@@ -27,7 +27,6 @@ try:
         recipient_list=['nischalgrg2022@gmail.com'],
         fail_silently=False,
     )
-    print("\n✅ Email sent successfully!")
 except Exception as e:
     print(f"\n❌ Error sending email: {e}")
     import traceback
