@@ -1,0 +1,297 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard | SEO Optima{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-subtitle">Welcome back, {{ request.user.get_full_name|default:request.user.username }}!</p>
+  </div>
+</div>
+
+<!-- Stats Cards Grid -->
+<div class="stats-grid">
+  <!-- Total Analyses -->
+  <div class="stat-card">
+    <div class="stat-card-content">
+      <div class="stat-info">
+        <p class="stat-label">Total Analyses</p>
+        <h3 class="stat-value">{{ total_analyses }}</h3>
+        <p class="stat-change positive">
+          <i class="bi bi-arrow-up"></i> +{{ total_analyses }} this month
+        </p>
+      </div>
+      <div class="stat-icon stat-icon-primary">
+        <i class="bi bi-graph-up"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Avg Performance -->
+  <div class="stat-card">
+    <div class="stat-card-content">
+      <div class="stat-info">
+        <p class="stat-label">Avg Performance</p>
+        <h3 class="stat-value">{{ avg_performance|default:"--" }}</h3>
+        <p class="stat-change {% if avg_performance >= 50 %}positive{% else %}negative{% endif %}">
+          <i class="bi bi-{% if avg_performance >= 50 %}arrow-up{% else %}arrow-down{% endif %}"></i> 
+          Performance score
+        </p>
+      </div>
+      <div class="stat-icon stat-icon-success">
+        <i class="bi bi-speedometer2"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Avg SEO Score -->
+  <div class="stat-card">
+    <div class="stat-card-content">
+      <div class="stat-info">
+        <p class="stat-label">Avg SEO Score</p>
+        <h3 class="stat-value">{{ avg_seo|default:"--" }}</h3>
+        <p class="stat-change {% if avg_seo >= 80 %}positive{% else %}negative{% endif %}">
+          <i class="bi bi-{% if avg_seo >= 80 %}arrow-up{% else %}arrow-down{% endif %}"></i> 
+          SEO ranking
+        </p>
+      </div>
+      <div class="stat-icon stat-icon-warning">
+        <i class="bi bi-search"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Headers Analyzed -->
+  <div class="stat-card">
+    <div class="stat-card-content">
+      <div class="stat-info">
+        <p class="stat-label">Headers Extracted</p>
+        <h3 class="stat-value">{{ headers_analyzed }}</h3>
+        <p class="stat-change neutral">
+          <i class="bi bi-dash"></i> Feature available
+        </p>
+      </div>
+      <div class="stat-icon stat-icon-info">
+        <i class="bi bi-list-nested"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="charts-row">
+  <!-- Monthly Analysis Chart -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <div>
+        <h3 class="chart-title">Monthly Analyses</h3>
+        <p class="chart-subtitle">Track your site analysis over time</p>
+      </div>
+      <div class="chart-actions">
+        <button class="chart-tab active">Week</button>
+        <button class="chart-tab">Month</button>
+        <button class="chart-tab">Year</button>
+      </div>
+    </div>
+    <div class="chart-body">
+      <canvas id="monthlyChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Performance Score Chart -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <div>
+        <h3 class="chart-title">Performance Trends</h3>
+        <p class="chart-subtitle">Average scores over time</p>
+      </div>
+    </div>
+    <div class="chart-body">
+      <canvas id="performanceChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Analyses Table -->
+<div class="table-card">
+  <div class="table-header">
+    <div>
+      <h3 class="table-title">Recent Analyses</h3>
+      <p class="table-subtitle">Your latest PageSpeed reports</p>
+    </div>
+    <a href="{% url 'dashboard:analysis_list' %}" class="btn-link">
+      View All <i class="bi bi-arrow-right"></i>
+    </a>
+  </div>
+
+  {% if recent_analyses %}
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Website</th>
+          <th>Date</th>
+          <th>Device</th>
+          <th>Performance</th>
+          <th>SEO</th>
+          <th>Best Practices</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for analysis in recent_analyses %}
+        <tr>
+          <td>
+            <div class="cell-with-icon">
+              <i class="bi bi-globe"></i>
+              <span class="text-truncate" style="max-width: 300px;">{{ analysis.url }}</span>
+            </div>
+          </td>
+          <td>{{ analysis.created_at|date:"M d, Y" }}</td>
+          <td>
+            <span class="badge badge-{{ analysis.strategy }}">
+              <i class="bi bi-{% if analysis.strategy == 'mobile' %}phone{% else %}laptop{% endif %}"></i>
+              {{ analysis.strategy|title }}
+            </span>
+          </td>
+          <td>
+            <div class="score-badge score-{{ analysis.performance_score|default:0 }}">
+              {{ analysis.performance_score|default:"--" }}
+            </div>
+          </td>
+          <td>
+            <div class="score-badge score-{{ analysis.seo_score|default:0 }}">
+              {{ analysis.seo_score|default:"--" }}
+            </div>
+          </td>
+          <td>
+            <div class="score-badge score-{{ analysis.best_practices_score|default:0 }}">
+              {{ analysis.best_practices_score|default:"--" }}
+            </div>
+          </td>
+          <td>
+            <div class="action-buttons">
+              <a href="{% url 'dashboard:analysis_detail' analysis.pk %}" class="btn-icon" title="View Details">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="{% url 'dashboard:delete_analysis' analysis.pk %}" class="btn-icon btn-icon-danger" title="Delete">
+                <i class="bi bi-trash"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">
+      <i class="bi bi-inbox"></i>
+    </div>
+    <h3 class="empty-title">No analyses yet</h3>
+    <p class="empty-subtitle">Start by analyzing your first website with PageSpeed Insights</p>
+    <a href="{% url 'dashboard:page_speed_insights' %}" class="btn btn-primary">
+      <i class="bi bi-plus-lg"></i> New Analysis
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Monthly Analyses Chart
+  const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+  const monthlyChart = new Chart(monthlyCtx, {
+    type: 'bar',
+    data: {
+      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      datasets: [{
+        label: 'Analyses',
+        data: [3, 7, 5, 9, 4, 8, 6],
+        backgroundColor: '#3B82F6',
+        borderRadius: 8,
+        barThickness: 24
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: {
+            borderDash: [5, 5]
+          }
+        },
+        x: {
+          grid: {
+            display: false
+          }
+        }
+      }
+    }
+  });
+
+  // Performance Trends Chart
+  const perfCtx = document.getElementById('performanceChart').getContext('2d');
+  const performanceChart = new Chart(perfCtx, {
+    type: 'line',
+    data: {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+      datasets: [
+        {
+          label: 'Performance',
+          data: [65, 72, 68, 78, 82, 85],
+          borderColor: '#3B82F6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          tension: 0.4,
+          fill: true
+        },
+        {
+          label: 'SEO',
+          data: [78, 82, 85, 88, 90, 92],
+          borderColor: '#10B981',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          tension: 0.4,
+          fill: true
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          align: 'end'
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 100,
+          grid: {
+            borderDash: [5, 5]
+          }
+        },
+        x: {
+          grid: {
+            display: false
+          }
+        }
+      }
+    }
+  });
+</script>
+{% endblock %}

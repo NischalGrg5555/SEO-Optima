@@ -1,0 +1,325 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Analysis Details | SEO Optima{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <a href="{% url 'dashboard:page_speed_insights' %}" class="btn btn-sm btn-outline-secondary mb-3">
+        ← Back
+      </a>
+      <h1 class="h2">{{ analysis.url }}</h1>
+      <p class="text-muted">{{ analysis.strategy|title }} Analysis • {{ analysis.created_at|date:"M d, Y H:i:s" }}</p>
+    </div>
+    <div class="col-md-4 text-end">
+      <a href="{% url 'dashboard:analysis_list' %}" class="btn btn-sm btn-outline-primary">All Analyses</a>
+      <a href="{% url 'dashboard:delete_analysis' analysis.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+    </div>
+  </div>
+
+  <!-- Score Overview -->
+  <div class="row mb-4">
+    <div class="col-lg-12">
+      <div class="card">
+        <div class="card-body">
+          <div class="row text-center">
+            <div class="col-md-3 col-sm-6 mb-3">
+              <div class="score-badge">
+                <div class="score-circle-wrapper">
+                  <div class="score-number" style="color: {% if analysis.performance_score >= 90 %}#10b981{% elif analysis.performance_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+                    {{ analysis.performance_score|default:"N/A" }}
+                  </div>
+                  <div class="score-name">Performance</div>
+                  <small style="color: {% if analysis.performance_score >= 90 %}#10b981{% elif analysis.performance_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+                    {% if analysis.performance_score >= 90 %}Excellent{% elif analysis.performance_score >= 50 %}Needs Work{% else %}Poor{% endif %}
+                  </small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+              <div class="score-badge">
+                <div class="score-circle-wrapper">
+                  <div class="score-number" style="color: {% if analysis.accessibility_score >= 90 %}#10b981{% elif analysis.accessibility_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+                    {{ analysis.accessibility_score|default:"N/A" }}
+                  </div>
+                  <div class="score-name">Accessibility</div>
+                  <small style="color: {% if analysis.accessibility_score >= 90 %}#10b981{% elif analysis.accessibility_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+                    {% if analysis.accessibility_score >= 90 %}Excellent{% elif analysis.accessibility_score >= 50 %}Needs Work{% else %}Poor{% endif %}
+                  </small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+              <div class="score-badge">
+                <div class="score-circle-wrapper">
+                  <div class="score-number" style="color: {% if analysis.best_practices_score >= 90 %}#10b981{% elif analysis.best_practices_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+                    {{ analysis.best_practices_score|default:"N/A" }}
+                  </div>
+                  <div class="score-name">Best Practices</div>
+                  <small style="color: {% if analysis.best_practices_score >= 90 %}#10b981{% elif analysis.best_practices_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+                    {% if analysis.best_practices_score >= 90 %}Excellent{% elif analysis.best_practices_score >= 50 %}Needs Work{% else %}Poor{% endif %}
+                  </small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+              <div class="score-badge">
+                <div class="score-circle-wrapper">
+                  <div class="score-number" style="color: {% if analysis.seo_score >= 90 %}#10b981{% elif analysis.seo_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+                    {{ analysis.seo_score|default:"N/A" }}
+                  </div>
+                  <div class="score-name">SEO</div>
+                  <small style="color: {% if analysis.seo_score >= 90 %}#10b981{% elif analysis.seo_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+                    {% if analysis.seo_score >= 90 %}Excellent{% elif analysis.seo_score >= 50 %}Needs Work{% else %}Poor{% endif %}
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core Web Vitals -->
+  {% if analysis.metrics %}
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Core Web Vitals & Metrics</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            {% for key, metric in analysis.metrics.items %}
+            <div class="col-lg-6 mb-4">
+              <div class="metric-detail">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <h6 class="mb-0">{{ metric.title }}</h6>
+                  {% if metric.score %}
+                  <span class="badge" 
+                        style="background-color: {% if metric.score >= 0.9 %}#10b981{% elif metric.score >= 0.5 %}#f59e0b{% else %}#ef4444{% endif %};">
+                    {% if metric.score >= 0.9 %}Good{% elif metric.score >= 0.5 %}Needs Work{% else %}Poor{% endif %}
+                  </span>
+                  {% endif %}
+                </div>
+                <div class="metric-detail-value">{{ metric.value }}</div>
+                {% if metric.score %}
+                <div class="progress mt-2" style="height: 4px;">
+                   <div class="progress-bar" 
+                     style="width: {% widthratio metric.score 1 100 %}%; background-color: {% if metric.score >= 0.9 %}#10b981{% elif metric.score >= 0.5 %}#f59e0b{% else %}#ef4444{% endif %};"></div>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Content Headers -->
+  {% if analysis.content_headers %}
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Content Headers Structure</h5>
+          <span class="badge bg-primary">{{ analysis.content_headers|length }} Headers Found</span>
+        </div>
+        <div class="card-body">
+          <div class="headers-container">
+            {% for header in analysis.content_headers %}
+            <div class="header-item header-{{ header.level|lower }}">
+              <span class="header-tag">{{ header.level }}</span>
+              <span class="header-text">{{ header.text }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+  .score-badge {
+    padding: 30px 20px;
+    text-align: center;
+    border-radius: 12px;
+    background: #f9fafb;
+    transition: all 0.3s ease;
+  }
+
+  .score-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  .score-circle-wrapper {
+    text-align: center;
+  }
+
+  .score-number {
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 10px;
+  }
+
+  .score-name {
+    font-size: 0.875rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-bottom: 5px;
+  }
+
+  .metric-detail {
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .metric-detail:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+  }
+
+  .metric-detail-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  /* Content Headers Styles */
+  .headers-container {
+    max-height: 600px;
+    overflow-y: auto;
+  }
+
+  .header-item {
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    border-left: 4px solid;
+    background: #f9fafb;
+    border-radius: 6px;
+    display: flex;
+    align-items: flex-start;
+    transition: all 0.2s ease;
+  }
+
+  .header-item:hover {
+    background: #f3f4f6;
+    transform: translateX(4px);
+  }
+
+  .header-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-right: 12px;
+    min-width: 40px;
+    text-align: center;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .header-text {
+    flex: 1;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #1f2937;
+  }
+
+  /* H1 - Purple */
+  .header-h1 {
+    border-left-color: #8b5cf6;
+  }
+
+  .header-h1 .header-tag {
+    background-color: #8b5cf6;
+  }
+
+  .header-h1 .header-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  /* H2 - Blue */
+  .header-h2 {
+    border-left-color: #3b82f6;
+    margin-left: 20px;
+  }
+
+  .header-h2 .header-tag {
+    background-color: #3b82f6;
+  }
+
+  .header-h2 .header-text {
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+
+  /* H3 - Cyan */
+  .header-h3 {
+    border-left-color: #06b6d4;
+    margin-left: 40px;
+  }
+
+  .header-h3 .header-tag {
+    background-color: #06b6d4;
+  }
+
+  /* H4 - Green */
+  .header-h4 {
+    border-left-color: #10b981;
+    margin-left: 60px;
+  }
+
+  .header-h4 .header-tag {
+    background-color: #10b981;
+  }
+
+  .header-h4 .header-text {
+    font-size: 0.9rem;
+  }
+
+  /* H5 - Yellow */
+  .header-h5 {
+    border-left-color: #f59e0b;
+    margin-left: 80px;
+  }
+
+  .header-h5 .header-tag {
+    background-color: #f59e0b;
+  }
+
+  .header-h5 .header-text {
+    font-size: 0.875rem;
+  }
+
+  /* H6 - Gray */
+  .header-h6 {
+    border-left-color: #6b7280;
+    margin-left: 100px;
+  }
+
+  .header-h6 .header-tag {
+    background-color: #6b7280;
+  }
+
+  .header-h6 .header-text {
+    font-size: 0.85rem;
+  }
+</style>
+{% endblock %}

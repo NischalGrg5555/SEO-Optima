@@ -1,0 +1,38 @@
+.auth-card{
+  max-width: 420px;
+}
+
+.auth-title{
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.auth-subtle{
+  color: #6c757d;
+}
+
+.btn-brand{
+  background: #3f5a2a;   /* similar green tone */
+  border-color: #3f5a2a;
+  color: #fff;
+  font-weight: 600;
+}
+
+.btn-brand:hover{
+  filter: brightness(0.95);
+  color: #fff;
+}
+
+.auth-image-wrap{
+  height: 100%;
+  width: 100%;
+  border-top-left-radius: 28px;
+  border-bottom-left-radius: 28px;
+  overflow: hidden;
+}
+
+.auth-image{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

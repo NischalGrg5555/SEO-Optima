@@ -1,0 +1,59 @@
+<aside class="sidebar">
+  <div class="brand">
+    <span class="logo">
+      <i class="bi bi-graph-up-arrow"></i>
+    </span>
+    <span class="name">SEO Optima</span>
+  </div>
+
+  <nav class="menu">
+    <div class="menu-section">MENU</div>
+    
+    <a class="menu-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'dashboard:home' %}">
+      <i class="bi bi-grid-fill"></i>
+      <span>Dashboard</span>
+    </a>
+
+    <div class="menu-section">SEO TOOLS</div>
+
+    <a class="menu-item {% if request.resolver_match.url_name == 'page_speed_insights' %}active{% endif %}" href="{% url 'dashboard:page_speed_insights' %}">
+      <i class="bi bi-speedometer2"></i>
+      <span>PageSpeed Insights</span>
+    </a>
+
+    <a class="menu-item {% if request.resolver_match.url_name == 'analysis_list' %}active{% endif %}" href="{% url 'dashboard:analysis_list' %}">
+      <i class="bi bi-file-earmark-text"></i>
+      <span>My Analyses</span>
+    </a>
+    
+    <a class="menu-item {% if request.resolver_match.url_name == 'extract_headers' %}active{% endif %}" href="{% url 'dashboard:extract_headers' %}">
+      <i class="bi bi-list-nested"></i>
+      <span>Extract Headers</span>
+    </a>
+
+    <div class="menu-section">COMING SOON</div>
+
+    <a class="menu-item menu-item-disabled" href="#">
+      <i class="bi bi-image"></i>
+      <span>Image Alt Finder</span>
+    </a>
+
+    <a class="menu-item menu-item-disabled" href="#">
+      <i class="bi bi-search"></i>
+      <span>Keywords Finder</span>
+    </a>
+
+    <a class="menu-item menu-item-disabled" href="#">
+      <i class="bi bi-file-pdf"></i>
+      <span>PDF Reports</span>
+    </a>
+
+    <div class="menu-divider"></div>
+
+    <a class="menu-item menu-logout" href="{% url 'accounts:logout' %}">
+      <i class="bi bi-box-arrow-right"></i>
+      <span>Logout</span>
+    </a>
+  </nav>
+</aside>
+

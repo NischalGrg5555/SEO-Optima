@@ -1,0 +1,84 @@
+{% extends "layouts/auth_split.html" %}
+{% block title %}Login | SEO Optima{% endblock %}
+
+{% block content %}
+  <h2 class="auth-title mb-4">Welcome Back</h2>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <div class="mb-3">
+      <label class="form-label">Email address</label>
+      {{ form.username }}
+      {% for e in form.username.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Password</label>
+      {{ form.password }}
+      {% for e in form.password.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+    </div>
+
+    <button class="btn btn-brand w-100 py-2" type="submit">Sign In</button>
+
+    {% if google_client_id %}
+    <div class="text-center my-3 small text-muted">or</div>
+    <div id="g_id_onload"
+         data-client_id="{{ google_client_id }}"
+         data-callback="handleCredentialResponse"
+         data-auto_prompt="false">
+    </div>
+    <div class="g_id_signin"
+         data-type="standard"
+         data-size="large"
+         data-theme="outline"
+         data-text="continue_with"
+         data-width="356">    </div>
+    {% endif %}
+
+    <div class="text-center mt-4 small">      Don’t have an account?
+      <a href="{% url 'accounts:register' %}" class="text-primary text-decoration-none fw-semibold">Create one</a>
+    </div>
+  </form>
+
+  {% if google_client_id %}
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script>
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+
+    function handleCredentialResponse(response) {
+      console.log('GSI callback fired');
+      if (!response || !response.credential) {
+        alert('Google did not return a credential. Check browser shields/third-party cookies.');
+        return;
+      }
+
+      const csrftoken = getCookie('csrftoken');
+      fetch("{% url 'accounts:google_login' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrftoken || ''
+        },
+        body: JSON.stringify({ credential: response.credential })
+      })
+      .then(res => res.json().then(data => ({ status: res.status, data })))
+      .then(({ status, data }) => {
+        if (status >= 200 && status < 300 && data.redirect_url) {
+          window.location.href = data.redirect_url;
+        } else {
+          alert(data.error || 'Google sign-in failed.');
+        }
+      })
+      .catch((err) => {
+        console.error('GSI fetch error', err);
+        alert('Network error during Google sign-in.');
+      });
+    }
+  </script>
+  {% endif %}
+{% endblock %}

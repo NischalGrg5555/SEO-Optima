@@ -1,0 +1,140 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}All Analyses | SEO Optima{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <a href="{% url 'dashboard:page_speed_insights' %}" class="btn btn-sm btn-outline-secondary mb-3">
+        ← Back
+      </a>
+      <h1 class="h2">All Analyses</h1>
+      <p class="text-muted">Your PageSpeed Insights history</p>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <form method="get" class="row g-3 align-items-end">
+            {% if filter_form %}
+              <div class="col-md-4">
+                {{ filter_form.strategy }}
+              </div>
+              <div class="col-md-4">
+                {{ filter_form.sort_by }}
+              </div>
+            {% endif %}
+            <div class="col-md-4">
+              <button type="submit" class="btn btn-primary w-100">Filter</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analyses List -->
+  <div class="row">
+    <div class="col-12">
+      {% if analyses %}
+      <div class="card">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>URL</th>
+                <th>Device</th>
+                <th>Performance</th>
+                <th>Accessibility</th>
+                <th>Best Practices</th>
+                <th>SEO</th>
+                <th>Date</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for analysis in analyses %}
+              <tr>
+                <td>
+                  <small class="text-muted">
+                    <a href="{{ analysis.url }}" target="_blank" rel="noopener noreferrer">{{ analysis.url|truncatewords:5 }}</a>
+                  </small>
+                </td>
+                <td>{{ analysis.strategy|title }}</td>
+                <td>
+                  <span class="badge" style="background-color: {% if analysis.performance_score >= 90 %}#10b981{% elif analysis.performance_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+                    {{ analysis.performance_score }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge" style="background-color: {% if analysis.accessibility_score >= 90 %}#10b981{% elif analysis.accessibility_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+                    {{ analysis.accessibility_score }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge" style="background-color: {% if analysis.best_practices_score >= 90 %}#10b981{% elif analysis.best_practices_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+                    {{ analysis.best_practices_score }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge" style="background-color: {% if analysis.seo_score >= 90 %}#10b981{% elif analysis.seo_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+                    {{ analysis.seo_score }}
+                  </span>
+                </td>
+                <td class="small">{{ analysis.created_at|date:"M d, Y H:i" }}</td>
+                <td>
+                  <a href="{% url 'dashboard:analysis_detail' analysis.pk %}" class="btn btn-sm btn-outline-primary">
+                    View
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      {% if is_paginated %}
+      <nav class="mt-4" aria-label="Page navigation">
+        <ul class="pagination">
+          {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?page=1">First</a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+          </li>
+          {% endif %}
+
+          {% for num in page_obj.paginator.page_range %}
+          <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+          </li>
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+          </li>
+          {% endif %}
+        </ul>
+      </nav>
+      {% endif %}
+      {% else %}
+      <div class="alert alert-info">
+        <p class="mb-0">No analyses found. <a href="{% url 'dashboard:page_speed_insights' %}">Create one now</a></p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

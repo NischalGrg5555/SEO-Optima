@@ -1,0 +1,269 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Page Speed Insights | SEO Optima{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <h1 class="h2">Page Speed Insights</h1>
+      <p class="text-muted">Analyze your website's performance metrics</p>
+    </div>
+  </div>
+
+  {% if messages %}
+  <div class="row mb-3">
+    <div class="col-12">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Input Form -->
+  <div class="row mb-4">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-body">
+          <form method="post" novalidate>
+            {% csrf_token %}
+            
+            <div class="mb-3">
+              <label class="form-label">Website URL</label>
+              {{ form.url }}
+              {% for error in form.url.errors %}
+              <div class="text-danger small mt-1">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Device Type</label>
+              <div class="d-flex gap-3">
+                {% for value, label in form.strategy.field.choices %}
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="strategy" 
+                         id="strategy_{{ value }}" value="{{ value }}"
+                         {% if form.strategy.value == value %}checked{% endif %}>
+                  <label class="form-check-label" for="strategy_{{ value }}">
+                    {{ label }}
+                  </label>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-brand w-100 py-2" 
+                    {% if is_loading %}disabled{% endif %}>
+              {% if is_loading %}
+              <span class="spinner-border spinner-border-sm me-2"></span>
+              Analyzing...
+              {% else %}
+              <i class="bi bi-search"></i> Analyze
+              {% endif %}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  {% if analysis %}
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="mb-0">{{ analysis.url }}</h5>
+            <small class="text-muted">{{ analysis.strategy|title }} • {{ analysis.created_at|date:"M d, Y H:i" }}</small>
+          </div>
+          <div>
+            <a href="{% url 'dashboard:analysis_detail' analysis.pk %}" class="btn btn-sm btn-outline-primary">
+              View Details
+            </a>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Score Badges -->
+          <div class="row text-center mb-4">
+            <div class="col-md-3 col-sm-6 mb-3">
+              <div class="score-badge" style="color: {% if analysis.performance_score >= 90 %}#10b981{% elif analysis.performance_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+                <div class="score-value">{{ analysis.performance_score|default:"N/A" }}</div>
+                <div class="score-label">Performance</div>
+              </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+              <div class="score-badge" style="color: {% if analysis.accessibility_score >= 90 %}#10b981{% elif analysis.accessibility_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+                <div class="score-value">{{ analysis.accessibility_score|default:"N/A" }}</div>
+                <div class="score-label">Accessibility</div>
+              </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+              <div class="score-badge" style="color: {% if analysis.best_practices_score >= 90 %}#10b981{% elif analysis.best_practices_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+                <div class="score-value">{{ analysis.best_practices_score|default:"N/A" }}</div>
+                <div class="score-label">Best Practices</div>
+              </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+              <div class="score-badge" style="color: {% if analysis.seo_score >= 90 %}#10b981{% elif analysis.seo_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+                <div class="score-value">{{ analysis.seo_score|default:"N/A" }}</div>
+                <div class="score-label">SEO</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Key Metrics -->
+          {% if analysis.metrics %}
+          <div class="row">
+            <div class="col-12">
+              <h6 class="mb-3">Core Web Vitals</h6>
+            </div>
+            {% for key, metric in analysis.metrics.items %}
+            <div class="col-md-6 col-lg-4 mb-3">
+              <div class="metric-card p-3 border rounded">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <span class="metric-title small text-muted">{{ metric.title }}</span>
+                  {% if metric.score %}
+                  <span class="badge" 
+                        style="background-color: {% if metric.score >= 0.9 %}#10b981{% elif metric.score >= 0.5 %}#f59e0b{% else %}#ef4444{% endif %};">
+                    {% if metric.score >= 0.9 %}Good{% elif metric.score >= 0.5 %}Needs Work{% else %}Poor{% endif %}
+                  </span>
+                  {% endif %}
+                </div>
+                <div class="metric-value h5 mb-0">{{ metric.value }}</div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% elif error %}
+  <div class="row">
+    <div class="col-12">
+      <div class="alert alert-danger">
+        <strong>Error:</strong> {{ error }}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Recent Analyses -->
+  {% if recent_analyses %}
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Recent Analyses</h5>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>URL</th>
+                <th>Device</th>
+                <th>Performance</th>
+                <th>SEO</th>
+                <th>Date</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for analysis in recent_analyses %}
+              <tr>
+                <td class="small">
+                  <a href="{{ analysis.url }}" target="_blank" rel="noopener noreferrer">
+                    {{ analysis.url|truncatewords:5 }}
+                  </a>
+                </td>
+                <td>{{ analysis.strategy|title }}</td>
+                <td>
+                  <span class="badge" style="background-color: {% if analysis.performance_score >= 90 %}#10b981{% elif analysis.performance_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+                    {{ analysis.performance_score }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge" style="background-color: {% if analysis.seo_score >= 90 %}#10b981{% elif analysis.seo_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+                    {{ analysis.seo_score }}
+                  </span>
+                </td>
+                <td class="small">{{ analysis.created_at|date:"M d, H:i" }}</td>
+                <td>
+                  <a href="{% url 'dashboard:analysis_detail' analysis.pk %}" class="btn btn-sm btn-outline-primary">
+                    View
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="card-footer bg-light text-center">
+          <a href="{% url 'dashboard:analysis_list' %}" class="btn btn-sm btn-link">
+            View All Analyses →
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+  .score-badge {
+    text-align: center;
+    padding: 20px;
+  }
+  
+  .score-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+  
+  .score-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .metric-card {
+    transition: all 0.3s ease;
+  }
+  
+  .metric-card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+  }
+  
+  .metric-title {
+    font-weight: 600;
+  }
+  
+  .metric-value {
+    color: #1f2937;
+    font-weight: 700;
+  }
+
+  .btn-brand {
+    background: #3f5a2a;
+    border-color: #3f5a2a;
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .btn-brand:hover {
+    filter: brightness(0.95);
+    color: #fff;
+  }
+</style>
+{% endblock %}

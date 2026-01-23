@@ -1,0 +1,55 @@
+<header class="topbar">
+  <div class="topbar-left">
+    <button class="sidebar-toggle" id="sidebarToggle">
+      <i class="bi bi-list"></i>
+    </button>
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input type="text" placeholder="Type to search..." class="search-input">
+    </div>
+  </div>
+
+  <div class="topbar-right">
+    <!-- Notifications -->
+    <button class="icon-button" data-bs-toggle="dropdown">
+      <i class="bi bi-bell"></i>
+      <span class="badge-dot"></span>
+    </button>
+    
+    <!-- Messages -->
+    <button class="icon-button" data-bs-toggle="dropdown">
+      <i class="bi bi-chat-dots"></i>
+    </button>
+
+    <!-- User Menu -->
+    <div class="user-menu" data-bs-toggle="dropdown">
+      <div class="user-info">
+        <span class="user-name">{{ request.user.get_full_name|default:request.user.username }}</span>
+        <span class="user-role">SEO Analyst</span>
+      </div>
+      <div class="avatar">
+        {{ request.user.first_name|slice:":1"|upper }}
+      </div>
+      <i class="bi bi-chevron-down"></i>
+    </div>
+    
+    <ul class="dropdown-menu dropdown-menu-end user-dropdown">
+      <li>
+        <a class="dropdown-item" href="#">
+          <i class="bi bi-person"></i> My Profile
+        </a>
+      </li>
+      <li>
+        <a class="dropdown-item" href="#">
+          <i class="bi bi-gear"></i> Settings
+        </a>
+      </li>
+      <li><hr class="dropdown-divider"></li>
+      <li>
+        <a class="dropdown-item" href="{% url 'accounts:logout' %}">
+          <i class="bi bi-box-arrow-right"></i> Logout
+        </a>
+      </li>
+    </ul>
+  </div>
+</header>
