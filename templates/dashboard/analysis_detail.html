@@ -122,29 +122,6 @@
   </div>
   {% endif %}
 
-  <!-- Content Headers -->
-  {% if analysis.content_headers %}
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">Content Headers Structure</h5>
-          <span class="badge bg-primary">{{ analysis.content_headers|length }} Headers Found</span>
-        </div>
-        <div class="card-body">
-          <div class="headers-container">
-            {% for header in analysis.content_headers %}
-            <div class="header-item header-{{ header.level|lower }}">
-              <span class="header-tag">{{ header.level }}</span>
-              <span class="header-text">{{ header.text }}</span>
-            </div>
-            {% endfor %}
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  {% endif %}
 </div>
 
 <style>
