@@ -34,6 +34,13 @@ class RegisterView(CreateView):
         # Generate OTP
         otp = OTP.create_otp(user)
         
+        # Print OTP to console for development
+        print(f"\n{'='*50}")
+        print(f"🔐 OTP GENERATED FOR: {user.email}")
+        print(f"🔑 CODE: {otp.code}")
+        print(f"⏰ EXPIRES AT: {otp.expires_at}")
+        print(f"{'='*50}\n")
+        
         # Send OTP via email (console backend for development)
         try:
             send_mail(
@@ -87,6 +94,15 @@ class OTPVerifyView(FormView):
             
             # Get the latest OTP for this user
             otp = user.otps.filter(is_verified=False).order_by('-created_at').first()
+            
+            # Debug logging
+            print(f"\n{'='*50}")
+            print(f"🔍 OTP VERIFICATION ATTEMPT")
+            print(f"📧 User: {user.email}")
+            print(f"🔑 Entered Code: '{otp_code}'")
+            print(f"✅ Expected Code: '{otp.code if otp else 'N/A'}'")
+            print(f"⏰ Expired: {otp.is_expired() if otp else 'N/A'}")
+            print(f"{'='*50}\n")
             
             if not otp:
                 messages.error(self.request, "No OTP found. Please register again.")

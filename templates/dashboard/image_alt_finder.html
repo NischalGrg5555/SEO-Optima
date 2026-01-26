@@ -1,0 +1,250 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Image Alt Text Finder | SEO Optima{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h1 class="h2">🖼️ Website Image + Alt Text Finder</h1>
+      <p class="text-muted">Analyze all images on any webpage and check their alt text for SEO and accessibility compliance.</p>
+    </div>
+  </div>
+
+  <!-- Extract Form -->
+  <div class="row mb-4">
+    <div class="col-lg-8 mx-auto">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <form method="post" id="imageAltForm">
+            {% csrf_token %}
+            
+            <div class="mb-4">
+              <label for="{{ form.url.id_for_label }}" class="form-label fw-bold">
+                Enter Website URL
+              </label>
+              {{ form.url }}
+              {% if form.url.errors %}
+                <div class="invalid-feedback d-block">
+                  {{ form.url.errors.0 }}
+                </div>
+              {% endif %}
+              <div class="form-text">
+                Example: https://example.com or https://blog.example.com/article
+              </div>
+            </div>
+
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary btn-lg" id="extractBtn">
+                <span id="btnText">🔍 Analyze Images</span>
+                <span id="btnLoading" class="d-none">
+                  <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  Analyzing...
+                </span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Section -->
+  {% if images %}
+  <div class="row">
+    <div class="col-lg-10 mx-auto">
+      <!-- Stats Cards -->
+      <div class="row mb-4">
+        <div class="col-md-4 col-12 mb-3">
+          <div class="stat-card">
+            <div class="stat-value">{{ stats.total_images }}</div>
+            <div class="stat-label">Total Images</div>
+          </div>
+        </div>
+        <div class="col-md-4 col-12 mb-3">
+          <div class="stat-card stat-success">
+            <div class="stat-value">{{ stats.images_with_alt }}</div>
+            <div class="stat-label">With Alt Text</div>
+          </div>
+        </div>
+        <div class="col-md-4 col-12 mb-3">
+          <div class="stat-card stat-danger">
+            <div class="stat-value">{{ stats.images_without_alt }}</div>
+            <div class="stat-label">Missing Alt Text</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- URL Display -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <h6 class="text-muted mb-2">Analyzed URL:</h6>
+          <a href="{{ url }}" target="_blank" class="text-break">{{ url }}</a>
+        </div>
+      </div>
+
+      <!-- Images Table -->
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Images & Alt Text Analysis</h5>
+          <span class="badge bg-primary">{{ images|length }} Images Found</span>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col" style="width: 10%;">#</th>
+                  <th scope="col" style="width: 45%;">Website URL / Image Source</th>
+                  <th scope="col" style="width: 35%;">Alt Text</th>
+                  <th scope="col" style="width: 10%;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for image in images %}
+                <tr>
+                  <td class="text-muted">{{ forloop.counter }}</td>
+                  <td>
+                    <div class="d-flex align-items-start">
+                      <img src="{{ image.src }}" 
+                           alt="{{ image.alt|default:'No alt text' }}" 
+                           class="img-thumbnail me-2" 
+                           style="width: 60px; height: 60px; object-fit: cover;"
+                           onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'60\' height=\'60\'%3E%3Crect fill=\'%23e9ecef\' width=\'60\' height=\'60\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' dominant-baseline=\'middle\' text-anchor=\'middle\' fill=\'%236c757d\'%3E?%3C/text%3E%3C/svg%3E'">
+                      <div class="flex-grow-1">
+                        <a href="{{ image.src }}" target="_blank" class="text-break small" style="word-break: break-all;">
+                          {{ image.src }}
+                        </a>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    {% if image.alt %}
+                      <span class="text-dark">{{ image.alt }}</span>
+                    {% else %}
+                      <span class="text-danger fst-italic">No alt text</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if image.status == 'OK' %}
+                      <span class="badge bg-success">✓ OK</span>
+                    {% else %}
+                      <span class="badge bg-danger">✗ Missing</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="mt-4 d-flex gap-2">
+        <a href="{% url 'dashboard:image_alt_list' %}" class="btn btn-outline-primary">
+          <i class="bi bi-list"></i> View All Analyses
+        </a>
+        <button onclick="window.print()" class="btn btn-outline-secondary">
+          <i class="bi bi-printer"></i> Print Report
+        </button>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if error %}
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <div class="alert alert-danger" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <strong>Error:</strong> {{ error }}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+/* Image Alt Finder Specific Styles */
+.stat-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #2563eb;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-success .stat-value {
+  color: #16a34a;
+}
+
+.stat-danger .stat-value {
+  color: #dc2626;
+}
+
+.table th {
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #4b5563;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.table td {
+  vertical-align: middle;
+  padding: 1rem 0.75rem;
+}
+
+.img-thumbnail {
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+@media print {
+  .btn, form, .card-header .badge {
+    display: none !important;
+  }
+  
+  .card {
+    border: 1px solid #000 !important;
+    box-shadow: none !important;
+  }
+}
+</style>
+
+<script>
+document.getElementById('imageAltForm')?.addEventListener('submit', function() {
+  const btn = document.getElementById('extractBtn');
+  const btnText = document.getElementById('btnText');
+  const btnLoading = document.getElementById('btnLoading');
+  
+  btn.disabled = true;
+  btnText.classList.add('d-none');
+  btnLoading.classList.remove('d-none');
+});
+</script>
+{% endblock %}

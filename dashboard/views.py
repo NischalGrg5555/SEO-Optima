@@ -4,7 +4,8 @@ from django.views.generic import ListView, DetailView
 from django.contrib import messages
 from .services.pagespeed import fetch_pagespeed_data, get_score_color
 from .services.header_extractor import extract_headers, get_header_hierarchy
-from .models import PageSpeedAnalysis
+from .services.image_extractor import extract_images, get_image_stats
+from .models import PageSpeedAnalysis, ImageAltAnalysis
 from .forms import PageSpeedForm, PageSpeedFilterForm, HeaderExtractorForm
 
 
@@ -62,19 +63,10 @@ def page_speed_insights(request):
     if request.method == 'POST' and form.is_valid():
         url = form.cleaned_data['url']
         strategy = form.cleaned_data['strategy']
-        is_loading = True
         
         try:
             # Fetch data from Google PageSpeed API
             api_data = fetch_pagespeed_data(url, strategy)
-            
-            # Extract content headers from the webpage
-            content_headers = []
-            try:
-                content_headers = extract_headers(url)
-            except Exception as e:
-                # Don't fail the entire analysis if header extraction fails
-                print(f"Warning: Could not extract headers: {str(e)}")
             
             # Save to database
             analysis = PageSpeedAnalysis.objects.create(
@@ -86,7 +78,6 @@ def page_speed_insights(request):
                 best_practices_score=api_data['scores'].get('best_practices'),
                 seo_score=api_data['scores'].get('seo'),
                 metrics=api_data.get('metrics', {}),
-                content_headers=content_headers,
                 full_response=api_data.get('full_response', {}),
             )
             
@@ -196,3 +187,93 @@ def extract_headers_view(request):
     }
     
     return render(request, 'dashboard/extract_headers.html', context)
+
+@login_required
+def image_alt_finder(request):
+    """Image and Alt Text Finder page"""
+    from .forms import ImageAltFinderForm
+    
+    form = ImageAltFinderForm(request.POST or None)
+    images = []
+    stats = {}
+    url = None
+    error = None
+    analysis = None
+    
+    if request.method == 'POST' and form.is_valid():
+        url = form.cleaned_data['url']
+        
+        try:
+            # Extract images from the URL
+            images = extract_images(url)
+            
+            # Get statistics
+            stats = get_image_stats(images)
+            
+            # Save to database
+            analysis = ImageAltAnalysis.objects.create(
+                user=request.user,
+                url=url,
+                total_images=stats['total_images'],
+                images_with_alt=stats['images_with_alt'],
+                images_without_alt=stats['images_without_alt'],
+                images_data=images
+            )
+            
+            messages.success(request, f'Successfully extracted {len(images)} images from {url}')
+            
+        except Exception as e:
+            error = str(e)
+            messages.error(request, f'Error extracting images: {error}')
+    
+    context = {
+        'form': form,
+        'images': images,
+        'stats': stats,
+        'url': url,
+        'error': error,
+        'analysis': analysis,
+    }
+    
+    return render(request, 'dashboard/image_alt_finder.html', context)
+
+
+@login_required
+def image_alt_list(request):
+    """List all image alt analyses for the current user"""
+    analyses = ImageAltAnalysis.objects.filter(user=request.user)
+    
+    context = {
+        'analyses': analyses,
+    }
+    
+    return render(request, 'dashboard/image_alt_list.html', context)
+
+
+@login_required
+def image_alt_detail(request, pk):
+    """View details of a specific image alt analysis"""
+    analysis = get_object_or_404(ImageAltAnalysis, pk=pk, user=request.user)
+    
+    context = {
+        'analysis': analysis,
+    }
+    
+    return render(request, 'dashboard/image_alt_detail.html', context)
+
+
+@login_required
+def delete_image_alt_analysis(request, pk):
+    """Delete an image alt analysis"""
+    analysis = get_object_or_404(ImageAltAnalysis, pk=pk, user=request.user)
+    
+    if request.method == 'POST':
+        analysis.delete()
+        messages.success(request, 'Analysis deleted successfully!')
+        return redirect('dashboard:image_alt_list')
+    
+    context = {
+        'analysis': analysis,
+    }
+    
+    return render(request, 'dashboard/delete_image_alt_analysis.html', context)

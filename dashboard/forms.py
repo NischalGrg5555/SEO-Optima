@@ -67,3 +67,19 @@ class HeaderExtractorForm(forms.Form):
             'invalid': 'Please enter a valid URL (e.g., https://example.com)',
         }
     )
+
+class ImageAltFinderForm(forms.Form):
+    """Form for extracting images and alt text from a webpage"""
+    url = forms.URLField(
+        label='Website URL',
+        required=True,
+        widget=forms.URLInput(attrs={
+            'class': 'form-control form-control-lg',
+            'placeholder': 'https://example.com',
+            'autocomplete': 'off',
+        }),
+        error_messages={
+            'required': 'Please enter a valid website URL',
+            'invalid': 'Please enter a valid URL (e.g., https://example.com)',
+        }
+    )

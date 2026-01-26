@@ -60,3 +60,39 @@ class PageSpeedAnalysis(models.Model):
         else:
             return 'Poor'
 
+
+class ImageAltAnalysis(models.Model):
+    """Model to store image and alt text analysis results"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='image_alt_analyses')
+    url = models.URLField(max_length=500)
+    
+    # Statistics
+    total_images = models.IntegerField(default=0)
+    images_with_alt = models.IntegerField(default=0)
+    images_without_alt = models.IntegerField(default=0)
+    
+    # Image data (stored as JSON)
+    # Format: [{'src': 'url', 'alt': 'text', 'status': 'OK/Missing'}]
+    images_data = models.JSONField(default=list, blank=True)
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['url']),
+        ]
+    
+    def __str__(self):
+        return f"{self.url} - {self.total_images} images"
+    
+    @property
+    def alt_text_percentage(self):
+        """Calculate percentage of images with alt text"""
+        if self.total_images == 0:
+            return 0
+        return round((self.images_with_alt / self.total_images) * 100, 1)
+

@@ -33,9 +33,9 @@
 
     <div class="menu-section">COMING SOON</div>
 
-    <a class="menu-item menu-item-disabled" href="#">
+    <a class="menu-item {% if request.resolver_match.url_name == 'image_alt_finder' or request.resolver_match.url_name == 'image_alt_list' or request.resolver_match.url_name == 'image_alt_detail' %}active{% endif %}" href="{% url 'dashboard:image_alt_finder' %}">
       <i class="bi bi-image"></i>
-      <span>Image Alt Finder</span>
+      <span>Website Image + Alt text Finder</span>
     </a>
 
     <a class="menu-item menu-item-disabled" href="#">
