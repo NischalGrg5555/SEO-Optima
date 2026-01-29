@@ -434,7 +434,13 @@ def gsc_callback(request):
         return redirect('dashboard:keywords_finder')
     
     try:
-        # Create flow instance
+        # Create flow instance with relaxed scope checking
+        from oauthlib.oauth2.rfc6749.parameters import prepare_token_request
+        import os
+        
+        # Disable strict scope checking
+        os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
+        
         flow = Flow.from_client_config(
             {
                 "web": {
@@ -466,7 +472,7 @@ def gsc_callback(request):
             'token_uri': credentials.token_uri,
             'client_id': credentials.client_id,
             'client_secret': credentials.client_secret,
-            'scopes': credentials.scopes
+            'scopes': list(credentials.scopes)  # Convert to list for JSON
         }
         
         # Create or update GSC connection
@@ -485,6 +491,9 @@ def gsc_callback(request):
             messages.success(request, f'Google Search Console connection updated! Found {len(properties)} properties.')
         
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"GSC Connection Error: {error_details}")  # Log to console
         messages.error(request, f'Error connecting to Google Search Console: {str(e)}')
     
     return redirect('dashboard:keywords_finder')
