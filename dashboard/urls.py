@@ -10,6 +10,13 @@ from .views import (
     image_alt_list,
     image_alt_detail,
     delete_image_alt_analysis,
+    keywords_finder,
+    keywords_list,
+    keywords_detail,
+    delete_keyword_analysis,
+    connect_gsc,
+    gsc_callback,
+    disconnect_gsc,
 )
 
 app_name = "dashboard"
@@ -25,4 +32,12 @@ urlpatterns = [
     path("image-alt-analyses/", image_alt_list, name="image_alt_list"),
     path("image-alt-analysis/<int:pk>/", image_alt_detail, name="image_alt_detail"),
     path("image-alt-analysis/<int:pk>/delete/", delete_image_alt_analysis, name="delete_image_alt_analysis"),
+    path("keywords-finder/", keywords_finder, name="keywords_finder"),
+    path("keywords-analyses/", keywords_list, name="keywords_list"),
+    path("keywords-analysis/<int:pk>/", keywords_detail, name="keywords_detail"),
+    path("keywords-analysis/<int:pk>/delete/", delete_keyword_analysis, name="delete_keyword_analysis"),
+    # Google Search Console OAuth
+    path("connect-gsc/", connect_gsc, name="connect_gsc"),
+    path("gsc-callback/", gsc_callback, name="gsc_callback"),
+    path("disconnect-gsc/", disconnect_gsc, name="disconnect_gsc"),
 ]

@@ -158,3 +158,8 @@ PAGESPEED_API_KEY = os.environ.get('PAGESPEED_API_KEY', 'your-google-pagespeed-a
 
 # Google Sign-In
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
+# Google Search Console API OAuth Configuration
+GSC_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
+GSC_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
+GSC_REDIRECT_URI = os.environ.get('GOOGLE_REDIRECT_URI', 'http://127.0.0.1:8001/dashboard/gsc-callback/')
+GSC_SCOPES = ['https://www.googleapis.com/auth/webmasters.readonly']

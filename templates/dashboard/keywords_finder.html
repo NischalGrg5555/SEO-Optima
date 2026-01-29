@@ -1,0 +1,389 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Keywords Finder | SEO Optima{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <h1 class="h2">🔍 Keywords Finder</h1>
+          <p class="text-muted">Discover what keywords your website ranks for and their search volume and positions.</p>
+        </div>
+        <div>
+          {% if gsc_connected %}
+            <div class="card border-success">
+              <div class="card-body p-3">
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-check-circle-fill text-success me-2"></i>
+                  <div>
+                    <strong class="text-success">Connected</strong>
+                    <p class="mb-0 small text-muted">{{ gsc_connection.properties|length }} properties found</p>
+                  </div>
+                  <a href="{% url 'dashboard:disconnect_gsc' %}" class="btn btn-sm btn-outline-danger ms-3">
+                    <i class="bi bi-x-circle me-1"></i> Disconnect
+                  </a>
+                </div>
+              </div>
+            </div>
+          {% else %}
+            <div class="card border-warning">
+              <div class="card-body p-3">
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                  <div>
+                    <strong>Not Connected</strong>
+                    <p class="mb-0 small text-muted">Using demo data</p>
+                  </div>
+                  <a href="{% url 'dashboard:connect_gsc' %}" class="btn btn-sm btn-primary ms-3">
+                    <i class="bi bi-google me-1"></i> Connect GSC
+                  </a>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+      {% if not gsc_connected %}
+      <div class="alert alert-info mt-3">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>Note:</strong> Currently showing mock/demo data. Connect Google Search Console for real keyword rankings from your verified properties.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Analyze Form -->
+  <div class="row mb-4">
+    <div class="col-lg-8 mx-auto">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <form method="post" id="keywordsForm">
+            {% csrf_token %}
+            
+            <div class="mb-4">
+              <label for="{{ form.url.id_for_label }}" class="form-label fw-bold">
+                Enter Website URL
+              </label>
+              {{ form.url }}
+              {% if form.url.errors %}
+                <div class="invalid-feedback d-block">
+                  {{ form.url.errors.0 }}
+                </div>
+              {% endif %}
+              <div class="form-text">
+                {% if gsc_connected %}
+                  Enter a URL from your Search Console properties: {{ gsc_connection.properties|join:", " }}
+                {% else %}
+                  Example: https://example.com or https://blog.example.com
+                {% endif %}
+              </div>
+            </div>
+
+            {% if gsc_connected %}
+            <div class="mb-4">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="useGSC" name="use_gsc" value="true" checked>
+                <label class="form-check-label" for="useGSC">
+                  <strong>Use Real Data from Google Search Console</strong>
+                  <p class="text-muted small mb-0">Uncheck to use demo data instead</p>
+                </label>
+              </div>
+            </div>
+            {% endif %}
+
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary btn-lg" id="analyzeBtn">
+                <span id="btnText">
+                  {% if gsc_connected %}
+                    🔍 Fetch Keywords from GSC
+                  {% else %}
+                    🔍 Generate Demo Keywords
+                  {% endif %}
+                </span>
+                <span id="btnLoading" class="d-none">
+                  <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  Analyzing...
+                </span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Section -->
+  {% if keywords %}
+  <div class="row">
+    <div class="col-lg-11 mx-auto">
+      <!-- Stats Cards -->
+      <div class="row mb-4">
+        <div class="col-md-2 col-6 mb-3">
+          <div class="stat-card">
+            <div class="stat-value">{{ stats.total_keywords }}</div>
+            <div class="stat-label">Keywords</div>
+          </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+          <div class="stat-card stat-success">
+            <div class="stat-value">{{ stats.top_3_positions }}</div>
+            <div class="stat-label">Top 3</div>
+          </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+          <div class="stat-card stat-primary">
+            <div class="stat-value">{{ stats.top_10_positions }}</div>
+            <div class="stat-label">Top 10</div>
+          </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+          <div class="stat-card stat-info">
+            <div class="stat-value">{{ stats.top_20_positions }}</div>
+            <div class="stat-label">Top 20</div>
+          </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+          <div class="stat-card stat-warning">
+            <div class="stat-value">{{ stats.total_volume|floatformat:0 }}</div>
+            <div class="stat-label">Total Volume</div>
+          </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+          <div class="stat-card">
+            <div class="stat-value">{{ stats.avg_position }}</div>
+            <div class="stat-label">Avg Position</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- URL Display -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <h6 class="text-muted mb-2">Analyzed URL:</h6>
+          <a href="{{ url }}" target="_blank" class="text-break">{{ url }}</a>
+        </div>
+      </div>
+
+      <!-- Keywords Table -->
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">{{ stats.total_keywords }} Keywords</h5>
+          <button class="btn btn-sm btn-outline-primary" onclick="exportToCSV()">
+            <i class="bi bi-download"></i> Export
+          </button>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover table-striped mb-0" id="keywordsTable">
+              <thead class="table-light sticky-top">
+                <tr>
+                  <th scope="col" style="width: 5%;">#</th>
+                  <th scope="col" style="width: 35%;">
+                    <i class="bi bi-key"></i> Keyword
+                  </th>
+                  <th scope="col" style="width: 15%;">
+                    <i class="bi bi-graph-up"></i> Volume
+                  </th>
+                  <th scope="col" style="width: 12%;">
+                    <i class="bi bi-trophy"></i> Position
+                  </th>
+                  <th scope="col" style="width: 33%;">
+                    <i class="bi bi-link-45deg"></i> URL
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for keyword in keywords %}
+                <tr>
+                  <td class="text-muted">{{ forloop.counter }}</td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <!-- Flag/icon based on country -->
+                      {% if keyword.keyword|lower|slice:":2" == "us" or keyword.keyword|lower|slice:":2" == "uk" %}
+                        <span class="me-2">🌐</span>
+                      {% endif %}
+                      <strong>{{ keyword.keyword }}</strong>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge bg-secondary">{{ keyword.volume|floatformat:0 }}</span>
+                  </td>
+                  <td>
+                    {% if keyword.position <= 3 %}
+                      <span class="badge bg-success">{{ keyword.position }}</span>
+                    {% elif keyword.position <= 10 %}
+                      <span class="badge bg-primary">{{ keyword.position }}</span>
+                    {% elif keyword.position <= 20 %}
+                      <span class="badge bg-info">{{ keyword.position }}</span>
+                    {% else %}
+                      <span class="badge bg-warning text-dark">{{ keyword.position }}</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <a href="{{ keyword.url }}" target="_blank" class="text-break small text-decoration-none">
+                      {{ keyword.url|truncatechars:50 }}
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="mt-4 d-flex gap-2">
+        <a href="{% url 'dashboard:keywords_list' %}" class="btn btn-outline-primary">
+          <i class="bi bi-list"></i> View All Analyses
+        </a>
+        <button onclick="window.print()" class="btn btn-outline-secondary">
+          <i class="bi bi-printer"></i> Print Report
+        </button>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if error %}
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <div class="alert alert-danger" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <strong>Error:</strong> {{ error }}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+/* Keywords Finder Specific Styles */
+.stat-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2563eb;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-success .stat-value {
+  color: #16a34a;
+}
+
+.stat-primary .stat-value {
+  color: #2563eb;
+}
+
+.stat-info .stat-value {
+  color: #0891b2;
+}
+
+.stat-warning .stat-value {
+  color: #f59e0b;
+}
+
+.table th {
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #4b5563;
+  border-bottom: 2px solid #e5e7eb;
+  background-color: #f9fafb !important;
+}
+
+.table thead.sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.table td {
+  vertical-align: middle;
+  padding: 0.75rem;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(0,0,0,0.02);
+}
+
+@media print {
+  .btn, form, .alert-info {
+    display: none !important;
+  }
+  
+  .card {
+    border: 1px solid #000 !important;
+    box-shadow: none !important;
+  }
+}
+</style>
+
+<script>
+document.getElementById('keywordsForm')?.addEventListener('submit', function() {
+  const btn = document.getElementById('analyzeBtn');
+  const btnText = document.getElementById('btnText');
+  const btnLoading = document.getElementById('btnLoading');
+  
+  btn.disabled = true;
+  btnText.classList.add('d-none');
+  btnLoading.classList.remove('d-none');
+});
+
+function exportToCSV() {
+  const table = document.getElementById('keywordsTable');
+  let csv = [];
+  
+  // Get headers
+  const headers = [];
+  table.querySelectorAll('thead th').forEach(th => {
+    headers.push(th.textContent.trim());
+  });
+  csv.push(headers.join(','));
+  
+  // Get rows
+  table.querySelectorAll('tbody tr').forEach(tr => {
+    const row = [];
+    tr.querySelectorAll('td').forEach(td => {
+      row.push('"' + td.textContent.trim().replace(/"/g, '""') + '"');
+    });
+    csv.push(row.join(','));
+  });
+  
+  // Download
+  const csvContent = csv.join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'keywords_analysis.csv';
+  a.click();
+  window.URL.revokeObjectURL(url);
+}
+</script>
+{% endblock %}

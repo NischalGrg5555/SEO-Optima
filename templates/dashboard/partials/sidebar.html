@@ -38,7 +38,7 @@
       <span>Website Image + Alt text Finder</span>
     </a>
 
-    <a class="menu-item menu-item-disabled" href="#">
+    <a class="menu-item {% if request.resolver_match.url_name == 'keywords_finder' or request.resolver_match.url_name == 'keywords_list' or request.resolver_match.url_name == 'keywords_detail' %}active{% endif %}" href="{% url 'dashboard:keywords_finder' %}">
       <i class="bi bi-search"></i>
       <span>Keywords Finder</span>
     </a>
