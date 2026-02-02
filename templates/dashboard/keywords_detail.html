@@ -3,117 +3,151 @@
 {% block title %}Keyword Analysis Detail | SEO Optima{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
+<div class="container-fluid px-4 py-4">
   <!-- Header -->
-  <div class="row mb-4">
-    <div class="col-md-8">
-      <a href="{% url 'dashboard:keywords_list' %}" class="btn btn-sm btn-outline-secondary mb-3">
-        ← Back to List
+  <div class="analysis-header mb-4">
+    <div class="d-flex align-items-center mb-3">
+      <a href="{% url 'dashboard:keywords_list' %}" class="btn btn-sm btn-light border me-3">
+        <i class="bi bi-arrow-left"></i> Back
       </a>
-      <h1 class="h2">Keyword Analysis Detail</h1>
+      <div class="flex-grow-1">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="badge bg-primary">Keyword Analysis</span>
+          <span class="badge bg-secondary">{{ analysis.total_keywords }} Keywords</span>
+        </div>
+        <h1 class="h3 mb-1 text-break">{{ analysis.url }}</h1>
+        <div class="text-muted small">
+          <i class="bi bi-calendar3"></i> {{ analysis.created_at|date:"M d, Y" }} at {{ analysis.created_at|date:"H:i" }}
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-outline-light" onclick="exportToCSV()">
+          <i class="bi bi-download"></i> Export CSV
+        </button>
+        <a href="{% url 'dashboard:delete_keyword_analysis' analysis.pk %}" class="btn btn-sm btn-outline-danger">
+          <i class="bi bi-trash"></i> Delete
+        </a>
+        <button onclick="window.print()" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-printer"></i> Print
+        </button>
+      </div>
     </div>
   </div>
 
   <!-- Stats Cards -->
-  <div class="row mb-4">
-    <div class="col-md-2 col-6 mb-3">
-      <div class="stat-card">
-        <div class="stat-value">{{ analysis.total_keywords }}</div>
-        <div class="stat-label">Keywords</div>
+  <div class="row g-3 mb-4">
+    <div class="col-xl-2 col-lg-4 col-md-6 col-6">
+      <div class="score-card">
+        <div class="score-category">Keywords</div>
+        <div class="score-value" style="color: #2563eb;">{{ analysis.total_keywords }}</div>
+        <div class="score-status" style="color: #6b7280;">Total Found</div>
+        <div class="score-bar">
+          <div class="score-bar-fill" style="width: 100%; background: #2563eb;"></div>
+        </div>
       </div>
     </div>
-    <div class="col-md-2 col-6 mb-3">
-      <div class="stat-card stat-success">
-        <div class="stat-value">{{ analysis.top_3_positions }}</div>
-        <div class="stat-label">Top 3</div>
+    <div class="col-xl-2 col-lg-4 col-md-6 col-6">
+      <div class="score-card">
+        <div class="score-category">Top 3</div>
+        <div class="score-value" style="color: #10b981;">{{ analysis.top_3_positions }}</div>
+        <div class="score-status" style="color: #10b981;">Excellent</div>
+        <div class="score-bar">
+          <div class="score-bar-fill" style="width: {% widthratio analysis.top_3_positions analysis.total_keywords 100 %}%; background: #10b981;"></div>
+        </div>
       </div>
     </div>
-    <div class="col-md-2 col-6 mb-3">
-      <div class="stat-card stat-primary">
-        <div class="stat-value">{{ analysis.top_10_positions }}</div>
-        <div class="stat-label">Top 10</div>
+    <div class="col-xl-2 col-lg-4 col-md-6 col-6">
+      <div class="score-card">
+        <div class="score-category">Top 10</div>
+        <div class="score-value" style="color: #3b82f6;">{{ analysis.top_10_positions }}</div>
+        <div class="score-status" style="color: #3b82f6;">Good</div>
+        <div class="score-bar">
+          <div class="score-bar-fill" style="width: {% widthratio analysis.top_10_positions analysis.total_keywords 100 %}%; background: #3b82f6;"></div>
+        </div>
       </div>
     </div>
-    <div class="col-md-2 col-6 mb-3">
-      <div class="stat-card stat-info">
-        <div class="stat-value">{{ analysis.top_20_positions }}</div>
-        <div class="stat-label">Top 20</div>
+    <div class="col-xl-2 col-lg-4 col-md-6 col-6">
+      <div class="score-card">
+        <div class="score-category">Top 20</div>
+        <div class="score-value" style="color: #0891b2;">{{ analysis.top_20_positions }}</div>
+        <div class="score-status" style="color: #0891b2;">Fair</div>
+        <div class="score-bar">
+          <div class="score-bar-fill" style="width: {% widthratio analysis.top_20_positions analysis.total_keywords 100 %}%; background: #0891b2;"></div>
+        </div>
       </div>
     </div>
-    <div class="col-md-2 col-6 mb-3">
-      <div class="stat-card stat-warning">
-        <div class="stat-value">{{ analysis.total_volume|floatformat:0 }}</div>
-        <div class="stat-label">Total Volume</div>
+    <div class="col-xl-2 col-lg-4 col-md-6 col-6">
+      <div class="score-card">
+        <div class="score-category">Total Volume</div>
+        <div class="score-value" style="color: #f59e0b;">{{ analysis.total_volume|floatformat:0 }}</div>
+        <div class="score-status" style="color: #6b7280;">Search Vol.</div>
+        <div class="score-bar">
+          <div class="score-bar-fill" style="width: 100%; background: #f59e0b;"></div>
+        </div>
       </div>
     </div>
-    <div class="col-md-2 col-6 mb-3">
-      <div class="stat-card">
-        <div class="stat-value">{{ analysis.avg_position }}</div>
-        <div class="stat-label">Avg Position</div>
+    <div class="col-xl-2 col-lg-4 col-md-6 col-6">
+      <div class="score-card">
+        <div class="score-category">Avg Position</div>
+        <div class="score-value" style="color: #6b7280;">{{ analysis.avg_position }}</div>
+        <div class="score-status" style="color: #6b7280;">Average</div>
+        <div class="score-bar">
+          <div class="score-bar-fill" style="width: {% widthratio 100 analysis.avg_position 100 %}%; background: #6b7280;"></div>
+        </div>
       </div>
-    </div>
-  </div>
-
-  <!-- URL Display -->
-  <div class="card mb-4">
-    <div class="card-body">
-      <h6 class="text-muted mb-2">Analyzed URL:</h6>
-      <a href="{{ analysis.url }}" target="_blank" class="text-break">{{ analysis.url }}</a>
-      <hr>
-      <small class="text-muted">Analyzed on: {{ analysis.created_at|date:"F d, Y \a\t H:i" }}</small>
     </div>
   </div>
 
   <!-- Keywords Table -->
-  <div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">{{ analysis.total_keywords }} Keywords</h5>
-      <button class="btn btn-sm btn-outline-primary" onclick="exportToCSV()">
-        <i class="bi bi-download"></i> Export
-      </button>
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-bottom">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-key text-primary me-2"></i>{{ analysis.total_keywords }} Keywords</h5>
+        <span class="badge bg-primary">Ranked Keywords</span>
+      </div>
     </div>
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-hover table-striped mb-0" id="keywordsTable">
+        <table class="table table-hover mb-0" id="keywordsTable">
           <thead class="table-light">
             <tr>
-              <th scope="col" style="width: 5%;">#</th>
+              <th scope="col" style="width: 5%;" class="px-4">#</th>
               <th scope="col" style="width: 35%;">
-                <i class="bi bi-key"></i> Keyword
+                <i class="bi bi-key me-1"></i> Keyword
               </th>
               <th scope="col" style="width: 15%;">
-                <i class="bi bi-graph-up"></i> Volume
+                <i class="bi bi-graph-up me-1"></i> Volume
               </th>
               <th scope="col" style="width: 12%;">
-                <i class="bi bi-trophy"></i> Position
+                <i class="bi bi-trophy me-1"></i> Position
               </th>
               <th scope="col" style="width: 33%;">
-                <i class="bi bi-link-45deg"></i> URL
+                <i class="bi bi-link-45deg me-1"></i> URL
               </th>
             </tr>
           </thead>
           <tbody>
             {% for keyword in analysis.keywords_data %}
             <tr>
-              <td class="text-muted">{{ forloop.counter }}</td>
-              <td><strong>{{ keyword.keyword }}</strong></td>
+              <td class="text-muted px-4">{{ forloop.counter }}</td>
+              <td><strong class="text-dark">{{ keyword.keyword }}</strong></td>
               <td>
-                <span class="badge bg-secondary">{{ keyword.volume|floatformat:0 }}</span>
+                <span class="badge bg-secondary rounded-pill">{{ keyword.volume|floatformat:0 }}</span>
               </td>
               <td>
                 {% if keyword.position <= 3 %}
-                  <span class="badge bg-success">{{ keyword.position }}</span>
+                  <span class="badge bg-success rounded-pill"><i class="bi bi-trophy-fill me-1"></i>{{ keyword.position }}</span>
                 {% elif keyword.position <= 10 %}
-                  <span class="badge bg-primary">{{ keyword.position }}</span>
+                  <span class="badge bg-primary rounded-pill"><i class="bi bi-star-fill me-1"></i>{{ keyword.position }}</span>
                 {% elif keyword.position <= 20 %}
-                  <span class="badge bg-info">{{ keyword.position }}</span>
+                  <span class="badge bg-info rounded-pill">{{ keyword.position }}</span>
                 {% else %}
-                  <span class="badge bg-warning text-dark">{{ keyword.position }}</span>
+                  <span class="badge bg-warning text-dark rounded-pill">{{ keyword.position }}</span>
                 {% endif %}
               </td>
               <td>
-                <a href="{{ keyword.url }}" target="_blank" class="text-break small text-decoration-none">
-                  {{ keyword.url|truncatechars:50 }}
+                <a href="{{ keyword.url }}" target="_blank" class="text-decoration-none small text-break" style="color: #4b5563;">
+                  {{ keyword.url|truncatechars:60 }}
                 </a>
               </td>
             </tr>
@@ -123,81 +157,184 @@
       </div>
     </div>
   </div>
-
-  <!-- Action Buttons -->
-  <div class="mt-4 d-flex gap-2">
-    <a href="{% url 'dashboard:delete_keyword_analysis' analysis.pk %}" class="btn btn-outline-danger">
-      <i class="bi bi-trash"></i> Delete Analysis
-    </a>
-    <button onclick="window.print()" class="btn btn-outline-secondary">
-      <i class="bi bi-printer"></i> Print Report
-    </button>
-  </div>
 </div>
 
 <style>
-.stat-card {
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  padding: 20px;
-  text-align: center;
-  transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.stat-value {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #2563eb;
-  margin-bottom: 8px;
-}
-
-.stat-label {
-  font-size: 0.875rem;
-  color: #6b7280;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.stat-success .stat-value { color: #16a34a; }
-.stat-primary .stat-value { color: #2563eb; }
-.stat-info .stat-value { color: #0891b2; }
-.stat-warning .stat-value { color: #f59e0b; }
-
-.table th {
-  font-weight: 600;
-  font-size: 0.875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #4b5563;
-  border-bottom: 2px solid #e5e7eb;
-}
-
-.table td {
-  vertical-align: middle;
-  padding: 0.75rem;
-}
-
-.table-striped tbody tr:nth-of-type(odd) {
-  background-color: rgba(0,0,0,0.02);
-}
-
-@media print {
-  .btn {
-    display: none !important;
+  /* Header Styles */
+  .analysis-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 24px;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
-  
+
+  .analysis-header .btn-light {
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    font-weight: 500;
+  }
+
+  .analysis-header .btn-light:hover {
+    background: white;
+  }
+
+  .analysis-header .btn-outline-light {
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+    font-weight: 500;
+  }
+
+  .analysis-header .btn-outline-light:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: white;
+    color: white;
+  }
+
+  .analysis-header h1 {
+    color: white;
+    font-weight: 600;
+  }
+
+  .analysis-header .badge {
+    font-size: 0.75rem;
+    padding: 6px 12px;
+    font-weight: 600;
+  }
+
+  .analysis-header .text-muted {
+    color: rgba(255, 255, 255, 0.8) !important;
+  }
+
+  /* Score Card Styles */
+  .score-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+    height: 100%;
+  }
+
+  .score-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .score-category {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+  }
+
+  .score-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .score-status {
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+
+  .score-bar {
+    width: 100%;
+    height: 5px;
+    background: #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .score-bar-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 1s ease;
+  }
+
+  /* Card Styles */
   .card {
-    border: 1px solid #000 !important;
-    box-shadow: none !important;
+    border-radius: 12px;
   }
-}
+
+  .card-header {
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    padding: 16px 24px;
+  }
+
+  .card-header h5 {
+    font-weight: 600;
+    font-size: 1.1rem;
+  }
+
+  /* Table Styles */
+  .table {
+    font-size: 0.9rem;
+  }
+
+  .table th {
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #4b5563;
+    border-bottom: 2px solid #e5e7eb;
+    padding: 14px 12px;
+  }
+
+  .table td {
+    vertical-align: middle;
+    padding: 14px 12px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .table tbody tr:hover {
+    background-color: #f9fafb;
+  }
+
+  .badge {
+    font-size: 0.75rem;
+    padding: 6px 12px;
+    font-weight: 600;
+  }
+
+  .badge.rounded-pill {
+    padding: 6px 14px;
+  }
+
+  @media print {
+    .btn, .analysis-header .btn {
+      display: none !important;
+    }
+    
+    .card {
+      border: 1px solid #000 !important;
+      box-shadow: none !important;
+    }
+    
+    .analysis-header {
+      background: #333 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .score-value {
+      font-size: 2rem;
+    }
+    
+    .score-category {
+      font-size: 0.7rem;
+    }
+  }
 </style>
 
 <script>
