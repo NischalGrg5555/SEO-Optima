@@ -31,165 +31,49 @@
     </div>
   </div>
 
-  <!-- Score Overview -->
-  <div class="row g-3 mb-4">
-    <div class="col-lg-3 col-md-6">
-      <div class="score-card">
-        <div class="score-category">Performance</div>
-        <div class="score-value" style="color: {% if analysis.performance_score >= 90 %}#10b981{% elif analysis.performance_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
-          {{ analysis.performance_score|default:"N/A" }}
-        </div>
-        <div class="score-status" style="color: {% if analysis.performance_score >= 90 %}#10b981{% elif analysis.performance_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
-          {% if analysis.performance_score >= 90 %}Excellent{% elif analysis.performance_score >= 50 %}Needs Work{% else %}Poor{% endif %}
-        </div>
-        <div class="score-bar">
-          <div class="score-bar-fill" style="width: {{ analysis.performance_score|default:0 }}%; background: {% if analysis.performance_score >= 90 %}#10b981{% elif analysis.performance_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};"></div>
-        </div>
-      </div>
-    </div>
-    <div class="col-lg-3 col-md-6">
-      <div class="score-card">
-        <div class="score-category">Accessibility</div>
-        <div class="score-value" style="color: {% if analysis.accessibility_score >= 90 %}#10b981{% elif analysis.accessibility_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
-          {{ analysis.accessibility_score|default:"N/A" }}
-        </div>
-        <div class="score-status" style="color: {% if analysis.accessibility_score >= 90 %}#10b981{% elif analysis.accessibility_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
-          {% if analysis.accessibility_score >= 90 %}Excellent{% elif analysis.accessibility_score >= 50 %}Needs Work{% else %}Poor{% endif %}
-        </div>
-        <div class="score-bar">
-          <div class="score-bar-fill" style="width: {{ analysis.accessibility_score|default:0 }}%; background: {% if analysis.accessibility_score >= 90 %}#10b981{% elif analysis.accessibility_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};"></div>
-        </div>
-      </div>
-    </div>
-    <div class="col-lg-3 col-md-6">
-      <div class="score-card">
-        <div class="score-category">Best Practices</div>
-        <div class="score-value" style="color: {% if analysis.best_practices_score >= 90 %}#10b981{% elif analysis.best_practices_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
-          {{ analysis.best_practices_score|default:"N/A" }}
-        </div>
-        <div class="score-status" style="color: {% if analysis.best_practices_score >= 90 %}#10b981{% elif analysis.best_practices_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
-          {% if analysis.best_practices_score >= 90 %}Excellent{% elif analysis.best_practices_score >= 50 %}Needs Work{% else %}Poor{% endif %}
-        </div>
-        <div class="score-bar">
-          <div class="score-bar-fill" style="width: {{ analysis.best_practices_score|default:0 }}%; background: {% if analysis.best_practices_score >= 90 %}#10b981{% elif analysis.best_practices_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};"></div>
-        </div>
-      </div>
-    </div>
-    <div class="col-lg-3 col-md-6">
-      <div class="score-card">
-        <div class="score-category">SEO</div>
-        <div class="score-value" style="color: {% if analysis.seo_score >= 90 %}#10b981{% elif analysis.seo_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
-          {{ analysis.seo_score|default:"N/A" }}
-        </div>
-        <div class="score-status" style="color: {% if analysis.seo_score >= 90 %}#10b981{% elif analysis.seo_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
-          {% if analysis.seo_score >= 90 %}Excellent{% elif analysis.seo_score >= 50 %}Needs Work{% else %}Poor{% endif %}
-        </div>
-        <div class="score-bar">
-          <div class="score-bar-fill" style="width: {{ analysis.seo_score|default:0 }}%; background: {% if analysis.seo_score >= 90 %}#10b981{% elif analysis.seo_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- What This Means Section -->
-  <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-light border-bottom">
-      <h5 class="mb-0"><i class="bi bi-lightbulb text-warning me-2"></i>Why Does Speed Matter?</h5>
-    </div>
-    <div class="card-body p-4">
-      <div class="row g-3">
-        <div class="col-md-4">
-          <div class="d-flex gap-3">
-            <div class="flex-shrink-0">
-              <div class="rounded-circle bg-success bg-opacity-10 p-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                <i class="bi bi-people text-success" style="font-size: 1.5rem;"></i>
-              </div>
-            </div>
-            <div>
-              <h6 class="mb-1">Keep Visitors</h6>
-              <p class="small text-muted mb-0">A 1-second delay = 7% fewer conversions. Slow sites lose customers.</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="d-flex gap-3">
-            <div class="flex-shrink-0">
-              <div class="rounded-circle bg-primary bg-opacity-10 p-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                <i class="bi bi-google text-primary" style="font-size: 1.5rem;"></i>
-              </div>
-            </div>
-            <div>
-              <h6 class="mb-1">Boost Rankings</h6>
-              <p class="small text-muted mb-0">Google ranks faster websites higher. Speed = better SEO.</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="d-flex gap-3">
-            <div class="flex-shrink-0">
-              <div class="rounded-circle bg-info bg-opacity-10 p-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                <i class="bi bi-phone text-info" style="font-size: 1.5rem;"></i>
-              </div>
-            </div>
-            <div>
-              <h6 class="mb-1">Mobile First</h6>
-              <p class="small text-muted mb-0">Most visitors use mobile. They expect pages to load in 3 seconds.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Quick Summary Section -->
+  <!-- Hero Performance Summary Section -->
   <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
     <div class="card-body p-4">
-      <h5 class="mb-3"><i class="bi bi-graph-up me-2"></i>Your Performance Summary</h5>
-      <div class="row g-3">
-        <div class="col-md-6">
-          <p class="mb-2"><strong>Overall Status:</strong></p>
-          <p class="mb-3" style="font-size: 1.1rem;">
-            {% if analysis.performance_score >= 90 %}
-              ✅ Your website is fast and loads well for visitors
-            {% elif analysis.performance_score >= 50 %}
-              ⚠️ Your website has speed issues that may be losing you customers
-            {% else %}
-              🔴 Your website is slow and needs significant improvements
-            {% endif %}
-          </p>
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div style="font-size: 4rem; font-weight: 800; line-height: 1;">{{ analysis.performance_score|default:"N/A" }}</div>
+            <div>
+              <h5 class="mb-1">Performance Score</h5>
+              <div style="font-size: 1.1rem; opacity: 0.95;">
+                {% if analysis.performance_score >= 90 %}
+                  ✅ <strong>Excellent!</strong> Your website is fast and loads well
+                {% elif analysis.performance_score >= 50 %}
+                  ⚠️ <strong>Needs Work.</strong> Speed issues may be losing you customers
+                {% else %}
+                  🔴 <strong>Critical.</strong> Your website needs urgent improvements
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="performance-bar" style="height: 8px; background: rgba(255,255,255,0.2); border-radius: 10px; overflow: hidden;">
+            <div style="height: 100%; width: {{ analysis.performance_score|default:0 }}%; background: {% if analysis.performance_score >= 90 %}#10b981{% elif analysis.performance_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %}; transition: width 0.3s ease;"></div>
+          </div>
         </div>
-        <div class="col-md-6">
-          <p class="mb-2"><strong>Business Impact:</strong></p>
-          <p class="mb-0">
-            {% if analysis.performance_score >= 90 %}
-              Your fast site keeps visitors happy and ranks well on Google
-            {% elif analysis.performance_score >= 50 %}
-              Slow load times are likely costing you sales and SEO ranking
-            {% else %}
-              Your site speed is critical - fix it now to save your business
-            {% endif %}
-          </p>
+        <div class="col-md-4 text-md-end">
+          <div class="metrics-summary p-3 rounded" style="background: rgba(255,255,255,0.15); backdrop-filter: blur(10px);">
+            <div style="font-size: 2rem; font-weight: 700; margin-bottom: 5px;">
+              {% if analysis.metrics %}
+                {{ analysis.metrics.items|length|add:"-5"|default:0 }}
+              {% else %}
+                0
+              {% endif %}
+            </div>
+            <div style="font-size: 0.9rem; opacity: 0.9;">Metrics Need Attention</div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- What This Means Section -->
-  <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-light border-bottom">
-      <h5 class="mb-0"><i class="bi bi-info-circle text-primary me-2"></i>Understanding Your Results</h5>
-    </div>
-    <div class="card-body p-4">
-      <p class="mb-0 text-muted">
-        Your website's speed affects how visitors experience your site. Faster websites keep visitors happy, improve Google rankings, and increase conversions. 
-        Below you'll see detailed metrics that measure different aspects of your site's performance - think of them as a health check for your website!
-      </p>
     </div>
   </div>
 
   <!-- Website Speed Metrics -->
   {% if analysis.metrics %}
-  <div class="card border-0 shadow-sm">
+  <div class="card border-0 shadow-sm" style="background-color: #f8fafc;">
     <div class="card-header bg-white border-bottom">
       <div class="d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="bi bi-speedometer2 text-primary me-2"></i>Website Speed Metrics</h5>
@@ -199,7 +83,7 @@
       </div>
     </div>
 
-    <div class="card-body p-4">
+    <div class="card-body p-4" style="background-color: #f8fafc;">
       <div class="row g-3">
         {% for key, metric in analysis.metrics.items %}
         <div class="col-12">
@@ -207,27 +91,55 @@
             <!-- Simple Header: Icon, Title, Value, Status -->
             <div class="metric-simple-header">
               <div class="metric-simple-left">
-                <div class="metric-simple-title">{{ metric.title }}</div>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="metric-simple-title">{{ metric.title }}</div>
+                  <i class="bi bi-info-circle text-muted" 
+                     style="font-size: 1rem; cursor: help; opacity: 0.6;"
+                     data-bs-toggle="tooltip" 
+                     data-bs-placement="top" 
+                     data-bs-html="true"
+                     title="{% if 'First Contentful Paint' in metric.title %}<strong>Like opening a book</strong><br>How quickly visitors see the first bit of content on your page. Faster is better!{% elif 'Speed Index' in metric.title %}<strong>Like loading a video</strong><br>How quickly your page content becomes visible. Lower numbers mean visitors see your content faster.{% elif 'Largest Contentful Paint' in metric.title %}<strong>Like a movie starting</strong><br>When the main content (biggest image or text) appears. This is what visitors came to see!{% elif 'Total Blocking Time' in metric.title %}<strong>Like a frozen screen</strong><br>How long your page is unresponsive. Lower means visitors can interact with your page sooner.{% elif 'Cumulative Layout Shift' in metric.title %}<strong>Like text jumping while reading</strong><br>Measures unexpected movement of content. Lower scores mean your page doesn't shift around annoyingly.{% endif %}"></i>
+                  <a href="{% if 'First Contentful Paint' in metric.title %}https://developer.chrome.com/docs/lighthouse/performance/first-contentful-paint{% elif 'Speed Index' in metric.title %}https://developer.chrome.com/docs/lighthouse/performance/speed-index{% elif 'Largest Contentful Paint' in metric.title %}https://developer.chrome.com/docs/lighthouse/performance/lighthouse-largest-contentful-paint{% elif 'Total Blocking Time' in metric.title %}https://developer.chrome.com/docs/lighthouse/performance/lighthouse-total-blocking-time{% elif 'Cumulative Layout Shift' in metric.title %}https://web.dev/articles/cls{% endif %}" 
+                     target="_blank" 
+                     rel="noopener noreferrer"
+                     class="text-muted"
+                     style="font-size: 1rem; text-decoration: none; opacity: 0.6;"
+                     title="Read the official guide">
+                    <i class="bi bi-question-circle"></i>
+                  </a>
+                </div>
                 <div class="metric-simple-desc">
                   {% if 'First Contentful Paint' in metric.title %}
-                    ⚡ First impression
+                    ⚡ First thing your visitors see
                   {% elif 'Speed Index' in metric.title %}
-                    📊 Overall speed
+                    📊 Main content loading time
                   {% elif 'Largest Contentful Paint' in metric.title %}
                     🎯 Main content
                   {% elif 'Total Blocking Time' in metric.title %}
-                    ⏱️ Responsiveness
+                    ⏱️ Visual stability (no jumping)
                   {% elif 'Cumulative Layout Shift' in metric.title %}
-                    📱 Stability
+                    📱 Overall loading speed
                   {% endif %}
                 </div>
               </div>
               <div class="metric-simple-right">
                 <div class="metric-simple-value">{{ metric.value }}</div>
-                <span class="metric-simple-badge" 
-                      style="background-color: {% if metric.score >= 0.9 %}#10b981{% elif metric.score >= 0.5 %}#f59e0b{% else %}#ef4444{% endif %};">
-                  {% if metric.score >= 0.9 %}✅ GOOD{% elif metric.score >= 0.5 %}⚠️ NEEDS WORK{% else %}🔴 POOR{% endif %}
-                </span>
+                <div class="d-flex flex-column gap-2">
+                  <span class="metric-simple-badge" 
+                        style="background-color: {% if metric.score >= 0.9 %}#10b981{% elif metric.score >= 0.5 %}#f59e0b{% else %}#ef4444{% endif %};">
+                    {% if metric.score >= 0.9 %}✅ GOOD{% elif metric.score >= 0.5 %}⚠️ NEEDS WORK{% else %}🔴 POOR{% endif %}
+                  </span>
+                  <span class="metric-priority-badge" 
+                        style="background-color: {% if metric.score >= 0.9 %}#e0f2fe{% elif metric.score >= 0.5 %}#fff7ed{% else %}#fee2e2{% endif %}; 
+                               color: {% if metric.score >= 0.9 %}#0369a1{% elif metric.score >= 0.5 %}#c2410c{% else %}#991b1b{% endif %};
+                               padding: 4px 10px; 
+                               border-radius: 4px; 
+                               font-size: 0.7rem; 
+                               font-weight: 700;
+                               text-align: center;">
+                    {% if metric.score >= 0.9 %}✓ Maintain{% elif metric.score >= 0.5 %}→ Fix Soon{% else %}! Fix First{% endif %}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -353,50 +265,44 @@
   <!-- Action Plan Section -->
   <div class="card border-0 shadow-sm mb-4">
     <div class="card-header bg-white border-bottom">
-      <h5 class="mb-0"><i class="bi bi-rocket text-success me-2"></i>What to Do Next?</h5>
+      <h5 class="mb-0"><i class="bi bi-rocket text-success me-2"></i>Priority Action Plan</h5>
     </div>
     <div class="card-body p-4">
-      <div class="alert alert-info mb-4" role="alert">
-        <strong><i class="bi bi-info-circle me-2"></i>Quick Start Guide:</strong><br>
-        Focus on the metrics marked "Needs Work" or "Poor" first. Even small improvements can make a big difference!
-      </div>
       <div class="row g-4">
-        <div class="col-md-6">
-          <div class="action-item">
-            <div class="action-number">1</div>
+        <div class="col-md-4">
+          <div class="action-item-compact">
+            <div class="action-number-compact">1</div>
             <div>
-              <h6 class="mb-2">Identify Slowdowns</h6>
-              <p class="small text-muted mb-0">Look for metrics in red (Poor). Start by fixing the worst performer first - it will have the biggest impact.</p>
+              <h6 class="mb-2" style="font-size: 0.95rem; font-weight: 700;">Start with Red Metrics</h6>
+              <p class="small text-muted mb-0">Fix "Poor" metrics first - they have the biggest impact on your score.</p>
             </div>
           </div>
         </div>
-        <div class="col-md-6">
-          <div class="action-item">
-            <div class="action-number">2</div>
+        <div class="col-md-4">
+          <div class="action-item-compact">
+            <div class="action-number-compact">2</div>
             <div>
-              <h6 class="mb-2">Common Speed Issues</h6>
-              <p class="small text-muted mb-0">
-                • Large images not optimized<br>
-                • Too many JavaScript files<br>
-                • Slow server response time<br>
-                • Unoptimized videos
-              </p>
+              <h6 class="mb-2" style="font-size: 0.95rem; font-weight: 700;">Optimize Images</h6>
+              <p class="small text-muted mb-0">Compress and resize images. Use WebP format for 30% smaller files.</p>
             </div>
           </div>
         </div>
-        <div class="col-md-6">
-          <div class="action-item">
-            <div class="action-number">3</div>
+        <div class="col-md-4">
+          <div class="action-item-compact">
+            <div class="action-number-compact">3</div>
             <div>
-              <h6 class="mb-2">Get Help</h6>
-              <p class="small text-muted mb-0">Use Chrome DevTools (press F12) to see detailed recommendations for each metric above.</p>
+              <h6 class="mb-2" style="font-size: 0.95rem; font-weight: 700;">Reduce Code</h6>
+              <p class="small text-muted mb-0">Minimize JavaScript and CSS. Remove unused code and plugins.</p>
             </div>
           </div>
         </div>
-        <div class="col-md-6">
-          <div class="action-item">
-            <div class="action-number">4</div>
-            <div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Metrics Guide Modal -->
               <h6 class="mb-2">Test Again</h6>
               <p class="small text-muted mb-0">After making changes, re-run this analysis (PageSpeed Insights) to measure improvements.</p>
             </div>
@@ -1335,6 +1241,27 @@
     color: white;
     font-weight: 700;
     font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  /* Compact Action Items */
+  .action-item-compact {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .action-number-compact {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    font-weight: 700;
+    font-size: 0.9rem;
     flex-shrink: 0;
   }
 
