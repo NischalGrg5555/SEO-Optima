@@ -94,6 +94,89 @@
   <!-- What This Means Section -->
   <div class="card border-0 shadow-sm mb-4">
     <div class="card-header bg-light border-bottom">
+      <h5 class="mb-0"><i class="bi bi-lightbulb text-warning me-2"></i>Why Does Speed Matter?</h5>
+    </div>
+    <div class="card-body p-4">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="d-flex gap-3">
+            <div class="flex-shrink-0">
+              <div class="rounded-circle bg-success bg-opacity-10 p-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                <i class="bi bi-people text-success" style="font-size: 1.5rem;"></i>
+              </div>
+            </div>
+            <div>
+              <h6 class="mb-1">Keep Visitors</h6>
+              <p class="small text-muted mb-0">A 1-second delay = 7% fewer conversions. Slow sites lose customers.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="d-flex gap-3">
+            <div class="flex-shrink-0">
+              <div class="rounded-circle bg-primary bg-opacity-10 p-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                <i class="bi bi-google text-primary" style="font-size: 1.5rem;"></i>
+              </div>
+            </div>
+            <div>
+              <h6 class="mb-1">Boost Rankings</h6>
+              <p class="small text-muted mb-0">Google ranks faster websites higher. Speed = better SEO.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="d-flex gap-3">
+            <div class="flex-shrink-0">
+              <div class="rounded-circle bg-info bg-opacity-10 p-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                <i class="bi bi-phone text-info" style="font-size: 1.5rem;"></i>
+              </div>
+            </div>
+            <div>
+              <h6 class="mb-1">Mobile First</h6>
+              <p class="small text-muted mb-0">Most visitors use mobile. They expect pages to load in 3 seconds.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Summary Section -->
+  <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+    <div class="card-body p-4">
+      <h5 class="mb-3"><i class="bi bi-graph-up me-2"></i>Your Performance Summary</h5>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <p class="mb-2"><strong>Overall Status:</strong></p>
+          <p class="mb-3" style="font-size: 1.1rem;">
+            {% if analysis.performance_score >= 90 %}
+              ✅ Your website is fast and loads well for visitors
+            {% elif analysis.performance_score >= 50 %}
+              ⚠️ Your website has speed issues that may be losing you customers
+            {% else %}
+              🔴 Your website is slow and needs significant improvements
+            {% endif %}
+          </p>
+        </div>
+        <div class="col-md-6">
+          <p class="mb-2"><strong>Business Impact:</strong></p>
+          <p class="mb-0">
+            {% if analysis.performance_score >= 90 %}
+              Your fast site keeps visitors happy and ranks well on Google
+            {% elif analysis.performance_score >= 50 %}
+              Slow load times are likely costing you sales and SEO ranking
+            {% else %}
+              Your site speed is critical - fix it now to save your business
+            {% endif %}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- What This Means Section -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-light border-bottom">
       <h5 class="mb-0"><i class="bi bi-info-circle text-primary me-2"></i>Understanding Your Results</h5>
     </div>
     <div class="card-body p-4">
@@ -117,88 +200,45 @@
     </div>
 
     <div class="card-body p-4">
-      <div class="row g-4">
+      <div class="row g-3">
         {% for key, metric in analysis.metrics.items %}
-        <div class="col-lg-6 col-md-12">
-          <div class="metric-card">
-            <div class="d-flex justify-content-between align-items-start mb-3">
-              <div class="flex-grow-1">
-                <div class="d-flex align-items-center gap-2 mb-2">
-                  <h6 class="mb-0 metric-title">{{ metric.title }}</h6>
-                  <i class="bi bi-info-circle-fill text-muted info-icon" 
-                     data-bs-toggle="tooltip" 
-                     data-bs-placement="top" 
-                     data-bs-html="true"
-                     title="<div class='tooltip-content'>{% if 'First Contentful Paint' in metric.title %}<strong>Like opening a book</strong><br>How quickly visitors see the first bit of content on your page. Faster is better!{% elif 'Speed Index' in metric.title %}<strong>Like loading a video</strong><br>How quickly your page content becomes visible. Lower numbers mean visitors see your content faster.{% elif 'Largest Contentful Paint' in metric.title %}<strong>Like a movie starting</strong><br>When the main content (biggest image or text) appears. This is what visitors came to see!{% elif 'Total Blocking Time' in metric.title %}<strong>Like a frozen screen</strong><br>How long your page is unresponsive. Lower means visitors can interact with your page sooner.{% elif 'Cumulative Layout Shift' in metric.title %}<strong>Like text jumping while reading</strong><br>Measures unexpected movement of content. Lower scores mean your page doesn't shift around annoyingly.{% endif %}</div>"></i>
-                  <a href="{% if 'First Contentful Paint' in metric.title %}https://developer.chrome.com/docs/lighthouse/performance/first-contentful-paint{% elif 'Speed Index' in metric.title %}https://developer.chrome.com/docs/lighthouse/performance/speed-index{% elif 'Largest Contentful Paint' in metric.title %}https://developer.chrome.com/docs/lighthouse/performance/lighthouse-largest-contentful-paint{% elif 'Total Blocking Time' in metric.title %}https://developer.chrome.com/docs/lighthouse/performance/lighthouse-total-blocking-time#how_to_improve_your_overall_performance_score{% elif 'Cumulative Layout Shift' in metric.title %}https://web.dev/articles/cls{% endif %}" 
-                     target="_blank" 
-                     rel="noopener noreferrer"
-                     class="metric-help-link"
-                     title="Read the official guide">
-                    <i class="bi bi-question-circle"></i>
-                  </a>
-                </div>
-                <small class="text-muted metric-description d-block">
+        <div class="col-12">
+          <div class="metric-card-simple" style="border-left: 6px solid {% if metric.score >= 0.9 %}#10b981{% elif metric.score >= 0.5 %}#f59e0b{% else %}#ef4444{% endif %};">
+            <!-- Simple Header: Icon, Title, Value, Status -->
+            <div class="metric-simple-header">
+              <div class="metric-simple-left">
+                <div class="metric-simple-title">{{ metric.title }}</div>
+                <div class="metric-simple-desc">
                   {% if 'First Contentful Paint' in metric.title %}
-                    ⚡ First thing your visitors see
+                    ⚡ First impression
                   {% elif 'Speed Index' in metric.title %}
-                    📊 Overall loading speed
+                    📊 Overall speed
                   {% elif 'Largest Contentful Paint' in metric.title %}
-                    🎯 Main content loading time
+                    🎯 Main content
                   {% elif 'Total Blocking Time' in metric.title %}
-                    ⏱️ Page responsiveness
+                    ⏱️ Responsiveness
                   {% elif 'Cumulative Layout Shift' in metric.title %}
-                    📱 Visual stability (no jumping)
+                    📱 Stability
                   {% endif %}
-                </small>
+                </div>
               </div>
-              <div class="metric-ranges ms-3">
-                {% if 'First Contentful Paint' in metric.title %}
-                  <div class="range-item range-good">Good: 0–1.8s</div>
-                  <div class="range-item range-needs">Needs Work: 1.8–3s</div>
-                  <div class="range-item range-poor">Poor: 3s+</div>
-                {% elif 'Speed Index' in metric.title %}
-                  <div class="range-item range-good">Good: 0–3.4s</div>
-                  <div class="range-item range-needs">Needs Work: 3.4–5.8s</div>
-                  <div class="range-item range-poor">Poor: 5.8s+</div>
-                {% elif 'Largest Contentful Paint' in metric.title %}
-                  <div class="range-item range-good">Good: 0–2.5s</div>
-                  <div class="range-item range-needs">Needs Work: 2.5–4s</div>
-                  <div class="range-item range-poor">Poor: 4s+</div>
-                {% elif 'Total Blocking Time' in metric.title %}
-                  <div class="range-item range-good">Good: 0–200ms</div>
-                  <div class="range-item range-needs">Needs Work: 200–600ms</div>
-                  <div class="range-item range-poor">Poor: 600ms+</div>
-                {% elif 'Cumulative Layout Shift' in metric.title %}
-                  <div class="range-item range-good">Good: 0–0.1</div>
-                  <div class="range-item range-needs">Needs Work: 0.1–0.25</div>
-                  <div class="range-item range-poor">Poor: 0.25+</div>
-                {% endif %}
+              <div class="metric-simple-right">
+                <div class="metric-simple-value">{{ metric.value }}</div>
+                <span class="metric-simple-badge" 
+                      style="background-color: {% if metric.score >= 0.9 %}#10b981{% elif metric.score >= 0.5 %}#f59e0b{% else %}#ef4444{% endif %};">
+                  {% if metric.score >= 0.9 %}✅ GOOD{% elif metric.score >= 0.5 %}⚠️ NEEDS WORK{% else %}🔴 POOR{% endif %}
+                </span>
               </div>
             </div>
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <div class="metric-value">{{ metric.value }}</div>
+
+            <!-- Simple Gauge Only -->
+            <div class="metric-simple-gauge">
               {% if metric.score %}
-              <span class="badge metric-badge" 
-                    style="background-color: {% if metric.score >= 0.9 %}#10b981{% elif metric.score >= 0.5 %}#f59e0b{% else %}#ef4444{% endif %};">
-                {% if metric.score >= 0.9 %}GOOD{% elif metric.score >= 0.5 %}POOR{% else %}POOR{% endif %}
-              </span>
-              {% endif %}
-            </div>
-            {% if metric.score %}
-            <div class="metric-gauge mt-4">
               {% if 'First Contentful Paint' in metric.title %}
-                <!-- FCP: 0-1.8 Green, 1.8-3 Orange, 3+ Red -->
                 <div class="gauge-bar">
-                  <div class="gauge-section good" style="flex: 1.8;">
-                    <span class="gauge-text">GOOD</span>
-                  </div>
-                  <div class="gauge-section needs" style="flex: 1.2;">
-                    <span class="gauge-text">NEEDS<br>WORK</span>
-                  </div>
-                  <div class="gauge-section poor" style="flex: 2;">
-                    <span class="gauge-text">POOR</span>
-                  </div>
+                  <div class="gauge-section good" style="flex: 1.8;"><span class="gauge-text">GOOD</span></div>
+                  <div class="gauge-section needs" style="flex: 1.2;"><span class="gauge-text">NEEDS WORK</span></div>
+                  <div class="gauge-section poor" style="flex: 2;"><span class="gauge-text">POOR</span></div>
                   <div class="gauge-marker" style="left: {% widthratio 1.8 5 100 %}%;"></div>
                   <div class="gauge-marker" style="left: {% widthratio 3 5 100 %}%;"></div>
                 </div>
@@ -207,17 +247,10 @@
                   <span class="threshold-label" style="left: {% widthratio 3 5 100 %}%;">3s</span>
                 </div>
               {% elif 'Speed Index' in metric.title %}
-                <!-- Speed Index: 0-3.4 Green, 3.4-5.8 Orange, 5.8+ Red -->
                 <div class="gauge-bar">
-                  <div class="gauge-section good" style="flex: 34;">
-                    <span class="gauge-text">GOOD</span>
-                  </div>
-                  <div class="gauge-section needs" style="flex: 24;">
-                    <span class="gauge-text">NEEDS<br>WORK</span>
-                  </div>
-                  <div class="gauge-section poor" style="flex: 42;">
-                    <span class="gauge-text">POOR</span>
-                  </div>
+                  <div class="gauge-section good" style="flex: 34;"><span class="gauge-text">GOOD</span></div>
+                  <div class="gauge-section needs" style="flex: 24;"><span class="gauge-text">NEEDS WORK</span></div>
+                  <div class="gauge-section poor" style="flex: 42;"><span class="gauge-text">POOR</span></div>
                   <div class="gauge-marker" style="left: {% widthratio 34 100 100 %}%;"></div>
                   <div class="gauge-marker" style="left: {% widthratio 58 100 100 %}%;"></div>
                 </div>
@@ -226,17 +259,10 @@
                   <span class="threshold-label" style="left: {% widthratio 58 100 100 %}%;">5.8s</span>
                 </div>
               {% elif 'Largest Contentful Paint' in metric.title %}
-                <!-- LCP: 0-2.5 Green, 2.5-4 Orange, 4+ Red -->
                 <div class="gauge-bar">
-                  <div class="gauge-section good" style="flex: 25;">
-                    <span class="gauge-text">GOOD</span>
-                  </div>
-                  <div class="gauge-section needs" style="flex: 15;">
-                    <span class="gauge-text">NEEDS<br>WORK</span>
-                  </div>
-                  <div class="gauge-section poor" style="flex: 60;">
-                    <span class="gauge-text">POOR</span>
-                  </div>
+                  <div class="gauge-section good" style="flex: 25;"><span class="gauge-text">GOOD</span></div>
+                  <div class="gauge-section needs" style="flex: 15;"><span class="gauge-text">NEEDS WORK</span></div>
+                  <div class="gauge-section poor" style="flex: 60;"><span class="gauge-text">POOR</span></div>
                   <div class="gauge-marker" style="left: {% widthratio 25 100 100 %}%;"></div>
                   <div class="gauge-marker" style="left: {% widthratio 40 100 100 %}%;"></div>
                 </div>
@@ -245,17 +271,10 @@
                   <span class="threshold-label" style="left: {% widthratio 40 100 100 %}%;">4s</span>
                 </div>
               {% elif 'Total Blocking Time' in metric.title %}
-                <!-- TBT: 0-200 Green, 200-600 Orange, 600+ Red -->
                 <div class="gauge-bar">
-                  <div class="gauge-section good" style="flex: 200;">
-                    <span class="gauge-text">GOOD</span>
-                  </div>
-                  <div class="gauge-section needs" style="flex: 400;">
-                    <span class="gauge-text">NEEDS<br>WORK</span>
-                  </div>
-                  <div class="gauge-section poor" style="flex: 400;">
-                    <span class="gauge-text">POOR</span>
-                  </div>
+                  <div class="gauge-section good" style="flex: 200;"><span class="gauge-text">GOOD</span></div>
+                  <div class="gauge-section needs" style="flex: 400;"><span class="gauge-text">NEEDS WORK</span></div>
+                  <div class="gauge-section poor" style="flex: 400;"><span class="gauge-text">POOR</span></div>
                   <div class="gauge-marker" style="left: {% widthratio 200 1000 100 %}%;"></div>
                   <div class="gauge-marker" style="left: {% widthratio 600 1000 100 %}%;"></div>
                 </div>
@@ -264,17 +283,10 @@
                   <span class="threshold-label" style="left: {% widthratio 600 1000 100 %}%;">600ms</span>
                 </div>
               {% elif 'Cumulative Layout Shift' in metric.title %}
-                <!-- CLS: 0-0.1 Green, 0.1-0.25 Orange, 0.25+ Red -->
                 <div class="gauge-bar">
-                  <div class="gauge-section good" style="flex: 1;">
-                    <span class="gauge-text">GOOD</span>
-                  </div>
-                  <div class="gauge-section needs" style="flex: 1.5;">
-                    <span class="gauge-text">NEEDS<br>WORK</span>
-                  </div>
-                  <div class="gauge-section poor" style="flex: 2.5;">
-                    <span class="gauge-text">POOR</span>
-                  </div>
+                  <div class="gauge-section good" style="flex: 1;"><span class="gauge-text">GOOD</span></div>
+                  <div class="gauge-section needs" style="flex: 1.5;"><span class="gauge-text">NEEDS WORK</span></div>
+                  <div class="gauge-section poor" style="flex: 2.5;"><span class="gauge-text">POOR</span></div>
                   <div class="gauge-marker" style="left: {% widthratio 1 5 100 %}%;"></div>
                   <div class="gauge-marker" style="left: {% widthratio 2.5 5 100 %}%;"></div>
                 </div>
@@ -283,8 +295,53 @@
                   <span class="threshold-label" style="left: {% widthratio 2.5 5 100 %}%;">0.25</span>
                 </div>
               {% endif %}
+              {% endif %}
             </div>
-            {% endif %}
+
+            <!-- One Key Message -->
+            <div class="metric-simple-message" style="background-color: {% if metric.score >= 0.9 %}#ecfdf5{% elif metric.score >= 0.5 %}#fffbeb{% else %}#fef2f2{% endif %};">
+              {% if 'First Contentful Paint' in metric.title %}
+                {% if metric.score >= 0.9 %}
+                  ✅ <strong>Perfect!</strong> Visitors see content immediately.
+                {% elif metric.score >= 0.5 %}
+                  ⚠️ <strong>Too slow.</strong> Optimize images and reduce initial code.
+                {% else %}
+                  🔴 <strong>Critical.</strong> Page appears blank for too long.
+                {% endif %}
+              {% elif 'Speed Index' in metric.title %}
+                {% if metric.score >= 0.9 %}
+                  ✅ <strong>Excellent!</strong> Page loads very fast.
+                {% elif metric.score >= 0.5 %}
+                  ⚠️ <strong>Slow.</strong> Compress images and minimize code.
+                {% else %}
+                  🔴 <strong>Critical.</strong> Page takes way too long to load.
+                {% endif %}
+              {% elif 'Largest Contentful Paint' in metric.title %}
+                {% if metric.score >= 0.9 %}
+                  ✅ <strong>Great!</strong> Main content loads fast.
+                {% elif metric.score >= 0.5 %}
+                  ⚠️ <strong>Slow.</strong> Optimize large images and videos.
+                {% else %}
+                  🔴 <strong>Critical.</strong> Main content is too slow to load.
+                {% endif %}
+              {% elif 'Total Blocking Time' in metric.title %}
+                {% if metric.score >= 0.9 %}
+                  ✅ <strong>Perfect!</strong> Page responds instantly.
+                {% elif metric.score >= 0.5 %}
+                  ⚠️ <strong>Slow response.</strong> Reduce JavaScript.
+                {% else %}
+                  🔴 <strong>Critical.</strong> Page feels frozen.
+                {% endif %}
+              {% elif 'Cumulative Layout Shift' in metric.title %}
+                {% if metric.score >= 0.9 %}
+                  ✅ <strong>Perfect!</strong> Layout is stable.
+                {% elif metric.score >= 0.5 %}
+                  ⚠️ <strong>Jumpy.</strong> Add image dimensions.
+                {% else %}
+                  🔴 <strong>Critical.</strong> Content jumps around.
+                {% endif %}
+              {% endif %}
+            </div>
           </div>
         </div>
         {% endfor %}
@@ -292,6 +349,62 @@
     </div>
   </div>
   {% endif %}
+
+  <!-- Action Plan Section -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-bottom">
+      <h5 class="mb-0"><i class="bi bi-rocket text-success me-2"></i>What to Do Next?</h5>
+    </div>
+    <div class="card-body p-4">
+      <div class="alert alert-info mb-4" role="alert">
+        <strong><i class="bi bi-info-circle me-2"></i>Quick Start Guide:</strong><br>
+        Focus on the metrics marked "Needs Work" or "Poor" first. Even small improvements can make a big difference!
+      </div>
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="action-item">
+            <div class="action-number">1</div>
+            <div>
+              <h6 class="mb-2">Identify Slowdowns</h6>
+              <p class="small text-muted mb-0">Look for metrics in red (Poor). Start by fixing the worst performer first - it will have the biggest impact.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="action-item">
+            <div class="action-number">2</div>
+            <div>
+              <h6 class="mb-2">Common Speed Issues</h6>
+              <p class="small text-muted mb-0">
+                • Large images not optimized<br>
+                • Too many JavaScript files<br>
+                • Slow server response time<br>
+                • Unoptimized videos
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="action-item">
+            <div class="action-number">3</div>
+            <div>
+              <h6 class="mb-2">Get Help</h6>
+              <p class="small text-muted mb-0">Use Chrome DevTools (press F12) to see detailed recommendations for each metric above.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="action-item">
+            <div class="action-number">4</div>
+            <div>
+              <h6 class="mb-2">Test Again</h6>
+              <p class="small text-muted mb-0">After making changes, re-run this analysis (PageSpeed Insights) to measure improvements.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Metrics Guide Modal -->
   <div class="modal fade" id="metricsGuideModal" tabindex="-1" aria-labelledby="metricsGuideModalLabel" aria-hidden="true">
@@ -607,12 +720,12 @@
 
   .gauge-bar {
     display: flex;
-    height: 32px;
-    border-radius: 6px;
+    height: 36px;
+    border-radius: 8px;
     overflow: hidden;
     position: relative;
-    margin-bottom: 16px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   }
 
   .gauge-section {
@@ -624,13 +737,14 @@
   }
 
   .gauge-text {
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: #1f2937;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: white;
     text-align: center;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    line-height: 1.2;
+    letter-spacing: 0.6px;
+    line-height: 1.3;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   }
 
   .gauge-section.good {
@@ -686,12 +800,12 @@
   .gauge-threshold-labels {
     display: flex;
     justify-content: space-between;
-    padding: 0 2px;
-    font-size: 0.85rem;
+    padding: 4px 2px;
+    font-size: 0.8rem;
     font-weight: 700;
-    color: #374151;
+    color: #6b7280;
     position: relative;
-    height: 20px;
+    height: 22px;
     align-items: center;
   }
 
@@ -1024,6 +1138,226 @@
 
   .header-h6 .header-text {
     font-size: 0.85rem;
+  }
+
+  /* Professional Metric Card Styling */
+  .metric-card-new {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+  }
+
+  .metric-card-new:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .metric-title-new {
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: #111827;
+    letter-spacing: -0.3px;
+  }
+
+  .metric-description-new {
+    font-size: 0.875rem;
+    color: #6b7280;
+    color: #6b7280;
+  }
+
+  .metric-value-new {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #111827;
+    line-height: 1;
+  }
+
+  .metric-badge-new {
+    font-size: 0.8rem !important;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  /* Simplified Metric Card Styling */
+  .metric-card-simple {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+    margin-bottom: 24px;
+  }
+
+  .metric-card-simple:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  .metric-simple-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    gap: 20px;
+  }
+
+  .metric-simple-left {
+    flex: 1;
+  }
+
+  .metric-simple-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 4px;
+  }
+
+  .metric-simple-desc {
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+
+  .metric-simple-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+
+  .metric-simple-value {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #111827;
+    line-height: 1;
+  }
+
+  .metric-simple-badge {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: white;
+    white-space: nowrap;
+  }
+
+  .metric-simple-gauge {
+    margin-bottom: 16px;
+  }
+
+  .metric-simple-message {
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    border-left: 4px solid transparent;
+  }
+
+  .info-icon-new {
+    cursor: help;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+  }
+
+  .info-icon-new:hover {
+    opacity: 1;
+  }
+
+  .metric-help-link-new {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #f0f9ff;
+    color: #0ea5e9;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .metric-help-link-new:hover {
+    background: #0ea5e9;
+    color: white;
+  }
+
+  .range-pills {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .range-pill {
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-align: center;
+    color: white;
+    letter-spacing: 0.3px;
+  }
+
+  .range-pill.range-good {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  }
+
+  .range-pill.range-needs {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  }
+
+  .range-pill.range-poor {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  }
+
+  .business-impact-box {
+    padding: 16px 18px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-top: 16px;
+  }
+
+  /* Action Plan Styles */
+  .action-item {
+    display: flex;
+    gap: 16px;
+  }
+
+  .action-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  /* Single Column Metric Layout */
+  .col-12 .metric-card {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+  }
+
+  @media (max-width: 768px) {
+    .col-12 .metric-card {
+      flex-direction: column;
+    }
+  }
+
+  .col-12 .metric-card > div:first-child {
+    flex: 1;
+  }
+
+  .col-12 .metric-card .metric-value {
+    font-size: 2.5rem;
+    min-width: 150px;
   }
 </style>
 
