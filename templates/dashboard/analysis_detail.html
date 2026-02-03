@@ -104,7 +104,7 @@
     </div>
   </div>
 
-  <!-- Core Web Vitals -->
+  <!-- Website Speed Metrics -->
   {% if analysis.metrics %}
   <div class="card border-0 shadow-sm">
     <div class="card-header bg-white border-bottom">
@@ -115,14 +115,15 @@
         </button>
       </div>
     </div>
+
     <div class="card-body p-4">
-      <div class="row g-3">
+      <div class="row g-4">
         {% for key, metric in analysis.metrics.items %}
         <div class="col-lg-6 col-md-12">
           <div class="metric-card">
-            <div class="d-flex justify-content-between align-items-start mb-2">
+            <div class="d-flex justify-content-between align-items-start mb-3">
               <div class="flex-grow-1">
-                <div class="d-flex align-items-center gap-2">
+                <div class="d-flex align-items-center gap-2 mb-2">
                   <h6 class="mb-0 metric-title">{{ metric.title }}</h6>
                   <i class="bi bi-info-circle-fill text-muted info-icon" 
                      data-bs-toggle="tooltip" 
@@ -137,7 +138,7 @@
                     <i class="bi bi-question-circle"></i>
                   </a>
                 </div>
-                <small class="text-muted metric-description d-block mt-1">
+                <small class="text-muted metric-description d-block">
                   {% if 'First Contentful Paint' in metric.title %}
                     ⚡ First thing your visitors see
                   {% elif 'Speed Index' in metric.title %}
@@ -151,18 +152,137 @@
                   {% endif %}
                 </small>
               </div>
+              <div class="metric-ranges ms-3">
+                {% if 'First Contentful Paint' in metric.title %}
+                  <div class="range-item range-good">Good: 0–1.8s</div>
+                  <div class="range-item range-needs">Needs Work: 1.8–3s</div>
+                  <div class="range-item range-poor">Poor: 3s+</div>
+                {% elif 'Speed Index' in metric.title %}
+                  <div class="range-item range-good">Good: 0–3.4s</div>
+                  <div class="range-item range-needs">Needs Work: 3.4–5.8s</div>
+                  <div class="range-item range-poor">Poor: 5.8s+</div>
+                {% elif 'Largest Contentful Paint' in metric.title %}
+                  <div class="range-item range-good">Good: 0–2.5s</div>
+                  <div class="range-item range-needs">Needs Work: 2.5–4s</div>
+                  <div class="range-item range-poor">Poor: 4s+</div>
+                {% elif 'Total Blocking Time' in metric.title %}
+                  <div class="range-item range-good">Good: 0–200ms</div>
+                  <div class="range-item range-needs">Needs Work: 200–600ms</div>
+                  <div class="range-item range-poor">Poor: 600ms+</div>
+                {% elif 'Cumulative Layout Shift' in metric.title %}
+                  <div class="range-item range-good">Good: 0–0.1</div>
+                  <div class="range-item range-needs">Needs Work: 0.1–0.25</div>
+                  <div class="range-item range-poor">Poor: 0.25+</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div class="metric-value">{{ metric.value }}</div>
               {% if metric.score %}
-              <span class="badge metric-badge ms-2" 
+              <span class="badge metric-badge" 
                     style="background-color: {% if metric.score >= 0.9 %}#10b981{% elif metric.score >= 0.5 %}#f59e0b{% else %}#ef4444{% endif %};">
-                {% if metric.score >= 0.9 %}Good{% elif metric.score >= 0.5 %}Needs Work{% else %}Poor{% endif %}
+                {% if metric.score >= 0.9 %}GOOD{% elif metric.score >= 0.5 %}POOR{% else %}POOR{% endif %}
               </span>
               {% endif %}
             </div>
-            <div class="metric-value">{{ metric.value }}</div>
             {% if metric.score %}
-            <div class="metric-progress-bar mt-3">
-              <div class="metric-progress-fill" 
-                   style="width: {% widthratio metric.score 1 100 %}%; background-color: {% if metric.score >= 0.9 %}#10b981{% elif metric.score >= 0.5 %}#f59e0b{% else %}#ef4444{% endif %};"></div>
+            <div class="metric-gauge mt-4">
+              {% if 'First Contentful Paint' in metric.title %}
+                <!-- FCP: 0-1.8 Green, 1.8-3 Orange, 3+ Red -->
+                <div class="gauge-bar">
+                  <div class="gauge-section good" style="flex: 1.8;">
+                    <span class="gauge-text">GOOD</span>
+                  </div>
+                  <div class="gauge-section needs" style="flex: 1.2;">
+                    <span class="gauge-text">NEEDS<br>WORK</span>
+                  </div>
+                  <div class="gauge-section poor" style="flex: 2;">
+                    <span class="gauge-text">POOR</span>
+                  </div>
+                  <div class="gauge-marker" style="left: {% widthratio 1.8 5 100 %}%;"></div>
+                  <div class="gauge-marker" style="left: {% widthratio 3 5 100 %}%;"></div>
+                </div>
+                <div class="gauge-threshold-labels">
+                  <span class="threshold-label" style="left: {% widthratio 1.8 5 100 %}%;">1.8s</span>
+                  <span class="threshold-label" style="left: {% widthratio 3 5 100 %}%;">3s</span>
+                </div>
+              {% elif 'Speed Index' in metric.title %}
+                <!-- Speed Index: 0-3.4 Green, 3.4-5.8 Orange, 5.8+ Red -->
+                <div class="gauge-bar">
+                  <div class="gauge-section good" style="flex: 34;">
+                    <span class="gauge-text">GOOD</span>
+                  </div>
+                  <div class="gauge-section needs" style="flex: 24;">
+                    <span class="gauge-text">NEEDS<br>WORK</span>
+                  </div>
+                  <div class="gauge-section poor" style="flex: 42;">
+                    <span class="gauge-text">POOR</span>
+                  </div>
+                  <div class="gauge-marker" style="left: {% widthratio 34 100 100 %}%;"></div>
+                  <div class="gauge-marker" style="left: {% widthratio 58 100 100 %}%;"></div>
+                </div>
+                <div class="gauge-threshold-labels">
+                  <span class="threshold-label" style="left: {% widthratio 34 100 100 %}%;">3.4s</span>
+                  <span class="threshold-label" style="left: {% widthratio 58 100 100 %}%;">5.8s</span>
+                </div>
+              {% elif 'Largest Contentful Paint' in metric.title %}
+                <!-- LCP: 0-2.5 Green, 2.5-4 Orange, 4+ Red -->
+                <div class="gauge-bar">
+                  <div class="gauge-section good" style="flex: 25;">
+                    <span class="gauge-text">GOOD</span>
+                  </div>
+                  <div class="gauge-section needs" style="flex: 15;">
+                    <span class="gauge-text">NEEDS<br>WORK</span>
+                  </div>
+                  <div class="gauge-section poor" style="flex: 60;">
+                    <span class="gauge-text">POOR</span>
+                  </div>
+                  <div class="gauge-marker" style="left: {% widthratio 25 100 100 %}%;"></div>
+                  <div class="gauge-marker" style="left: {% widthratio 40 100 100 %}%;"></div>
+                </div>
+                <div class="gauge-threshold-labels">
+                  <span class="threshold-label" style="left: {% widthratio 25 100 100 %}%;">2.5s</span>
+                  <span class="threshold-label" style="left: {% widthratio 40 100 100 %}%;">4s</span>
+                </div>
+              {% elif 'Total Blocking Time' in metric.title %}
+                <!-- TBT: 0-200 Green, 200-600 Orange, 600+ Red -->
+                <div class="gauge-bar">
+                  <div class="gauge-section good" style="flex: 200;">
+                    <span class="gauge-text">GOOD</span>
+                  </div>
+                  <div class="gauge-section needs" style="flex: 400;">
+                    <span class="gauge-text">NEEDS<br>WORK</span>
+                  </div>
+                  <div class="gauge-section poor" style="flex: 400;">
+                    <span class="gauge-text">POOR</span>
+                  </div>
+                  <div class="gauge-marker" style="left: {% widthratio 200 1000 100 %}%;"></div>
+                  <div class="gauge-marker" style="left: {% widthratio 600 1000 100 %}%;"></div>
+                </div>
+                <div class="gauge-threshold-labels">
+                  <span class="threshold-label" style="left: {% widthratio 200 1000 100 %}%;">200ms</span>
+                  <span class="threshold-label" style="left: {% widthratio 600 1000 100 %}%;">600ms</span>
+                </div>
+              {% elif 'Cumulative Layout Shift' in metric.title %}
+                <!-- CLS: 0-0.1 Green, 0.1-0.25 Orange, 0.25+ Red -->
+                <div class="gauge-bar">
+                  <div class="gauge-section good" style="flex: 1;">
+                    <span class="gauge-text">GOOD</span>
+                  </div>
+                  <div class="gauge-section needs" style="flex: 1.5;">
+                    <span class="gauge-text">NEEDS<br>WORK</span>
+                  </div>
+                  <div class="gauge-section poor" style="flex: 2.5;">
+                    <span class="gauge-text">POOR</span>
+                  </div>
+                  <div class="gauge-marker" style="left: {% widthratio 1 5 100 %}%;"></div>
+                  <div class="gauge-marker" style="left: {% widthratio 2.5 5 100 %}%;"></div>
+                </div>
+                <div class="gauge-threshold-labels">
+                  <span class="threshold-label" style="left: {% widthratio 1 5 100 %}%;">0.1</span>
+                  <span class="threshold-label" style="left: {% widthratio 2.5 5 100 %}%;">0.25</span>
+                </div>
+              {% endif %}
             </div>
             {% endif %}
           </div>
@@ -412,6 +532,186 @@
     transition: width 1s ease;
   }
 
+  /* Threshold Reference Styles */
+  .reference-metric {
+    padding: 12px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+  }
+
+  .reference-metric-title {
+    font-size: 0.85rem;
+    color: #1f2937;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .reference-gauge-bar {
+    display: flex;
+    height: 20px;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  }
+
+  .reference-gauge-section {
+    flex: 1;
+    position: relative;
+  }
+
+  .reference-gauge-section.good {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  }
+
+  .reference-gauge-section.needs {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  }
+
+  .reference-gauge-section.poor {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  }
+
+  .reference-gauge-marker {
+    position: absolute;
+    top: -4px;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 28px;
+    background: #1f2937;
+    z-index: 10;
+  }
+
+  .reference-gauge-labels {
+    position: relative;
+    height: 18px;
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .reference-threshold-label {
+    position: absolute;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #374151;
+    margin-top: 2px;
+  }
+
+  /* Gauge Styles */
+  .metric-gauge {
+    margin-top: 16px;
+  }
+
+  .gauge-bar {
+    display: flex;
+    height: 32px;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  }
+
+  .gauge-section {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .gauge-text {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #1f2937;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+  }
+
+  .gauge-section.good {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  }
+
+  .gauge-section.needs {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  }
+
+  .gauge-section.poor {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  }
+
+  .gauge-marker {
+    position: absolute;
+    top: -8px;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 48px;
+    background: #1f2937;
+    border-radius: 1px;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+  }
+
+  .gauge-marker::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 10px;
+    height: 10px;
+    background: #1f2937;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+
+  .gauge-marker::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 10px;
+    height: 10px;
+    background: #1f2937;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+
+  .gauge-threshold-labels {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 2px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #374151;
+    position: relative;
+    height: 20px;
+    align-items: center;
+  }
+
+  .threshold-label {
+    position: absolute;
+    transform: translateX(-50%);
+    text-align: center;
+  }
+
+  .threshold-label::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 8px;
+    background: #374151;
+  }
+
   /* Card Styles */
   .card {
     border-radius: 12px;
@@ -471,6 +771,38 @@
     font-size: 0.8rem;
     color: #6b7280;
     font-weight: 500;
+  }
+
+  /* Metric Ranges Styles */
+  .metric-ranges {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 140px;
+  }
+
+  .range-item {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .range-good {
+    background-color: #52C655;
+    color: #1f2937;
+  }
+
+  .range-needs {
+    background-color: #F5A623;
+    color: #1f2937;
+  }
+
+  .range-poor {
+    background-color: #EF5350;
+    color: #1f2937;
   }
 
   /* Tooltip Styles */
