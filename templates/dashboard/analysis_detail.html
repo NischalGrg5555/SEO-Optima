@@ -71,248 +71,472 @@
     </div>
   </div>
 
-  <!-- Website Speed Metrics -->
-  {% if analysis.metrics %}
-  <div class="card border-0 shadow-sm" style="background-color: #f8fafc;">
+  <!-- Core Web Vitals Assessment (Real User Data) -->
+  {% if field_data and field_data.field_lcp %}
+  <div class="card border-0 shadow-sm mb-4" style="background-color: #f8fafc;">
     <div class="card-header bg-white border-bottom">
-      <div class="d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="bi bi-speedometer2 text-primary me-2"></i>Website Speed Metrics</h5>
-        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#metricsGuideModal">
-          <i class="bi bi-question-circle me-1"></i>What do these mean?
-        </button>
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+          <h5 class="mb-1"><i class="bi bi-people text-success me-2"></i>Performance Metrics Assessment</h5>
+          <p class="small text-muted mb-0">
+            <i class="bi bi-info-circle"></i>
+            Real-world data from Chrome users over the past 28 days (Core Web Vitals + Other Notable Metrics)
+          </p>
+        </div>
+        <span class="badge" style="padding: 8px 16px; font-size: 0.85rem; {% if field_data.overall_category == 'FAST' %}background: #10b981;{% elif field_data.overall_category == 'AVERAGE' %}background: #f59e0b;{% else %}background: #ef4444;{% endif %}">
+          {% if field_data.overall_category == 'FAST' %}
+            <i class="bi bi-check-circle-fill"></i> PASSED
+          {% elif field_data.overall_category == 'AVERAGE' %}
+            <i class="bi bi-exclamation-triangle-fill"></i> NEEDS IMPROVEMENT
+          {% else %}
+            <i class="bi bi-x-circle-fill"></i> FAILED
+          {% endif %}
+        </span>
       </div>
     </div>
 
     <div class="card-body p-4" style="background-color: #f8fafc;">
       <div class="row g-3">
-        {% for key, metric in analysis.metrics.items %}
+
+        {% if field_data.field_lcp %}
         <div class="col-12">
-          <div class="metric-card-simple" style="border-left: 6px solid {% if metric.score >= 0.9 %}#10b981{% elif metric.score >= 0.5 %}#f59e0b{% else %}#ef4444{% endif %};">
-            <!-- Simple Header: Icon, Title, Value, Status -->
-            <div class="metric-simple-header">
-              <div class="metric-simple-left">
-                <div class="d-flex align-items-center gap-2">
-                  <div class="metric-simple-title">{{ metric.title }}</div>
-                  <i class="bi bi-info-circle text-muted" 
-                     style="font-size: 1rem; cursor: help; opacity: 0.6;"
-                     data-bs-toggle="tooltip" 
-                     data-bs-placement="top" 
-                     data-bs-html="true"
-                     title="{% if 'First Contentful Paint' in metric.title %}<strong>Like opening a book</strong><br>How quickly visitors see the first bit of content on your page. Faster is better!{% elif 'Speed Index' in metric.title %}<strong>Like loading a video</strong><br>How quickly your page content becomes visible. Lower numbers mean visitors see your content faster.{% elif 'Largest Contentful Paint' in metric.title %}<strong>Like a movie starting</strong><br>When the main content (biggest image or text) appears. This is what visitors came to see!{% elif 'Total Blocking Time' in metric.title %}<strong>Like a frozen screen</strong><br>How long your page is unresponsive. Lower means visitors can interact with your page sooner.{% elif 'Cumulative Layout Shift' in metric.title %}<strong>Like text jumping while reading</strong><br>Measures unexpected movement of content. Lower scores mean your page doesn't shift around annoyingly.{% endif %}"></i>
-                  <a href="{% if 'First Contentful Paint' in metric.title %}https://developer.chrome.com/docs/lighthouse/performance/first-contentful-paint{% elif 'Speed Index' in metric.title %}https://developer.chrome.com/docs/lighthouse/performance/speed-index{% elif 'Largest Contentful Paint' in metric.title %}https://developer.chrome.com/docs/lighthouse/performance/lighthouse-largest-contentful-paint{% elif 'Total Blocking Time' in metric.title %}https://developer.chrome.com/docs/lighthouse/performance/lighthouse-total-blocking-time{% elif 'Cumulative Layout Shift' in metric.title %}https://web.dev/articles/cls{% endif %}" 
-                     target="_blank" 
-                     rel="noopener noreferrer"
-                     class="text-muted"
-                     style="font-size: 1rem; text-decoration: none; opacity: 0.6;"
-                     title="Read the official guide">
-                    <i class="bi bi-question-circle"></i>
-                  </a>
-                </div>
-                <div class="metric-simple-desc">
-                  {% if 'First Contentful Paint' in metric.title %}
-                    ⚡ First thing your visitors see
-                  {% elif 'Speed Index' in metric.title %}
-                    📊 Main content loading time
-                  {% elif 'Largest Contentful Paint' in metric.title %}
-                    🎯 Main content
-                  {% elif 'Total Blocking Time' in metric.title %}
-                    ⏱️ Visual stability (no jumping)
-                  {% elif 'Cumulative Layout Shift' in metric.title %}
-                    📱 Overall loading speed
-                  {% endif %}
-                </div>
-              </div>
-              <div class="metric-simple-right">
-                <div class="metric-simple-value">{{ metric.value }}</div>
-                <div class="d-flex flex-column gap-2">
-                  <span class="metric-simple-badge" 
-                        style="background-color: {% if metric.score >= 0.9 %}#10b981{% elif metric.score >= 0.5 %}#f59e0b{% else %}#ef4444{% endif %};">
-                    {% if metric.score >= 0.9 %}✅ GOOD{% elif metric.score >= 0.5 %}⚠️ NEEDS WORK{% else %}🔴 POOR{% endif %}
-                  </span>
-                  <span class="metric-priority-badge" 
-                        style="background-color: {% if metric.score >= 0.9 %}#e0f2fe{% elif metric.score >= 0.5 %}#fff7ed{% else %}#fee2e2{% endif %}; 
-                               color: {% if metric.score >= 0.9 %}#0369a1{% elif metric.score >= 0.5 %}#c2410c{% else %}#991b1b{% endif %};
-                               padding: 4px 10px; 
-                               border-radius: 4px; 
-                               font-size: 0.7rem; 
-                               font-weight: 700;
-                               text-align: center;">
-                    {% if metric.score >= 0.9 %}✓ Maintain{% elif metric.score >= 0.5 %}→ Fix Soon{% else %}! Fix First{% endif %}
-                  </span>
+          <div class="metric-card-simple" style="border-left: 6px solid {% if field_data.field_lcp.category == 'SLOW' %}#ef4444{% elif field_data.field_lcp.category == 'AVERAGE' %}#f59e0b{% else %}#10b981{% endif %};">
+            <div class="row g-4">
+              <div class="col-lg-8">
+                <div style="text-align: center; padding: 24px;">
+                  <div style="font-size: 1.1rem; font-weight: 600; color: #1f2937; margin-bottom: 8px;">📄 Page Loading Speed</div>
+                  <div style="font-size: 0.85rem; color: #6b7280; margin-bottom: 20px;">How fast your main content appears</div>
+                  
+                  <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 20px;">
+                    <div style="width: 80px; height: 80px; border-radius: 50%; background: {% if field_data.field_lcp.category == 'SLOW' %}linear-gradient(135deg, #fee2e2 0%, #fecaca 100%){% elif field_data.field_lcp.category == 'AVERAGE' %}linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%){% else %}linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%){% endif %}; display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                      {% if field_data.field_lcp.category == 'SLOW' %}🔴{% elif field_data.field_lcp.category == 'AVERAGE' %}🟡{% else %}🟢{% endif %}
+                    </div>
+                    <div style="text-align: left;">
+                      <div style="font-size: 2rem; font-weight: 700; color: {% if field_data.field_lcp.category == 'SLOW' %}#dc2626{% elif field_data.field_lcp.category == 'AVERAGE' %}#f59e0b{% else %}#10b981{% endif %};">{{ field_data.field_lcp.value }}</div>
+                      <div style="font-size: 0.9rem; font-weight: 600; color: {% if field_data.field_lcp.category == 'SLOW' %}#991b1b{% elif field_data.field_lcp.category == 'AVERAGE' %}#c2410c{% else %}#059669{% endif %}; background: {% if field_data.field_lcp.category == 'SLOW' %}#fee2e2{% elif field_data.field_lcp.category == 'AVERAGE' %}#fff7ed{% else %}#d1fae5{% endif %}; padding: 4px 12px; border-radius: 6px; display: inline-block;">
+                        {% if field_data.field_lcp.category == 'SLOW' %}Poor{% elif field_data.field_lcp.category == 'AVERAGE' %}Fair{% else %}Good{% endif %}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div style="background: {% if field_data.field_lcp.category == 'SLOW' %}#fef2f2{% elif field_data.field_lcp.category == 'AVERAGE' %}#fffbeb{% else %}#f0fdf4{% endif %}; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+                    <p style="margin: 0; font-size: 0.95rem; color: {% if field_data.field_lcp.category == 'SLOW' %}#991b1b{% elif field_data.field_lcp.category == 'AVERAGE' %}#c2410c{% else %}#059669{% endif %}; line-height: 1.6;">
+                      {% if field_data.field_lcp.category == 'SLOW' %}
+                        <strong>Your page takes too long to load.</strong> Most visitors see the main content after {{ field_data.field_lcp.value }}, which may cause them to leave before seeing your page.
+                      {% elif field_data.field_lcp.category == 'AVERAGE' %}
+                        <strong>Your page could load faster.</strong> Some visitors wait {{ field_data.field_lcp.value }} for main content, which could be improved.
+                      {% else %}
+                        <strong>Great loading speed!</strong> Your main content appears quickly ({{ field_data.field_lcp.value }}) for most visitors.
+                      {% endif %}
+                    </p>
+                  </div>
+                  
+                  <details style="text-align: left; font-size: 0.85rem; color: #6b7280;">
+                    <summary style="cursor: pointer; font-weight: 600; color: #4b5563; padding: 8px; user-select: none;">📊 Technical Details</summary>
+                    <div style="padding: 12px; background: #f9fafb; border-radius: 6px; margin-top: 8px;">
+                      <div style="margin-bottom: 8px;"><strong>Technical Name:</strong> {{ field_data.field_lcp.title }}</div>
+                      <div style="margin-bottom: 12px;"><strong>Your Score:</strong> {{ field_data.field_lcp.value }}</div>
+                      <div class="gauge-bar" style="display: flex; height: 24px; border-radius: 6px; overflow: hidden; margin-bottom: 8px;">
+                        {% for dist in field_data.field_lcp.distributions %}
+                        <div style="flex: {{ dist.proportion }}; background: {% if forloop.counter == 1 %}#10b981{% elif forloop.counter == 2 %}#f59e0b{% else %}#ef4444{% endif %}; display: flex; align-items: center; justify-content: center;">
+                          <span style="color: white; font-size: 0.7rem; font-weight: 600;">{{ dist.proportion|floatformat:0 }}%</span>
+                        </div>
+                        {% endfor %}
+                      </div>
+                      <div style="font-size: 0.75rem; color: #6b7280;">Distribution: Fast (0-2.5s) • Average (2.5-4s) • Slow (4s+)</div>
+                    </div>
+                  </details>
                 </div>
               </div>
-            </div>
-
-            <!-- Simple Gauge Only -->
-            <div class="metric-simple-gauge">
-              {% if metric.score %}
-              {% if 'First Contentful Paint' in metric.title %}
-                <div class="gauge-bar">
-                  <div class="gauge-section good" style="flex: 1.8;"><span class="gauge-text">GOOD</span></div>
-                  <div class="gauge-section needs" style="flex: 1.2;"><span class="gauge-text">NEEDS WORK</span></div>
-                  <div class="gauge-section poor" style="flex: 2;"><span class="gauge-text">POOR</span></div>
-                  <div class="gauge-marker" style="left: {% widthratio 1.8 5 100 %}%;"></div>
-                  <div class="gauge-marker" style="left: {% widthratio 3 5 100 %}%;"></div>
+              <div class="col-lg-4">
+                <div class="metric-action-plan" style="background: {% if field_data.field_lcp.category == 'SLOW' %}linear-gradient(135deg, #fee2e2 0%, #fecaca 100%){% elif field_data.field_lcp.category == 'AVERAGE' %}linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%){% else %}linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%){% endif %}; border-radius: 12px; padding: 16px; height: 100%;">
+                  <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi {% if field_data.field_lcp.category == 'SLOW' %}bi-tools{% elif field_data.field_lcp.category == 'AVERAGE' %}bi-wrench{% else %}bi-check-circle-fill{% endif %}" style="font-size: 1.2rem; color: {% if field_data.field_lcp.category == 'SLOW' %}#991b1b{% elif field_data.field_lcp.category == 'AVERAGE' %}#c2410c{% else %}#059669{% endif %};"></i>
+                    <h6 class="mb-0" style="font-weight: 700; font-size: 0.95rem; color: {% if field_data.field_lcp.category == 'SLOW' %}#991b1b{% elif field_data.field_lcp.category == 'AVERAGE' %}#c2410c{% else %}#059669{% endif %};">
+                      {% if field_data.field_lcp.category == 'SLOW' %}How to Fix This{% elif field_data.field_lcp.category == 'AVERAGE' %}How to Improve{% else %}Maintain Performance{% endif %}
+                    </h6>
+                  </div>
+                  <ul class="action-list mb-0">
+                    {% if field_data.field_lcp.category == 'SLOW' %}
+                      <li>🖼️ <strong>Optimize hero images</strong> - Compress main visual</li>
+                      <li>📱 <strong>Use responsive images</strong> - Serve correct sizes</li>
+                      <li>⚡ <strong>Preload critical resources</strong> - Add preload hints</li>
+                      <li>🚀 <strong>Upgrade hosting</strong> - Use faster server</li>
+                    {% elif field_data.field_lcp.category == 'AVERAGE' %}
+                      <li>🖼️ <strong>Compress large images</strong> - Reduce file sizes</li>
+                      <li>📱 <strong>Responsive images</strong> - Use srcset attribute</li>
+                      <li>⚡ <strong>Preload key assets</strong> - Hint browser early</li>
+                    {% else %}
+                      <li>✅ <strong>Monitor regularly</strong> - Track performance</li>
+                      <li>🎯 <strong>Keep optimized</strong> - Maintain best practices</li>
+                      <li>📊 <strong>Watch trends</strong> - Check for regressions</li>
+                    {% endif %}
+                  </ul>
                 </div>
-                <div class="gauge-threshold-labels">
-                  <span class="threshold-label" style="left: {% widthratio 1.8 5 100 %}%;">1.8s</span>
-                  <span class="threshold-label" style="left: {% widthratio 3 5 100 %}%;">3s</span>
-                </div>
-              {% elif 'Speed Index' in metric.title %}
-                <div class="gauge-bar">
-                  <div class="gauge-section good" style="flex: 34;"><span class="gauge-text">GOOD</span></div>
-                  <div class="gauge-section needs" style="flex: 24;"><span class="gauge-text">NEEDS WORK</span></div>
-                  <div class="gauge-section poor" style="flex: 42;"><span class="gauge-text">POOR</span></div>
-                  <div class="gauge-marker" style="left: {% widthratio 34 100 100 %}%;"></div>
-                  <div class="gauge-marker" style="left: {% widthratio 58 100 100 %}%;"></div>
-                </div>
-                <div class="gauge-threshold-labels">
-                  <span class="threshold-label" style="left: {% widthratio 34 100 100 %}%;">3.4s</span>
-                  <span class="threshold-label" style="left: {% widthratio 58 100 100 %}%;">5.8s</span>
-                </div>
-              {% elif 'Largest Contentful Paint' in metric.title %}
-                <div class="gauge-bar">
-                  <div class="gauge-section good" style="flex: 25;"><span class="gauge-text">GOOD</span></div>
-                  <div class="gauge-section needs" style="flex: 15;"><span class="gauge-text">NEEDS WORK</span></div>
-                  <div class="gauge-section poor" style="flex: 60;"><span class="gauge-text">POOR</span></div>
-                  <div class="gauge-marker" style="left: {% widthratio 25 100 100 %}%;"></div>
-                  <div class="gauge-marker" style="left: {% widthratio 40 100 100 %}%;"></div>
-                </div>
-                <div class="gauge-threshold-labels">
-                  <span class="threshold-label" style="left: {% widthratio 25 100 100 %}%;">2.5s</span>
-                  <span class="threshold-label" style="left: {% widthratio 40 100 100 %}%;">4s</span>
-                </div>
-              {% elif 'Total Blocking Time' in metric.title %}
-                <div class="gauge-bar">
-                  <div class="gauge-section good" style="flex: 200;"><span class="gauge-text">GOOD</span></div>
-                  <div class="gauge-section needs" style="flex: 400;"><span class="gauge-text">NEEDS WORK</span></div>
-                  <div class="gauge-section poor" style="flex: 400;"><span class="gauge-text">POOR</span></div>
-                  <div class="gauge-marker" style="left: {% widthratio 200 1000 100 %}%;"></div>
-                  <div class="gauge-marker" style="left: {% widthratio 600 1000 100 %}%;"></div>
-                </div>
-                <div class="gauge-threshold-labels">
-                  <span class="threshold-label" style="left: {% widthratio 200 1000 100 %}%;">200ms</span>
-                  <span class="threshold-label" style="left: {% widthratio 600 1000 100 %}%;">600ms</span>
-                </div>
-              {% elif 'Cumulative Layout Shift' in metric.title %}
-                <div class="gauge-bar">
-                  <div class="gauge-section good" style="flex: 1;"><span class="gauge-text">GOOD</span></div>
-                  <div class="gauge-section needs" style="flex: 1.5;"><span class="gauge-text">NEEDS WORK</span></div>
-                  <div class="gauge-section poor" style="flex: 2.5;"><span class="gauge-text">POOR</span></div>
-                  <div class="gauge-marker" style="left: {% widthratio 1 5 100 %}%;"></div>
-                  <div class="gauge-marker" style="left: {% widthratio 2.5 5 100 %}%;"></div>
-                </div>
-                <div class="gauge-threshold-labels">
-                  <span class="threshold-label" style="left: {% widthratio 1 5 100 %}%;">0.1</span>
-                  <span class="threshold-label" style="left: {% widthratio 2.5 5 100 %}%;">0.25</span>
-                </div>
-              {% endif %}
-              {% endif %}
-            </div>
-
-            <!-- One Key Message -->
-            <div class="metric-simple-message" style="background-color: {% if metric.score >= 0.9 %}#ecfdf5{% elif metric.score >= 0.5 %}#fffbeb{% else %}#fef2f2{% endif %};">
-              {% if 'First Contentful Paint' in metric.title %}
-                {% if metric.score >= 0.9 %}
-                  ✅ <strong>Perfect!</strong> Visitors see content immediately.
-                {% elif metric.score >= 0.5 %}
-                  ⚠️ <strong>Too slow.</strong> Optimize images and reduce initial code.
-                {% else %}
-                  🔴 <strong>Critical.</strong> Page appears blank for too long.
-                {% endif %}
-              {% elif 'Speed Index' in metric.title %}
-                {% if metric.score >= 0.9 %}
-                  ✅ <strong>Excellent!</strong> Page loads very fast.
-                {% elif metric.score >= 0.5 %}
-                  ⚠️ <strong>Slow.</strong> Compress images and minimize code.
-                {% else %}
-                  🔴 <strong>Critical.</strong> Page takes way too long to load.
-                {% endif %}
-              {% elif 'Largest Contentful Paint' in metric.title %}
-                {% if metric.score >= 0.9 %}
-                  ✅ <strong>Great!</strong> Main content loads fast.
-                {% elif metric.score >= 0.5 %}
-                  ⚠️ <strong>Slow.</strong> Optimize large images and videos.
-                {% else %}
-                  🔴 <strong>Critical.</strong> Main content is too slow to load.
-                {% endif %}
-              {% elif 'Total Blocking Time' in metric.title %}
-                {% if metric.score >= 0.9 %}
-                  ✅ <strong>Perfect!</strong> Page responds instantly.
-                {% elif metric.score >= 0.5 %}
-                  ⚠️ <strong>Slow response.</strong> Reduce JavaScript.
-                {% else %}
-                  🔴 <strong>Critical.</strong> Page feels frozen.
-                {% endif %}
-              {% elif 'Cumulative Layout Shift' in metric.title %}
-                {% if metric.score >= 0.9 %}
-                  ✅ <strong>Perfect!</strong> Layout is stable.
-                {% elif metric.score >= 0.5 %}
-                  ⚠️ <strong>Jumpy.</strong> Add image dimensions.
-                {% else %}
-                  🔴 <strong>Critical.</strong> Content jumps around.
-                {% endif %}
-              {% endif %}
+              </div>
             </div>
           </div>
         </div>
-        {% endfor %}
+        {% endif %}
+
+        {% if field_data.field_inp %}
+        <div class="col-12">
+          <div class="metric-card-simple" style="border-left: 6px solid {% if field_data.field_inp.category == 'SLOW' %}#ef4444{% elif field_data.field_inp.category == 'AVERAGE' %}#f59e0b{% else %}#10b981{% endif %};">
+            <div class="row g-4">
+              <div class="col-lg-8">
+                <div style="text-align: center; padding: 24px;">
+                  <div style="font-size: 1.1rem; font-weight: 600; color: #1f2937; margin-bottom: 8px;">👆 Click Response Time</div>
+                  <div style="font-size: 0.85rem; color: #6b7280; margin-bottom: 20px;">How quickly your page responds to clicks</div>
+                  
+                  <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 20px;">
+                    <div style="width: 80px; height: 80px; border-radius: 50%; background: {% if field_data.field_inp.category == 'SLOW' %}linear-gradient(135deg, #fee2e2 0%, #fecaca 100%){% elif field_data.field_inp.category == 'AVERAGE' %}linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%){% else %}linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%){% endif %}; display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                      {% if field_data.field_inp.category == 'SLOW' %}🔴{% elif field_data.field_inp.category == 'AVERAGE' %}🟡{% else %}🟢{% endif %}
+                    </div>
+                    <div style="text-align: left;">
+                      <div style="font-size: 2rem; font-weight: 700; color: {% if field_data.field_inp.category == 'SLOW' %}#dc2626{% elif field_data.field_inp.category == 'AVERAGE' %}#f59e0b{% else %}#10b981{% endif %};">{{ field_data.field_inp.value }}</div>
+                      <div style="font-size: 0.9rem; font-weight: 600; color: {% if field_data.field_inp.category == 'SLOW' %}#991b1b{% elif field_data.field_inp.category == 'AVERAGE' %}#c2410c{% else %}#059669{% endif %}; background: {% if field_data.field_inp.category == 'SLOW' %}#fee2e2{% elif field_data.field_inp.category == 'AVERAGE' %}#fff7ed{% else %}#d1fae5{% endif %}; padding: 4px 12px; border-radius: 6px; display: inline-block;">
+                        {% if field_data.field_inp.category == 'SLOW' %}Poor{% elif field_data.field_inp.category == 'AVERAGE' %}Fair{% else %}Good{% endif %}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div style="background: {% if field_data.field_inp.category == 'SLOW' %}#fef2f2{% elif field_data.field_inp.category == 'AVERAGE' %}#fffbeb{% else %}#f0fdf4{% endif %}; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+                    <p style="margin: 0; font-size: 0.95rem; color: {% if field_data.field_inp.category == 'SLOW' %}#991b1b{% elif field_data.field_inp.category == 'AVERAGE' %}#c2410c{% else %}#059669{% endif %}; line-height: 1.6;">
+                      {% if field_data.field_inp.category == 'SLOW' %}
+                        <strong>Your page feels sluggish.</strong> When visitors click buttons or links, there's a noticeable delay ({{ field_data.field_inp.value }}) before the page responds.
+                      {% elif field_data.field_inp.category == 'AVERAGE' %}
+                        <strong>Your page responds a bit slowly.</strong> When visitors click or tap, they notice a slight delay before the page reacts.
+                      {% else %}
+                        <strong>Your page responds instantly!</strong> When visitors click or tap, your page reacts immediately without any noticeable delay.
+                      {% endif %}
+                    </p>
+                  </div>
+                  
+                  <details style="text-align: left; font-size: 0.85rem; color: #6b7280;">
+                    <summary style="cursor: pointer; font-weight: 600; color: #4b5563; padding: 8px; user-select: none;">📊 Technical Details</summary>
+                    <div style="padding: 12px; background: #f9fafb; border-radius: 6px; margin-top: 8px;">
+                      <div style="margin-bottom: 8px;"><strong>Technical Name:</strong> {{ field_data.field_inp.title }}</div>
+                      <div style="margin-bottom: 12px;"><strong>Your Score:</strong> {{ field_data.field_inp.value }}</div>
+                      <div class="gauge-bar" style="display: flex; height: 24px; border-radius: 6px; overflow: hidden; margin-bottom: 8px;">
+                        {% for dist in field_data.field_inp.distributions %}
+                        <div style="flex: {{ dist.proportion }}; background: {% if forloop.counter == 1 %}#10b981{% elif forloop.counter == 2 %}#f59e0b{% else %}#ef4444{% endif %}; display: flex; align-items: center; justify-content: center;">
+                          <span style="color: white; font-size: 0.7rem; font-weight: 600;">{{ dist.proportion|floatformat:0 }}%</span>
+                        </div>
+                        {% endfor %}
+                      </div>
+                      <div style="font-size: 0.75rem; color: #6b7280;">Distribution: Fast (0-200ms) • Average (200-500ms) • Slow (500ms+)</div>
+                    </div>
+                  </details>
+                </div>
+              </div>
+              <div class="col-lg-4">
+                <div class="metric-action-plan" style="background: {% if field_data.field_inp.category == 'SLOW' %}linear-gradient(135deg, #fee2e2 0%, #fecaca 100%){% elif field_data.field_inp.category == 'AVERAGE' %}linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%){% else %}linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%){% endif %}; border-radius: 12px; padding: 16px; height: 100%;">
+                  <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi {% if field_data.field_inp.category == 'SLOW' %}bi-tools{% elif field_data.field_inp.category == 'AVERAGE' %}bi-wrench{% else %}bi-check-circle-fill{% endif %}" style="font-size: 1.2rem; color: {% if field_data.field_inp.category == 'SLOW' %}#991b1b{% elif field_data.field_inp.category == 'AVERAGE' %}#c2410c{% else %}#059669{% endif %};"></i>
+                    <h6 class="mb-0" style="font-weight: 700; font-size: 0.95rem; color: {% if field_data.field_inp.category == 'SLOW' %}#991b1b{% elif field_data.field_inp.category == 'AVERAGE' %}#c2410c{% else %}#059669{% endif %};">
+                      {% if field_data.field_inp.category == 'SLOW' %}How to Fix This{% elif field_data.field_inp.category == 'AVERAGE' %}How to Improve{% else %}Maintain Performance{% endif %}
+                    </h6>
+                  </div>
+                  <ul class="action-list mb-0">
+                    {% if field_data.field_inp.category == 'SLOW' %}
+                      <li>📦 <strong>Remove heavy JavaScript</strong> - Audit all scripts</li>
+                      <li>⚡ <strong>Code splitting</strong> - Load JS on demand</li>
+                      <li>🔧 <strong>Remove unused plugins</strong> - Clean up dependencies</li>
+                      <li>⏱️ <strong>Defer third-party scripts</strong> - Load after main content</li>
+                    {% elif field_data.field_inp.category == 'AVERAGE' %}
+                      <li>📦 <strong>Minimize JavaScript</strong> - Remove unused code</li>
+                      <li>⚡ <strong>Defer non-critical JS</strong> - Load asynchronously</li>
+                      <li>🔧 <strong>Optimize libraries</strong> - Use lighter alternatives</li>
+                    {% else %}
+                      <li>✅ <strong>Monitor regularly</strong> - Track performance</li>
+                      <li>🎯 <strong>Keep optimized</strong> - Maintain best practices</li>
+                      <li>📊 <strong>Watch trends</strong> - Check for regressions</li>
+                    {% endif %}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if field_data.field_cls %}
+        <div class="col-12">
+          <div class="metric-card-simple" style="border-left: 6px solid {% if field_data.field_cls.category == 'SLOW' %}#ef4444{% elif field_data.field_cls.category == 'AVERAGE' %}#f59e0b{% else %}#10b981{% endif %};">
+            <div class="row g-4">
+              <div class="col-lg-8">
+                <div style="text-align: center; padding: 24px;">
+                  <div style="font-size: 1.1rem; font-weight: 600; color: #1f2937; margin-bottom: 8px;">📐 Page Stability</div>
+                  <div style="font-size: 0.85rem; color: #6b7280; margin-bottom: 20px;">How stable your page is while loading</div>
+                  
+                  <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 20px;">
+                    <div style="width: 80px; height: 80px; border-radius: 50%; background: {% if field_data.field_cls.category == 'SLOW' %}linear-gradient(135deg, #fee2e2 0%, #fecaca 100%){% elif field_data.field_cls.category == 'AVERAGE' %}linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%){% else %}linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%){% endif %}; display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                      {% if field_data.field_cls.category == 'SLOW' %}🔴{% elif field_data.field_cls.category == 'AVERAGE' %}🟡{% else %}🟢{% endif %}
+                    </div>
+                    <div style="text-align: left;">
+                      <div style="font-size: 2rem; font-weight: 700; color: {% if field_data.field_cls.category == 'SLOW' %}#dc2626{% elif field_data.field_cls.category == 'AVERAGE' %}#f59e0b{% else %}#10b981{% endif %};">{{ field_data.field_cls.value }}</div>
+                      <div style="font-size: 0.9rem; font-weight: 600; color: {% if field_data.field_cls.category == 'SLOW' %}#991b1b{% elif field_data.field_cls.category == 'AVERAGE' %}#c2410c{% else %}#059669{% endif %}; background: {% if field_data.field_cls.category == 'SLOW' %}#fee2e2{% elif field_data.field_cls.category == 'AVERAGE' %}#fff7ed{% else %}#d1fae5{% endif %}; padding: 4px 12px; border-radius: 6px; display: inline-block;">
+                        {% if field_data.field_cls.category == 'SLOW' %}Poor{% elif field_data.field_cls.category == 'AVERAGE' %}Fair{% else %}Good{% endif %}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div style="background: {% if field_data.field_cls.category == 'SLOW' %}#fef2f2{% elif field_data.field_cls.category == 'AVERAGE' %}#fffbeb{% else %}#f0fdf4{% endif %}; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+                    <p style="margin: 0; font-size: 0.95rem; color: {% if field_data.field_cls.category == 'SLOW' %}#991b1b{% elif field_data.field_cls.category == 'AVERAGE' %}#c2410c{% else %}#059669{% endif %}; line-height: 1.6;">
+                      {% if field_data.field_cls.category == 'SLOW' %}
+                        <strong>Your page jumps around too much.</strong> Content shifts unexpectedly while loading, which can cause visitors to click the wrong thing by accident.
+                      {% elif field_data.field_cls.category == 'AVERAGE' %}
+                        <strong>Your page shifts around a bit.</strong> Content sometimes moves while loading, which can be frustrating for visitors.
+                      {% else %}
+                        <strong>Your page is very stable!</strong> Content stays in place while loading, so visitors don't accidentally click the wrong thing.
+                      {% endif %}
+                    </p>
+                  </div>
+                  
+                  <details style="text-align: left; font-size: 0.85rem; color: #6b7280;">
+                    <summary style="cursor: pointer; font-weight: 600; color: #4b5563; padding: 8px; user-select: none;">📊 Technical Details</summary>
+                    <div style="padding: 12px; background: #f9fafb; border-radius: 6px; margin-top: 8px;">
+                      <div style="margin-bottom: 8px;"><strong>Technical Name:</strong> {{ field_data.field_cls.title }}</div>
+                      <div style="margin-bottom: 12px;"><strong>Your Score:</strong> {{ field_data.field_cls.value }}</div>
+                      <div class="gauge-bar" style="display: flex; height: 24px; border-radius: 6px; overflow: hidden; margin-bottom: 8px;">
+                        {% for dist in field_data.field_cls.distributions %}
+                        <div style="flex: {{ dist.proportion }}; background: {% if forloop.counter == 1 %}#10b981{% elif forloop.counter == 2 %}#f59e0b{% else %}#ef4444{% endif %}; display: flex; align-items: center; justify-content: center;">
+                          <span style="color: white; font-size: 0.7rem; font-weight: 600;">{{ dist.proportion|floatformat:0 }}%</span>
+                        </div>
+                        {% endfor %}
+                      </div>
+                      <div style="font-size: 0.75rem; color: #6b7280;">Distribution: Good (0-0.1) • Average (0.1-0.25) • Poor (0.25+)</div>
+                    </div>
+                  </details>
+                </div>
+              </div>
+              <div class="col-lg-4">
+                <div class="metric-action-plan" style="background: {% if field_data.field_cls.category == 'SLOW' %}linear-gradient(135deg, #fee2e2 0%, #fecaca 100%){% elif field_data.field_cls.category == 'AVERAGE' %}linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%){% else %}linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%){% endif %}; border-radius: 12px; padding: 16px; height: 100%;">
+                  <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi {% if field_data.field_cls.category == 'SLOW' %}bi-tools{% elif field_data.field_cls.category == 'AVERAGE' %}bi-wrench{% else %}bi-check-circle-fill{% endif %}" style="font-size: 1.2rem; color: {% if field_data.field_cls.category == 'SLOW' %}#991b1b{% elif field_data.field_cls.category == 'AVERAGE' %}#c2410c{% else %}#059669{% endif %};"></i>
+                    <h6 class="mb-0" style="font-weight: 700; font-size: 0.95rem; color: {% if field_data.field_cls.category == 'SLOW' %}#991b1b{% elif field_data.field_cls.category == 'AVERAGE' %}#c2410c{% else %}#059669{% endif %};">
+                      {% if field_data.field_cls.category == 'SLOW' %}How to Fix This{% elif field_data.field_cls.category == 'AVERAGE' %}How to Improve{% else %}Maintain Performance{% endif %}
+                    </h6>
+                  </div>
+                  <ul class="action-list mb-0">
+                    {% if field_data.field_cls.category == 'SLOW' %}
+                      <li>📐 <strong>Set image dimensions</strong> - Add width & height</li>
+                      <li>📱 <strong>Reserve ad space</strong> - Define ad slot sizes</li>
+                      <li>🎨 <strong>Avoid dynamic content</strong> - Don't inject above fold</li>
+                      <li>⚡ <strong>Preload fonts</strong> - Avoid font swapping</li>
+                    {% elif field_data.field_cls.category == 'AVERAGE' %}
+                      <li>📐 <strong>Add image sizes</strong> - Set width and height</li>
+                      <li>📱 <strong>Reserve space for ads</strong> - Define dimensions</li>
+                      <li>🎨 <strong>Avoid layout shifts</strong> - Use CSS transforms</li>
+                    {% else %}
+                      <li>✅ <strong>Monitor regularly</strong> - Track performance</li>
+                      <li>🎯 <strong>Keep optimized</strong> - Maintain best practices</li>
+                      <li>📊 <strong>Watch trends</strong> - Check for regressions</li>
+                    {% endif %}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if field_data.field_fcp %}
+        <div class="col-12">
+          <div class="metric-card-simple" style="border-left: 6px solid {% if field_data.field_fcp.category == 'SLOW' %}#ef4444{% elif field_data.field_fcp.category == 'AVERAGE' %}#f59e0b{% else %}#10b981{% endif %};">
+            <div class="row g-4">
+              <div class="col-lg-8">
+                <div style="text-align: center; padding: 24px;">
+                  <div style="font-size: 1.1rem; font-weight: 600; color: #1f2937; margin-bottom: 8px;">⚡ Initial Display Speed</div>
+                  <div style="font-size: 0.85rem; color: #6b7280; margin-bottom: 20px;">How fast something first appears on screen</div>
+                  
+                  <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 20px;">
+                    <div style="width: 80px; height: 80px; border-radius: 50%; background: {% if field_data.field_fcp.category == 'SLOW' %}linear-gradient(135deg, #fee2e2 0%, #fecaca 100%){% elif field_data.field_fcp.category == 'AVERAGE' %}linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%){% else %}linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%){% endif %}; display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                      {% if field_data.field_fcp.category == 'SLOW' %}🔴{% elif field_data.field_fcp.category == 'AVERAGE' %}🟡{% else %}🟢{% endif %}
+                    </div>
+                    <div style="text-align: left;">
+                      <div style="font-size: 2rem; font-weight: 700; color: {% if field_data.field_fcp.category == 'SLOW' %}#dc2626{% elif field_data.field_fcp.category == 'AVERAGE' %}#f59e0b{% else %}#10b981{% endif %};">{{ field_data.field_fcp.value }}</div>
+                      <div style="font-size: 0.9rem; font-weight: 600; color: {% if field_data.field_fcp.category == 'SLOW' %}#991b1b{% elif field_data.field_fcp.category == 'AVERAGE' %}#c2410c{% else %}#059669{% endif %}; background: {% if field_data.field_fcp.category == 'SLOW' %}#fee2e2{% elif field_data.field_fcp.category == 'AVERAGE' %}#fff7ed{% else %}#d1fae5{% endif %}; padding: 4px 12px; border-radius: 6px; display: inline-block;">
+                        {% if field_data.field_fcp.category == 'SLOW' %}Poor{% elif field_data.field_fcp.category == 'AVERAGE' %}Fair{% else %}Good{% endif %}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div style="background: {% if field_data.field_fcp.category == 'SLOW' %}#fef2f2{% elif field_data.field_fcp.category == 'AVERAGE' %}#fffbeb{% else %}#f0fdf4{% endif %}; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+                    <p style="margin: 0; font-size: 0.95rem; color: {% if field_data.field_fcp.category == 'SLOW' %}#991b1b{% elif field_data.field_fcp.category == 'AVERAGE' %}#c2410c{% else %}#059669{% endif %}; line-height: 1.6;">
+                      {% if field_data.field_fcp.category == 'SLOW' %}
+                        <strong>Your page shows a blank screen for too long.</strong> It takes {{ field_data.field_fcp.value }} before visitors see anything at all, which feels very slow.
+                      {% elif field_data.field_fcp.category == 'AVERAGE' %}
+                        <strong>Your page takes a bit to show anything.</strong> Visitors wait a moment before seeing the first piece of content appear.
+                      {% else %}
+                        <strong>Content appears quickly!</strong> Visitors see something on screen almost immediately after your page starts loading.
+                      {% endif %}
+                    </p>
+                  </div>
+                  
+                  <details style="text-align: left; font-size: 0.85rem; color: #6b7280;">
+                    <summary style="cursor: pointer; font-weight: 600; color: #4b5563; padding: 8px; user-select: none;">📊 Technical Details</summary>
+                    <div style="padding: 12px; background: #f9fafb; border-radius: 6px; margin-top: 8px;">
+                      <div style="margin-bottom: 8px;"><strong>Technical Name:</strong> {{ field_data.field_fcp.title }}</div>
+                      <div style="margin-bottom: 12px;"><strong>Your Score:</strong> {{ field_data.field_fcp.value }}</div>
+                      <div class="gauge-bar" style="display: flex; height: 24px; border-radius: 6px; overflow: hidden; margin-bottom: 8px;">
+                        {% if field_data.field_fcp.distributions %}
+                          {% for dist in field_data.field_fcp.distributions %}
+                          <div style="flex: {{ dist.proportion }}; background: {% if forloop.counter == 1 %}#10b981{% elif forloop.counter == 2 %}#f59e0b{% else %}#ef4444{% endif %}; display: flex; align-items: center; justify-content: center;">
+                            <span style="color: white; font-size: 0.7rem; font-weight: 600;">{{ dist.proportion|floatformat:0 }}%</span>
+                          </div>
+                          {% endfor %}
+                        {% endif %}
+                      </div>
+                      <div style="font-size: 0.75rem; color: #6b7280;">Distribution: Fast (0-1.8s) • Average (1.8-3s) • Slow (3s+)</div>
+                    </div>
+                  </details>
+                </div>
+              </div>
+              <div class="col-lg-4">
+                <div class="metric-action-plan" style="background: {% if field_data.field_fcp.category == 'SLOW' %}linear-gradient(135deg, #fee2e2 0%, #fecaca 100%){% elif field_data.field_fcp.category == 'AVERAGE' %}linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%){% else %}linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%){% endif %}; border-radius: 12px; padding: 16px; height: 100%;">
+                  <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi {% if field_data.field_fcp.category == 'SLOW' %}bi-tools{% elif field_data.field_fcp.category == 'AVERAGE' %}bi-wrench{% else %}bi-check-circle-fill{% endif %}" style="font-size: 1.2rem; color: {% if field_data.field_fcp.category == 'SLOW' %}#991b1b{% elif field_data.field_fcp.category == 'AVERAGE' %}#c2410c{% else %}#059669{% endif %};"></i>
+                    <h6 class="mb-0" style="font-weight: 700; font-size: 0.95rem; color: {% if field_data.field_fcp.category == 'SLOW' %}#991b1b{% elif field_data.field_fcp.category == 'AVERAGE' %}#c2410c{% else %}#059669{% endif %};">
+                      {% if field_data.field_fcp.category == 'SLOW' %}How to Fix This{% elif field_data.field_fcp.category == 'AVERAGE' %}How to Improve{% else %}Maintain Performance{% endif %}
+                    </h6>
+                  </div>
+                  <ul class="action-list mb-0">
+                    {% if field_data.field_fcp.category == 'SLOW' %}
+                      <li>🖼️ <strong>Optimize images</strong> - Use WebP format</li>
+                      <li>⚡ <strong>Reduce render-blocking</strong> - Defer CSS/JS</li>
+                      <li>📦 <strong>Minimize payload</strong> - Remove unused code</li>
+                      <li>🌐 <strong>Use a CDN</strong> - Serve content faster</li>
+                    {% elif field_data.field_fcp.category == 'AVERAGE' %}
+                      <li>📸 <strong>Compress images</strong> - Reduce file sizes</li>
+                      <li>🎨 <strong>Defer non-critical CSS</strong> - Load above-fold first</li>
+                      <li>🧹 <strong>Remove unused code</strong> - Clean up resources</li>
+                      <li>⚡ <strong>Optimize fonts</strong> - Use font-display: swap</li>
+                    {% else %}
+                      <li>✅ <strong>Monitor regularly</strong> - Track performance</li>
+                      <li>🎯 <strong>Keep images optimized</strong> - WebP format</li>
+                      <li>📊 <strong>Track changes</strong> - Watch performance trends</li>
+                    {% endif %}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if field_data.field_ttfb %}
+        <div class="col-12">
+          <div class="metric-card-simple" style="border-left: 6px solid {% if field_data.field_ttfb.category == 'SLOW' %}#ef4444{% elif field_data.field_ttfb.category == 'AVERAGE' %}#f59e0b{% else %}#10b981{% endif %};">
+            <div class="row g-4">
+              <div class="col-lg-8">
+                <div style="text-align: center; padding: 24px;">
+                  <div style="font-size: 1.1rem; font-weight: 600; color: #1f2937; margin-bottom: 8px;">🌐 Server Response Time</div>
+                  <div style="font-size: 0.85rem; color: #6b7280; margin-bottom: 20px;">How fast your server starts sending data</div>
+                  
+                  <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 20px;">
+                    <div style="width: 80px; height: 80px; border-radius: 50%; background: {% if field_data.field_ttfb.category == 'SLOW' %}linear-gradient(135deg, #fee2e2 0%, #fecaca 100%){% elif field_data.field_ttfb.category == 'AVERAGE' %}linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%){% else %}linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%){% endif %}; display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                      {% if field_data.field_ttfb.category == 'SLOW' %}🔴{% elif field_data.field_ttfb.category == 'AVERAGE' %}🟡{% else %}🟢{% endif %}
+                    </div>
+                    <div style="text-align: left;">
+                      <div style="font-size: 2rem; font-weight: 700; color: {% if field_data.field_ttfb.category == 'SLOW' %}#dc2626{% elif field_data.field_ttfb.category == 'AVERAGE' %}#f59e0b{% else %}#10b981{% endif %};">{{ field_data.field_ttfb.value }}</div>
+                      <div style="font-size: 0.9rem; font-weight: 600; color: {% if field_data.field_ttfb.category == 'SLOW' %}#991b1b{% elif field_data.field_ttfb.category == 'AVERAGE' %}#c2410c{% else %}#059669{% endif %}; background: {% if field_data.field_ttfb.category == 'SLOW' %}#fee2e2{% elif field_data.field_ttfb.category == 'AVERAGE' %}#fff7ed{% else %}#d1fae5{% endif %}; padding: 4px 12px; border-radius: 6px; display: inline-block;">
+                        {% if field_data.field_ttfb.category == 'SLOW' %}Poor{% elif field_data.field_ttfb.category == 'AVERAGE' %}Fair{% else %}Good{% endif %}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div style="background: {% if field_data.field_ttfb.category == 'SLOW' %}#fef2f2{% elif field_data.field_ttfb.category == 'AVERAGE' %}#fffbeb{% else %}#f0fdf4{% endif %}; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+                    <p style="margin: 0; font-size: 0.95rem; color: {% if field_data.field_ttfb.category == 'SLOW' %}#991b1b{% elif field_data.field_ttfb.category == 'AVERAGE' %}#c2410c{% else %}#059669{% endif %}; line-height: 1.6;">
+                      {% if field_data.field_ttfb.category == 'SLOW' %}
+                        <strong>Your server is too slow.</strong> It takes {{ field_data.field_ttfb.value }} to start responding when someone visits your page. This delays everything else.
+                      {% elif field_data.field_ttfb.category == 'AVERAGE' %}
+                        <strong>Your server responds a bit slowly.</strong> There's a noticeable delay before your server starts sending page data to visitors.
+                      {% else %}
+                        <strong>Your server responds quickly!</strong> The server starts sending page data to visitors almost immediately after they request it.
+                      {% endif %}
+                    </p>
+                  </div>
+                  
+                  <details style="text-align: left; font-size: 0.85rem; color: #6b7280;">
+                    <summary style="cursor: pointer; font-weight: 600; color: #4b5563; padding: 8px; user-select: none;">📊 Technical Details</summary>
+                    <div style="padding: 12px; background: #f9fafb; border-radius: 6px; margin-top: 8px;">
+                      <div style="margin-bottom: 8px;"><strong>Technical Name:</strong> {{ field_data.field_ttfb.title }}</div>
+                      <div style="margin-bottom: 12px;"><strong>Your Score:</strong> {{ field_data.field_ttfb.value }}</div>
+                      <div class="gauge-bar" style="display: flex; height: 24px; border-radius: 6px; overflow: hidden; margin-bottom: 8px;">
+                        {% if field_data.field_ttfb.distributions %}
+                          {% for dist in field_data.field_ttfb.distributions %}
+                          <div style="flex: {{ dist.proportion }}; background: {% if forloop.counter == 1 %}#10b981{% elif forloop.counter == 2 %}#f59e0b{% else %}#ef4444{% endif %}; display: flex; align-items: center; justify-content: center;">
+                            <span style="color: white; font-size: 0.7rem; font-weight: 600;">{{ dist.proportion|floatformat:0 }}%</span>
+                          </div>
+                          {% endfor %}
+                        {% endif %}
+                      </div>
+                      <div style="font-size: 0.75rem; color: #6b7280;">Distribution: Fast (0-800ms) • Average (800-1800ms) • Slow (1800ms+)</div>
+                    </div>
+                  </details>
+                </div>
+              </div>
+              <div class="col-lg-4">
+                <div class="metric-action-plan" style="background: {% if field_data.field_ttfb.category == 'SLOW' %}linear-gradient(135deg, #fee2e2 0%, #fecaca 100%){% elif field_data.field_ttfb.category == 'AVERAGE' %}linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%){% else %}linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%){% endif %}; border-radius: 12px; padding: 16px; height: 100%;">
+                  <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi {% if field_data.field_ttfb.category == 'SLOW' %}bi-tools{% elif field_data.field_ttfb.category == 'AVERAGE' %}bi-wrench{% else %}bi-check-circle-fill{% endif %}" style="font-size: 1.2rem; color: {% if field_data.field_ttfb.category == 'SLOW' %}#991b1b{% elif field_data.field_ttfb.category == 'AVERAGE' %}#c2410c{% else %}#059669{% endif %};"></i>
+                    <h6 class="mb-0" style="font-weight: 700; font-size: 0.95rem; color: {% if field_data.field_ttfb.category == 'SLOW' %}#991b1b{% elif field_data.field_ttfb.category == 'AVERAGE' %}#c2410c{% else %}#059669{% endif %};">
+                      {% if field_data.field_ttfb.category == 'SLOW' %}How to Fix This{% elif field_data.field_ttfb.category == 'AVERAGE' %}How to Improve{% else %}Maintain Performance{% endif %}
+                    </h6>
+                  </div>
+                  <ul class="action-list mb-0">
+                    {% if field_data.field_ttfb.category == 'SLOW' %}
+                      <li>🚀 <strong>Upgrade server</strong> - Use faster hosting</li>
+                      <li>🌐 <strong>Use a CDN</strong> - Reduce server load</li>
+                      <li>⚙️ <strong>Optimize backend</strong> - Database queries</li>
+                      <li>🔄 <strong>Reduce redirects</strong> - Minimize hops</li>
+                    {% elif field_data.field_ttfb.category == 'AVERAGE' %}
+                      <li>💾 <strong>Enable caching</strong> - Redis or Memcached</li>
+                      <li>🗜️ <strong>Compress responses</strong> - Gzip/Brotli</li>
+                      <li>📊 <strong>Optimize database</strong> - Index queries</li>
+                      <li>⚡ <strong>Use HTTP/2</strong> - Faster protocol</li>
+                    {% else %}
+                      <li>✅ <strong>Monitor regularly</strong> - Track server health</li>
+                      <li>🎯 <strong>Keep optimized</strong> - Maintain cache</li>
+                      <li>📊 <strong>Watch trends</strong> - Check for slowdowns</li>
+                    {% endif %}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
       </div>
+    </div>
+  </div>
+  {% else %}
+  <!-- No Field Data Available -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body text-center p-5">
+      <i class="bi bi-info-circle text-muted" style="font-size: 3rem; opacity: 0.5;"></i>
+      <h5 class="mt-3 mb-2">Real User Data Not Available</h5>
+      <p class="text-muted mb-4">
+        This analysis doesn't have real user field data from Chrome UX Report. 
+        This could be because:
+      </p>
+      <ul class="text-muted text-start" style="max-width: 500px; margin: 0 auto;">
+        <li>The website doesn't have enough Chrome user traffic yet</li>
+        <li>This is an older analysis saved before field data collection</li>
+        <li>The URL hasn't been indexed by Chrome UX Report</li>
+      </ul>
+      <a href="{% url 'dashboard:page_speed_insights' %}" class="btn btn-primary mt-4">
+        <i class="bi bi-arrow-clockwise me-2"></i>Run New Analysis
+      </a>
     </div>
   </div>
   {% endif %}
 
-  <!-- Action Plan Section -->
-  <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-white border-bottom">
-      <h5 class="mb-0"><i class="bi bi-rocket text-success me-2"></i>Priority Action Plan</h5>
-    </div>
-    <div class="card-body p-4">
-      <div class="row g-4">
-        <div class="col-md-4">
-          <div class="action-item-compact">
-            <div class="action-number-compact">1</div>
-            <div>
-              <h6 class="mb-2" style="font-size: 0.95rem; font-weight: 700;">Start with Red Metrics</h6>
-              <p class="small text-muted mb-0">Fix "Poor" metrics first - they have the biggest impact on your score.</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="action-item-compact">
-            <div class="action-number-compact">2</div>
-            <div>
-              <h6 class="mb-2" style="font-size: 0.95rem; font-weight: 700;">Optimize Images</h6>
-              <p class="small text-muted mb-0">Compress and resize images. Use WebP format for 30% smaller files.</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="action-item-compact">
-            <div class="action-number-compact">3</div>
-            <div>
-              <h6 class="mb-2" style="font-size: 0.95rem; font-weight: 700;">Reduce Code</h6>
-              <p class="small text-muted mb-0">Minimize JavaScript and CSS. Remove unused code and plugins.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <!-- Metrics Guide Modal -->
-              <h6 class="mb-2">Test Again</h6>
-              <p class="small text-muted mb-0">After making changes, re-run this analysis (PageSpeed Insights) to measure improvements.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Metrics Guide Modal -->
   <div class="modal fade" id="metricsGuideModal" tabindex="-1" aria-labelledby="metricsGuideModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
       <div class="modal-content">
@@ -1263,6 +1487,29 @@
     font-weight: 700;
     font-size: 0.9rem;
     flex-shrink: 0;
+  }
+
+  /* Action List Styles */
+  .action-list {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 0;
+  }
+
+  .action-list li {
+    padding: 8px 0;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: #374151;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .action-list li:last-child {
+    border-bottom: none;
+  }
+
+  .metric-action-plan {
+    position: relative;
   }
 
   /* Single Column Metric Layout */

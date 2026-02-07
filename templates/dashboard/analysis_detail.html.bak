@@ -1,0 +1,1701 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Analysis Details | SEO Optima{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <!-- Header -->
+  <div class="analysis-header mb-4">
+    <div class="d-flex align-items-center mb-3">
+      <a href="{% url 'dashboard:page_speed_insights' %}" class="btn btn-sm btn-light border me-3">
+        <i class="bi bi-arrow-left"></i> Back
+      </a>
+      <div class="flex-grow-1">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="badge bg-primary">PageSpeed Insights</span>
+          <span class="badge bg-secondary">{{ analysis.strategy|title }}</span>
+        </div>
+        <h1 class="h3 mb-1 text-break">{{ analysis.url }}</h1>
+        <div class="text-muted small">
+          <i class="bi bi-calendar3"></i> {{ analysis.created_at|date:"M d, Y" }} at {{ analysis.created_at|date:"H:i" }}
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{% url 'dashboard:analysis_list' %}" class="btn btn-sm btn-outline-primary">
+          <i class="bi bi-list-ul"></i> All Analyses
+        </a>
+        <a href="{% url 'dashboard:delete_analysis' analysis.pk %}" class="btn btn-sm btn-outline-danger">
+          <i class="bi bi-trash"></i> Delete
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hero Performance Summary Section -->
+  <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+    <div class="card-body p-4">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div style="font-size: 4rem; font-weight: 800; line-height: 1;">{{ analysis.performance_score|default:"N/A" }}</div>
+            <div>
+              <h5 class="mb-1">Performance Score</h5>
+              <div style="font-size: 1.1rem; opacity: 0.95;">
+                {% if analysis.performance_score >= 90 %}
+                  ✅ <strong>Excellent!</strong> Your website is fast and loads well
+                {% elif analysis.performance_score >= 50 %}
+                  ⚠️ <strong>Needs Work.</strong> Speed issues may be losing you customers
+                {% else %}
+                  🔴 <strong>Critical.</strong> Your website needs urgent improvements
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="performance-bar" style="height: 8px; background: rgba(255,255,255,0.2); border-radius: 10px; overflow: hidden;">
+            <div style="height: 100%; width: {{ analysis.performance_score|default:0 }}%; background: {% if analysis.performance_score >= 90 %}#10b981{% elif analysis.performance_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %}; transition: width 0.3s ease;"></div>
+          </div>
+        </div>
+        <div class="col-md-4 text-md-end">
+          <div class="metrics-summary p-3 rounded" style="background: rgba(255,255,255,0.15); backdrop-filter: blur(10px);">
+            <div style="font-size: 2rem; font-weight: 700; margin-bottom: 5px;">
+              {% if analysis.metrics %}
+                {{ analysis.metrics.items|length|add:"-5"|default:0 }}
+              {% else %}
+                0
+              {% endif %}
+            </div>
+            <div style="font-size: 0.9rem; opacity: 0.9;">Metrics Need Attention</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core Web Vitals Assessment (Real User Data) -->
+  {% if field_data %}
+  <div class="card border-0 shadow-sm mb-4" style="background-color: #f8fafc;">
+    <div class="card-header bg-white border-bottom">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+          <h5 class="mb-1"><i class="bi bi-people text-success me-2"></i>Core Web Vitals Assessment</h5>
+          <p class="small text-muted mb-0">
+            <i class="bi bi-info-circle"></i>
+            Real-world data from Chrome users over the past 28 days
+          </p>
+        </div>
+        <span class="badge" style="padding: 8px 16px; font-size: 0.85rem; {% if field_data.overall_category == 'FAST' %}background: #10b981;{% elif field_data.overall_category == 'AVERAGE' %}background: #f59e0b;{% else %}background: #ef4444;{% endif %}">
+          {% if field_data.overall_category == 'FAST' %}
+            <i class="bi bi-check-circle-fill"></i> PASSED
+          {% elif field_data.overall_category == 'AVERAGE' %}
+            <i class="bi bi-exclamation-triangle-fill"></i> NEEDS IMPROVEMENT
+          {% else %}
+            <i class="bi bi-x-circle-fill"></i> FAILED
+          {% endif %}
+        </span>
+      </div>
+    </div>
+
+    <div class="card-body p-4" style="background-color: #f8fafc;">
+      <div class="row g-3">
+        
+        <!-- Largest Contentful Paint (LCP) - Field Data -->
+        {% if field_data.field_lcp %}
+        <div class="col-12">
+          <div class="metric-card-simple" style="border-left: 6px solid {% if field_data.field_lcp.category == 'FAST' %}#10b981{% elif field_data.field_lcp.category == 'AVERAGE' %}#f59e0b{% else %}#ef4444{% endif %};">
+            <div class="row g-4">
+              <!-- Left Column: Metric Info & Distribution -->
+              <div class="col-lg-8">
+                <div class="metric-simple-header">
+                  <div class="metric-simple-left">
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="metric-simple-title">{{ field_data.field_lcp.title }}</div>
+                      <i class="bi bi-info-circle text-muted" style="font-size: 0.9rem; cursor: help;" 
+                         data-bs-toggle="tooltip" 
+                         title="Measures loading performance. Good LCP is 2.5s or less."></i>
+                    </div>
+                    <div class="metric-simple-desc">Measures loading performance - when main content becomes visible</div>
+                  </div>
+                  <div class="metric-simple-right">
+                    <div class="metric-simple-value">{{ field_data.field_lcp.value }}</div>
+                    <div class="d-flex flex-column gap-2">
+                      <span class="metric-simple-badge" style="background-color: {% if field_data.field_lcp.category == 'FAST' %}#ecfdf5{% elif field_data.field_lcp.category == 'AVERAGE' %}#fffbeb{% else %}#fef2f2{% endif %}; color: {% if field_data.field_lcp.category == 'FAST' %}#059669{% elif field_data.field_lcp.category == 'AVERAGE' %}#d97706{% else %}#dc2626{% endif %};">
+                        {% if field_data.field_lcp.category == 'FAST' %}GOOD{% elif field_data.field_lcp.category == 'AVERAGE' %}NEEDS WORK{% else %}POOR{% endif %}
+                      </span>
+                      <span class="metric-priority-badge" 
+                            style="background-color: {% if field_data.field_lcp.category == 'FAST' %}#e0f2fe{% elif field_data.field_lcp.category == 'AVERAGE' %}#fff7ed{% else %}#fee2e2{% endif %}; 
+                                   color: {% if field_data.field_lcp.category == 'FAST' %}#0369a1{% elif field_data.field_lcp.category == 'AVERAGE' %}#c2410c{% else %}#991b1b{% endif %};
+                                   padding: 4px 10px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-align: center;">
+                        {% if field_data.field_lcp.category == 'FAST' %}✓ Maintain{% elif field_data.field_lcp.category == 'AVERAGE' %}→ Fix Soon{% else %}! Fix First{% endif %}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Distribution Bar -->
+                <div class="metric-simple-gauge">
+                  <div class="gauge-bar" style="display: flex; height: 36px; border-radius: 8px; overflow: hidden;">
+                    {% for dist in field_data.field_lcp.distributions %}
+                    <div style="flex: {{ dist.proportion }}; background: {% if forloop.counter == 1 %}#10b981{% elif forloop.counter == 2 %}#f59e0b{% else %}#ef4444{% endif %}; display: flex; align-items: center; justify-content: center;">
+                      <span style="color: white; font-size: 0.75rem; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
+                        {{ dist.proportion|floatformat:0 }}%
+                      </span>
+                    </div>
+                    {% endfor %}
+                  </div>
+                  <div class="gauge-threshold-labels">
+                    <span style="left: 0%;">0s</span>
+                    <span style="left: 50%;">2.5s</span>
+                    <span style="left: 80%;">4s</span>
+                  </div>
+                </div>
+
+                <!-- Summary Message -->
+                <div class="metric-simple-message" style="background-color: {% if field_data.field_lcp.category == 'FAST' %}#ecfdf5{% elif field_data.field_lcp.category == 'AVERAGE' %}#fffbeb{% else %}#fef2f2{% endif %};">
+                  {% if field_data.field_lcp.category == 'FAST' %}
+                    ✅ <strong>Great!</strong> Most users see your main content load quickly.
+                  {% elif field_data.field_lcp.category == 'AVERAGE' %}
+                    ⚠️ <strong>Slow.</strong> Many users wait too long for main content.
+                  {% else %}
+                    🔴 <strong>Critical.</strong> Main content takes too long to load for most users.
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Right Column: Action Plan -->
+              <div class="col-lg-4">
+                {% if field_data.field_lcp.category != 'FAST' %}
+                <div class="metric-action-plan" style="background: linear-gradient(135deg, {% if field_data.field_lcp.category == 'AVERAGE' %}#fff7ed{% else %}#fee2e2{% endif %} 0%, {% if field_data.field_lcp.category == 'AVERAGE' %}#fed7aa{% else %}#fecaca{% endif %} 100%); border-radius: 12px; padding: 16px; height: 100%;">
+                  <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi bi-tools" style="font-size: 1.2rem; color: {% if field_data.field_lcp.category == 'AVERAGE' %}#c2410c{% else %}#991b1b{% endif %};"></i>
+                    <h6 class="mb-0" style="font-weight: 700; font-size: 0.95rem; color: {% if field_data.field_lcp.category == 'AVERAGE' %}#c2410c{% else %}#991b1b{% endif %};">How to Fix This</h6>
+                  </div>
+                  <ul class="action-list mb-0">
+                    {% if field_data.field_lcp.category == 'SLOW' %}
+                    <li>🖼️ <strong>Optimize hero images</strong> - Compress main visual</li>
+                    <li>📱 <strong>Use responsive images</strong> - Serve correct sizes</li>
+                    <li>⚡ <strong>Preload critical resources</strong> - Add preload hints</li>
+                    <li>🚀 <strong>Upgrade hosting</strong> - Use faster server</li>
+                    {% else %}
+                    <li>🖼️ <strong>Compress large images</strong> - Reduce file sizes</li>
+                    <li>📱 <strong>Responsive images</strong> - Use srcset attribute</li>
+                    <li>⚡ <strong>Preload key assets</strong> - Hint browser early</li>
+                    {% endif %}
+                  </ul>
+                </div>
+                {% else %}
+                <div class="metric-action-plan" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 12px; padding: 16px; height: 100%;">
+                  <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi bi-check-circle-fill" style="font-size: 1.2rem; color: #059669;"></i>
+                    <h6 class="mb-0" style="font-weight: 700; font-size: 0.95rem; color: #059669;">Maintain Performance</h6>
+                  </div>
+                  <ul class="action-list mb-0">
+                    <li>✅ <strong>Monitor regularly</strong> - Test monthly</li>
+                    <li>🎯 <strong>Keep it optimized</strong> - Don't add bloat</li>
+                    <li>📊 <strong>Track changes</strong> - Watch performance trends</li>
+                  </ul>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Interaction to Next Paint (INP) - Field Data -->
+        {% if field_data.field_inp %}
+        <div class="col-12">
+          <div class="metric-card-simple" style="border-left: 6px solid {% if field_data.field_inp.category == 'FAST' %}#10b981{% elif field_data.field_inp.category == 'AVERAGE' %}#f59e0b{% else %}#ef4444{% endif %};">
+            <div class="row g-4">
+              <div class="col-lg-8">
+                <div class="metric-simple-header">
+                  <div class="metric-simple-left">
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="metric-simple-title">{{ field_data.field_inp.title }}</div>
+                      <i class="bi bi-info-circle text-muted" style="font-size: 0.9rem; cursor: help;" 
+                         data-bs-toggle="tooltip" 
+                         title="Measures interactivity. Good INP is 200ms or less."></i>
+                    </div>
+                    <div class="metric-simple-desc">Measures responsiveness - how quickly page responds to user interactions</div>
+                  </div>
+                  <div class="metric-simple-right">
+                    <div class="metric-simple-value">{{ field_data.field_inp.value }}</div>
+                    <div class="d-flex flex-column gap-2">
+                      <span class="metric-simple-badge" style="background-color: {% if field_data.field_inp.category == 'FAST' %}#ecfdf5{% elif field_data.field_inp.category == 'AVERAGE' %}#fffbeb{% else %}#fef2f2{% endif %}; color: {% if field_data.field_inp.category == 'FAST' %}#059669{% elif field_data.field_inp.category == 'AVERAGE' %}#d97706{% else %}#dc2626{% endif %};">
+                        {% if field_data.field_inp.category == 'FAST' %}GOOD{% elif field_data.field_inp.category == 'AVERAGE' %}NEEDS WORK{% else %}POOR{% endif %}
+                      </span>
+                      <span class="metric-priority-badge" 
+                            style="background-color: {% if field_data.field_inp.category == 'FAST' %}#e0f2fe{% elif field_data.field_inp.category == 'AVERAGE' %}#fff7ed{% else %}#fee2e2{% endif %}; 
+                                   color: {% if field_data.field_inp.category == 'FAST' %}#0369a1{% elif field_data.field_inp.category == 'AVERAGE' %}#c2410c{% else %}#991b1b{% endif %};
+                                   padding: 4px 10px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-align: center;">
+                        {% if field_data.field_inp.category == 'FAST' %}✓ Maintain{% elif field_data.field_inp.category == 'AVERAGE' %}→ Fix Soon{% else %}! Fix First{% endif %}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="metric-simple-gauge">
+                  <div class="gauge-bar" style="display: flex; height: 36px; border-radius: 8px; overflow: hidden;">
+                    {% for dist in field_data.field_inp.distributions %}
+                    <div style="flex: {{ dist.proportion }}; background: {% if forloop.counter == 1 %}#10b981{% elif forloop.counter == 2 %}#f59e0b{% else %}#ef4444{% endif %}; display: flex; align-items: center; justify-content: center;">
+                      <span style="color: white; font-size: 0.75rem; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
+                        {{ dist.proportion|floatformat:0 }}%
+                      </span>
+                    </div>
+                    {% endfor %}
+                  </div>
+                  <div class="gauge-threshold-labels">
+                    <span style="left: 0%;">0ms</span>
+                    <span style="left: 40%;">200ms</span>
+                    <span style="left: 100%;">500ms</span>
+                  </div>
+                </div>
+
+                <div class="metric-simple-message" style="background-color: {% if field_data.field_inp.category == 'FAST' %}#ecfdf5{% elif field_data.field_inp.category == 'AVERAGE' %}#fffbeb{% else %}#fef2f2{% endif %};">
+                  {% if field_data.field_inp.category == 'FAST' %}
+                    ✅ <strong>Perfect!</strong> Page responds instantly to user interactions.
+                  {% elif field_data.field_inp.category == 'AVERAGE' %}
+                    ⚠️ <strong>Slow response.</strong> Users experience delays when clicking.
+                  {% else %}
+                    🔴 <strong>Critical.</strong> Page feels frozen when users interact.
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="col-lg-4">
+                {% if field_data.field_inp.category != 'FAST' %}
+                <div class="metric-action-plan" style="background: linear-gradient(135deg, {% if field_data.field_inp.category == 'AVERAGE' %}#fff7ed{% else %}#fee2e2{% endif %} 0%, {% if field_data.field_inp.category == 'AVERAGE' %}#fed7aa{% else %}#fecaca{% endif %} 100%); border-radius: 12px; padding: 16px; height: 100%;">
+                  <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi bi-tools" style="font-size: 1.2rem; color: {% if field_data.field_inp.category == 'AVERAGE' %}#c2410c{% else %}#991b1b{% endif %};"></i>
+                    <h6 class="mb-0" style="font-weight: 700; font-size: 0.95rem; color: {% if field_data.field_inp.category == 'AVERAGE' %}#c2410c{% else %}#991b1b{% endif %};">How to Fix This</h6>
+                  </div>
+                  <ul class="action-list mb-0">
+                    {% if field_data.field_inp.category == 'SLOW' %}
+                    <li>📦 <strong>Remove heavy JavaScript</strong> - Audit all scripts</li>
+                    <li>⚡ <strong>Code splitting</strong> - Load JS on demand</li>
+                    <li>🔧 <strong>Remove unused plugins</strong> - Clean up dependencies</li>
+                    <li>⏱️ <strong>Defer third-party scripts</strong> - Load after main content</li>
+                    {% else %}
+                    <li>📦 <strong>Minimize JavaScript</strong> - Remove unused code</li>
+                    <li>⚡ <strong>Defer non-critical JS</strong> - Load asynchronously</li>
+                    <li>🔧 <strong>Optimize libraries</strong> - Use lighter alternatives</li>
+                    {% endif %}
+                  </ul>
+                </div>
+                {% else %}
+                <div class="metric-action-plan" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 12px; padding: 16px; height: 100%;">
+                  <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi bi-check-circle-fill" style="font-size: 1.2rem; color: #059669;"></i>
+                    <h6 class="mb-0" style="font-weight: 700; font-size: 0.95rem; color: #059669;">Maintain Performance</h6>
+                  </div>
+                  <ul class="action-list mb-0">
+                    <li>✅ <strong>Monitor regularly</strong> - Test monthly</li>
+                    <li>🎯 <strong>Keep it optimized</strong> - Don't add bloat</li>
+                    <li>📊 <strong>Track changes</strong> - Watch performance trends</li>
+                  </ul>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Cumulative Layout Shift (CLS) - Field Data -->
+        {% if field_data.field_cls %}
+        <div class="col-12">
+          <div class="metric-card-simple" style="border-left: 6px solid {% if field_data.field_cls.category == 'FAST' %}#10b981{% elif field_data.field_cls.category == 'AVERAGE' %}#f59e0b{% else %}#ef4444{% endif %};">
+            <div class="row g-4">
+              <div class="col-lg-8">
+                <div class="metric-simple-header">
+                  <div class="metric-simple-left">
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="metric-simple-title">{{ field_data.field_cls.title }}</div>
+                      <i class="bi bi-info-circle text-muted" style="font-size: 0.9rem; cursor: help;" 
+                         data-bs-toggle="tooltip" 
+                         title="Measures visual stability. Good CLS is 0.1 or less."></i>
+                    </div>
+                    <div class="metric-simple-desc">Measures visual stability - how much content jumps around</div>
+                  </div>
+                  <div class="metric-simple-right">
+                    <div class="metric-simple-value">{{ field_data.field_cls.value }}</div>
+                    <div class="d-flex flex-column gap-2">
+                      <span class="metric-simple-badge" style="background-color: {% if field_data.field_cls.category == 'FAST' %}#ecfdf5{% elif field_data.field_cls.category == 'AVERAGE' %}#fffbeb{% else %}#fef2f2{% endif %}; color: {% if field_data.field_cls.category == 'FAST' %}#059669{% elif field_data.field_cls.category == 'AVERAGE' %}#d97706{% else %}#dc2626{% endif %};">
+                        {% if field_data.field_cls.category == 'FAST' %}GOOD{% elif field_data.field_cls.category == 'AVERAGE' %}NEEDS WORK{% else %}POOR{% endif %}
+                      </span>
+                      <span class="metric-priority-badge" 
+                            style="background-color: {% if field_data.field_cls.category == 'FAST' %}#e0f2fe{% elif field_data.field_cls.category == 'AVERAGE' %}#fff7ed{% else %}#fee2e2{% endif %}; 
+                                   color: {% if field_data.field_cls.category == 'FAST' %}#0369a1{% elif field_data.field_cls.category == 'AVERAGE' %}#c2410c{% else %}#991b1b{% endif %};
+                                   padding: 4px 10px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-align: center;">
+                        {% if field_data.field_cls.category == 'FAST' %}✓ Maintain{% elif field_data.field_cls.category == 'AVERAGE' %}→ Fix Soon{% else %}! Fix First{% endif %}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="metric-simple-gauge">
+                  <div class="gauge-bar" style="display: flex; height: 36px; border-radius: 8px; overflow: hidden;">
+                    {% for dist in field_data.field_cls.distributions %}
+                    <div style="flex: {{ dist.proportion }}; background: {% if forloop.counter == 1 %}#10b981{% elif forloop.counter == 2 %}#f59e0b{% else %}#ef4444{% endif %}; display: flex; align-items: center; justify-content: center;">
+                      <span style="color: white; font-size: 0.75rem; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
+                        {{ dist.proportion|floatformat:0 }}%
+                      </span>
+                    </div>
+                    {% endfor %}
+                  </div>
+                  <div class="gauge-threshold-labels">
+                    <span style="left: 0%;">0</span>
+                    <span style="left: 40%;">0.1</span>
+                    <span style="left: 100%;">0.25</span>
+                  </div>
+                </div>
+
+                <div class="metric-simple-message" style="background-color: {% if field_data.field_cls.category == 'FAST' %}#ecfdf5{% elif field_data.field_cls.category == 'AVERAGE' %}#fffbeb{% else %}#fef2f2{% endif %};">
+                  {% if field_data.field_cls.category == 'FAST' %}
+                    ✅ <strong>Perfect!</strong> Layout is stable - content doesn't jump.
+                  {% elif field_data.field_cls.category == 'AVERAGE' %}
+                    ⚠️ <strong>Jumpy.</strong> Content shifts around during loading.
+                  {% else %}
+                    🔴 <strong>Critical.</strong> Content jumps excessively while loading.
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="col-lg-4">
+                {% if field_data.field_cls.category != 'FAST' %}
+                <div class="metric-action-plan" style="background: linear-gradient(135deg, {% if field_data.field_cls.category == 'AVERAGE' %}#fff7ed{% else %}#fee2e2{% endif %} 0%, {% if field_data.field_cls.category == 'AVERAGE' %}#fed7aa{% else %}#fecaca{% endif %} 100%); border-radius: 12px; padding: 16px; height: 100%;">
+                  <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi bi-tools" style="font-size: 1.2rem; color: {% if field_data.field_cls.category == 'AVERAGE' %}#c2410c{% else %}#991b1b{% endif %};"></i>
+                    <h6 class="mb-0" style="font-weight: 700; font-size: 0.95rem; color: {% if field_data.field_cls.category == 'AVERAGE' %}#c2410c{% else %}#991b1b{% endif %};">How to Fix This</h6>
+                  </div>
+                  <ul class="action-list mb-0">
+                    {% if field_data.field_cls.category == 'SLOW' %}
+                    <li>📐 <strong>Set image dimensions</strong> - Add width & height</li>
+                    <li>📱 <strong>Reserve ad space</strong> - Define ad slot sizes</li>
+                    <li>🎨 <strong>Avoid dynamic content</strong> - Don't inject above fold</li>
+                    <li>⚡ <strong>Preload fonts</strong> - Avoid font swapping</li>
+                    {% else %}
+                    <li>📐 <strong>Add image sizes</strong> - Set width and height</li>
+                    <li>📱 <strong>Reserve space for ads</strong> - Define dimensions</li>
+                    <li>🎨 <strong>Avoid layout shifts</strong> - Use CSS transforms</li>
+                    {% endif %}
+                  </ul>
+                </div>
+                {% else %}
+                <div class="metric-action-plan" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 12px; padding: 16px; height: 100%;">
+                  <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi bi-check-circle-fill" style="font-size: 1.2rem; color: #059669;"></i>
+                    <h6 class="mb-0" style="font-weight: 700; font-size: 0.95rem; color: #059669;">Maintain Performance</h6>
+                  </div>
+                  <ul class="action-list mb-0">
+                    <li>✅ <strong>Monitor regularly</strong> - Test monthly</li>
+                    <li>🎯 <strong>Keep it optimized</strong> - Don't add bloat</li>
+                    <li>📊 <strong>Track changes</strong> - Watch performance trends</li>
+                  </ul>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- Metrics Guide Modal -->
+  <div class="modal fade" id="metricsGuideModal" tabindex="-1" aria-labelledby="metricsGuideModalLabel" aria-hidden="true">
+        <div class="col-12">
+          <div class="metric-card-simple" style="border-left: 6px solid {% if metric.score >= 0.9 %}#10b981{% elif metric.score >= 0.5 %}#f59e0b{% else %}#ef4444{% endif %};">
+            
+            <div class="row g-4">
+              <!-- Left Column: Metric Info & Gauge -->
+              <div class="col-lg-8">
+                <!-- Simple Header: Icon, Title, Value, Status -->
+                <div class="metric-simple-header">
+                  <div class="metric-simple-left">
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="metric-simple-title">{{ metric.title }}</div>
+                      <i class="bi bi-info-circle text-muted" 
+                         style="font-size: 1rem; cursor: help; opacity: 0.6;"
+                         data-bs-toggle="tooltip" 
+                         data-bs-placement="top" 
+                         data-bs-html="true"
+                         title="{% if 'First Contentful Paint' in metric.title %}<strong>Like opening a book</strong><br>How quickly visitors see the first bit of content on your page. Faster is better!{% elif 'Speed Index' in metric.title %}<strong>Like loading a video</strong><br>How quickly your page content becomes visible. Lower numbers mean visitors see your content faster.{% elif 'Largest Contentful Paint' in metric.title %}<strong>Like a movie starting</strong><br>When the main content (biggest image or text) appears. This is what visitors came to see!{% elif 'Total Blocking Time' in metric.title %}<strong>Like a frozen screen</strong><br>How long your page is unresponsive. Lower means visitors can interact with your page sooner.{% elif 'Cumulative Layout Shift' in metric.title %}<strong>Like text jumping while reading</strong><br>Measures unexpected movement of content. Lower scores mean your page doesn't shift around annoyingly.{% endif %}"></i>
+                      <a href="{% if 'First Contentful Paint' in metric.title %}https://developer.chrome.com/docs/lighthouse/performance/first-contentful-paint{% elif 'Speed Index' in metric.title %}https://developer.chrome.com/docs/lighthouse/performance/speed-index{% elif 'Largest Contentful Paint' in metric.title %}https://developer.chrome.com/docs/lighthouse/performance/lighthouse-largest-contentful-paint{% elif 'Total Blocking Time' in metric.title %}https://developer.chrome.com/docs/lighthouse/performance/lighthouse-total-blocking-time{% elif 'Cumulative Layout Shift' in metric.title %}https://web.dev/articles/cls{% endif %}" 
+                         target="_blank" 
+                         rel="noopener noreferrer"
+                         class="text-muted"
+                         style="font-size: 1rem; text-decoration: none; opacity: 0.6;"
+                         title="Read the official guide">
+                        <i class="bi bi-question-circle"></i>
+                      </a>
+                    </div>
+                    <div class="metric-simple-desc">
+                      {% if 'First Contentful Paint' in metric.title %}
+                        ⚡ First impression
+                      {% elif 'Speed Index' in metric.title %}
+                        📊 Overall speed
+                      {% elif 'Largest Contentful Paint' in metric.title %}
+                        🎯 Main content
+                      {% elif 'Total Blocking Time' in metric.title %}
+                        ⏱️ Responsiveness
+                      {% elif 'Cumulative Layout Shift' in metric.title %}
+                        📱 Stability
+                      {% endif %}
+                    </div>
+                  </div>
+                  <div class="metric-simple-right">
+                    <div class="metric-simple-value">{{ metric.value }}</div>
+                    <div class="d-flex flex-column gap-2">
+                      <span class="metric-simple-badge" 
+                            style="background-color: {% if metric.score >= 0.9 %}#10b981{% elif metric.score >= 0.5 %}#f59e0b{% else %}#ef4444{% endif %};">
+                        {% if metric.score >= 0.9 %}✅ GOOD{% elif metric.score >= 0.5 %}⚠️ NEEDS WORK{% else %}🔴 POOR{% endif %}
+                      </span>
+                      <span class="metric-priority-badge" 
+                            style="background-color: {% if metric.score >= 0.9 %}#e0f2fe{% elif metric.score >= 0.5 %}#fff7ed{% else %}#fee2e2{% endif %}; 
+                                   color: {% if metric.score >= 0.9 %}#0369a1{% elif metric.score >= 0.5 %}#c2410c{% else %}#991b1b{% endif %};
+                                   padding: 4px 10px; 
+                                   border-radius: 4px; 
+                                   font-size: 0.7rem; 
+                                   font-weight: 700;
+                                   text-align: center;">
+                        {% if metric.score >= 0.9 %}✓ Maintain{% elif metric.score >= 0.5 %}→ Fix Soon{% else %}! Fix First{% endif %}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Simple Gauge Only -->
+                <div class="metric-simple-gauge">
+              {% if metric.score is not none %}
+              {% if 'First Contentful Paint' in metric.title %}
+                <div class="gauge-bar">
+                  <div class="gauge-section good" style="flex: 1.8;"><span class="gauge-text">GOOD</span></div>
+                  <div class="gauge-section needs" style="flex: 1.2;"><span class="gauge-text">NEEDS WORK</span></div>
+                  <div class="gauge-section poor" style="flex: 2;"><span class="gauge-text">POOR</span></div>
+                  <div class="gauge-marker" style="left: {% widthratio 1.8 5 100 %}%;"></div>
+                  <div class="gauge-marker" style="left: {% widthratio 3 5 100 %}%;"></div>
+                </div>
+                <div class="gauge-threshold-labels">
+                  <span class="threshold-label" style="left: {% widthratio 1.8 5 100 %}%;">1.8s</span>
+                  <span class="threshold-label" style="left: {% widthratio 3 5 100 %}%;">3s</span>
+                </div>
+              {% elif 'Speed Index' in metric.title %}
+                <div class="gauge-bar">
+                  <div class="gauge-section good" style="flex: 34;"><span class="gauge-text">GOOD</span></div>
+                  <div class="gauge-section needs" style="flex: 24;"><span class="gauge-text">NEEDS WORK</span></div>
+                  <div class="gauge-section poor" style="flex: 42;"><span class="gauge-text">POOR</span></div>
+                  <div class="gauge-marker" style="left: {% widthratio 34 100 100 %}%;"></div>
+                  <div class="gauge-marker" style="left: {% widthratio 58 100 100 %}%;"></div>
+                </div>
+                <div class="gauge-threshold-labels">
+                  <span class="threshold-label" style="left: {% widthratio 34 100 100 %}%;">3.4s</span>
+                  <span class="threshold-label" style="left: {% widthratio 58 100 100 %}%;">5.8s</span>
+                </div>
+              {% elif 'Largest Contentful Paint' in metric.title %}
+                <div class="gauge-bar">
+                  <div class="gauge-section good" style="flex: 25;"><span class="gauge-text">GOOD</span></div>
+                  <div class="gauge-section needs" style="flex: 15;"><span class="gauge-text">NEEDS WORK</span></div>
+                  <div class="gauge-section poor" style="flex: 60;"><span class="gauge-text">POOR</span></div>
+                  <div class="gauge-marker" style="left: {% widthratio 25 100 100 %}%;"></div>
+                  <div class="gauge-marker" style="left: {% widthratio 40 100 100 %}%;"></div>
+                </div>
+                <div class="gauge-threshold-labels">
+                  <span class="threshold-label" style="left: {% widthratio 25 100 100 %}%;">2.5s</span>
+                  <span class="threshold-label" style="left: {% widthratio 40 100 100 %}%;">4s</span>
+                </div>
+              {% elif 'Total Blocking Time' in metric.title %}
+                <div class="gauge-bar">
+                  <div class="gauge-section good" style="flex: 200;"><span class="gauge-text">GOOD</span></div>
+                  <div class="gauge-section needs" style="flex: 400;"><span class="gauge-text">NEEDS WORK</span></div>
+                  <div class="gauge-section poor" style="flex: 400;"><span class="gauge-text">POOR</span></div>
+                  <div class="gauge-marker" style="left: {% widthratio 200 1000 100 %}%;"></div>
+                  <div class="gauge-marker" style="left: {% widthratio 600 1000 100 %}%;"></div>
+                </div>
+                <div class="gauge-threshold-labels">
+                  <span class="threshold-label" style="left: {% widthratio 200 1000 100 %}%;">200ms</span>
+                  <span class="threshold-label" style="left: {% widthratio 600 1000 100 %}%;">600ms</span>
+                </div>
+              {% elif 'Cumulative Layout Shift' in metric.title %}
+                <div class="gauge-bar">
+                  <div class="gauge-section good" style="flex: 1;"><span class="gauge-text">GOOD</span></div>
+                  <div class="gauge-section needs" style="flex: 1.5;"><span class="gauge-text">NEEDS WORK</span></div>
+                  <div class="gauge-section poor" style="flex: 2.5;"><span class="gauge-text">POOR</span></div>
+                  <div class="gauge-marker" style="left: {% widthratio 1 5 100 %}%;"></div>
+                  <div class="gauge-marker" style="left: {% widthratio 2.5 5 100 %}%;"></div>
+                </div>
+                <div class="gauge-threshold-labels">
+                  <span class="threshold-label" style="left: {% widthratio 1 5 100 %}%;">0.1</span>
+                  <span class="threshold-label" style="left: {% widthratio 2.5 5 100 %}%;">0.25</span>
+                </div>
+              {% endif %}
+              {% endif %}
+            </div>
+
+            <!-- One Key Message -->
+            <div class="metric-simple-message" style="background-color: {% if metric.score >= 0.9 %}#ecfdf5{% elif metric.score >= 0.5 %}#fffbeb{% else %}#fef2f2{% endif %};">
+              {% if 'First Contentful Paint' in metric.title %}
+                {% if metric.score >= 0.9 %}
+                  ✅ <strong>Perfect!</strong> Visitors see content immediately.
+                {% elif metric.score >= 0.5 %}
+                  ⚠️ <strong>Too slow.</strong> Optimize images and reduce initial code.
+                {% else %}
+                  🔴 <strong>Critical.</strong> Page appears blank for too long.
+                {% endif %}
+              {% elif 'Speed Index' in metric.title %}
+                {% if metric.score >= 0.9 %}
+                  ✅ <strong>Excellent!</strong> Page loads very fast.
+                {% elif metric.score >= 0.5 %}
+                  ⚠️ <strong>Slow.</strong> Compress images and minimize code.
+                {% else %}
+                  🔴 <strong>Critical.</strong> Page takes way too long to load.
+                {% endif %}
+              {% elif 'Largest Contentful Paint' in metric.title %}
+                {% if metric.score >= 0.9 %}
+                  ✅ <strong>Great!</strong> Main content loads fast.
+                {% elif metric.score >= 0.5 %}
+                  ⚠️ <strong>Slow.</strong> Optimize large images and videos.
+                {% else %}
+                  🔴 <strong>Critical.</strong> Main content is too slow to load.
+                {% endif %}
+              {% elif 'Total Blocking Time' in metric.title %}
+                {% if metric.score >= 0.9 %}
+                  ✅ <strong>Perfect!</strong> Page responds instantly.
+                {% elif metric.score >= 0.5 %}
+                  ⚠️ <strong>Slow response.</strong> Reduce JavaScript.
+                {% else %}
+                  🔴 <strong>Critical.</strong> Page feels frozen.
+                {% endif %}
+              {% elif 'Cumulative Layout Shift' in metric.title %}
+                {% if metric.score >= 0.9 %}
+                  ✅ <strong>Perfect!</strong> Layout is stable.
+                {% elif metric.score >= 0.5 %}
+                  ⚠️ <strong>Jumpy.</strong> Add image dimensions.
+                {% else %}
+                  🔴 <strong>Critical.</strong> Content jumps around.
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Right Column: Action Plan -->
+          <div class="col-lg-4">
+            {% if metric.score < 0.9 %}
+            <div class="metric-action-plan" style="background: linear-gradient(135deg, {% if metric.score < 0.5 %}#fee2e2{% else %}#fff7ed{% endif %} 0%, {% if metric.score < 0.5 %}#fecaca{% else %}#fed7aa{% endif %} 100%); border-radius: 12px; padding: 16px; height: 100%;">
+              <div class="d-flex align-items-center gap-2 mb-3">
+                <i class="bi bi-tools" style="font-size: 1.2rem; color: {% if metric.score < 0.5 %}#991b1b{% else %}#c2410c{% endif %};"></i>
+                <h6 class="mb-0" style="font-weight: 700; font-size: 0.95rem; color: {% if metric.score < 0.5 %}#991b1b{% else %}#c2410c{% endif %};">How to Fix This</h6>
+              </div>
+              
+              {% if 'First Contentful Paint' in metric.title %}
+                <ul class="action-list mb-0">
+                  {% if metric.score < 0.5 %}
+                  <li>🖼️ <strong>Optimize images</strong> - Compress and use WebP format</li>
+                  <li>⚡ <strong>Reduce render-blocking</strong> - Defer CSS and JavaScript</li>
+                  <li>📦 <strong>Minimize initial payload</strong> - Remove unused code</li>
+                  <li>🚀 <strong>Use CDN</strong> - Serve assets from nearby servers</li>
+                  {% else %}
+                  <li>🖼️ <strong>Compress images</strong> - Use WebP or smaller formats</li>
+                  <li>⚡ <strong>Defer non-critical CSS</strong> - Load styles asynchronously</li>
+                  <li>📦 <strong>Remove unused code</strong> - Clean up your codebase</li>
+                  {% endif %}
+                </ul>
+              
+              {% elif 'Speed Index' in metric.title %}
+                <ul class="action-list mb-0">
+                  {% if metric.score < 0.5 %}
+                  <li>🖼️ <strong>Optimize all images</strong> - Compress and lazy-load</li>
+                  <li>📦 <strong>Minimize JavaScript</strong> - Remove unused libraries</li>
+                  <li>⚡ <strong>Enable compression</strong> - Use gzip or brotli</li>
+                  <li>🌐 <strong>Use HTTP/2</strong> - Enable on your server</li>
+                  {% else %}
+                  <li>🖼️ <strong>Lazy-load images</strong> - Load images as needed</li>
+                  <li>📦 <strong>Code splitting</strong> - Break JS into smaller chunks</li>
+                  <li>⚡ <strong>Compress assets</strong> - Enable gzip compression</li>
+                  {% endif %}
+                </ul>
+              
+              {% elif 'Largest Contentful Paint' in metric.title %}
+                <ul class="action-list mb-0">
+                  {% if metric.score < 0.5 %}
+                  <li>🖼️ <strong>Optimize hero images</strong> - Compress main visual</li>
+                  <li>📱 <strong>Use responsive images</strong> - Serve correct sizes</li>
+                  <li>⚡ <strong>Preload critical resources</strong> - Add preload hints</li>
+                  <li>🚀 <strong>Upgrade hosting</strong> - Use faster server</li>
+                  {% else %}
+                  <li>🖼️ <strong>Compress large images</strong> - Reduce file sizes</li>
+                  <li>📱 <strong>Responsive images</strong> - Use srcset attribute</li>
+                  <li>⚡ <strong>Preload key assets</strong> - Hint browser early</li>
+                  {% endif %}
+                </ul>
+              
+              {% elif 'Total Blocking Time' in metric.title %}
+                <ul class="action-list mb-0">
+                  {% if metric.score < 0.5 %}
+                  <li>📦 <strong>Remove heavy JavaScript</strong> - Audit all scripts</li>
+                  <li>⚡ <strong>Code splitting</strong> - Load JS on demand</li>
+                  <li>🔧 <strong>Remove unused plugins</strong> - Clean up dependencies</li>
+                  <li>⏱️ <strong>Defer third-party scripts</strong> - Load after main content</li>
+                  {% else %}
+                  <li>📦 <strong>Minimize JavaScript</strong> - Remove unused code</li>
+                  <li>⚡ <strong>Defer non-critical JS</strong> - Load asynchronously</li>
+                  <li>🔧 <strong>Optimize libraries</strong> - Use lighter alternatives</li>
+                  {% endif %}
+                </ul>
+              
+              {% elif 'Cumulative Layout Shift' in metric.title %}
+                <ul class="action-list mb-0">
+                  {% if metric.score < 0.5 %}
+                  <li>📐 <strong>Set image dimensions</strong> - Add width & height</li>
+                  <li>📱 <strong>Reserve ad space</strong> - Define ad slot sizes</li>
+                  <li>🎨 <strong>Avoid dynamic content</strong> - Don't inject above fold</li>
+                  <li>⚡ <strong>Preload fonts</strong> - Avoid font swapping</li>
+                  {% else %}
+                  <li>📐 <strong>Add image sizes</strong> - Set width and height</li>
+                  <li>📱 <strong>Reserve space for ads</strong> - Define dimensions</li>
+                  <li>🎨 <strong>Avoid layout shifts</strong> - Use CSS transforms</li>
+                  {% endif %}
+                </ul>
+              {% endif %}
+            </div>
+            {% else %}
+            <div class="metric-action-plan" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 12px; padding: 16px; height: 100%;">
+              <div class="d-flex align-items-center gap-2 mb-3">
+                <i class="bi bi-check-circle-fill" style="font-size: 1.2rem; color: #059669;"></i>
+                <h6 class="mb-0" style="font-weight: 700; font-size: 0.95rem; color: #059669;">Maintain Performance</h6>
+              </div>
+              <ul class="action-list mb-0">
+                <li>✅ <strong>Monitor regularly</strong> - Test monthly</li>
+                <li>🎯 <strong>Keep it optimized</strong> - Don't add bloat</li>
+                <li>📊 <strong>Track changes</strong> - Watch performance trends</li>
+              </ul>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- Metrics Guide Modal -->
+  <div class="modal fade" id="metricsGuideModal" tabindex="-1" aria-labelledby="metricsGuideModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="metricsGuideModalLabel">
+            <i class="bi bi-book me-2"></i>Understanding Speed Metrics - Simple Guide
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="metric-guide">
+            <div class="guide-item">
+              <div class="guide-icon">⚡</div>
+              <div class="guide-content">
+                <h6>First Contentful Paint (FCP)</h6>
+                <p class="guide-analogy"><strong>Like opening a book:</strong> How quickly do you see the first word?</p>
+                <p>This measures when visitors first see <em>anything</em> on your page - text, images, or any content. It's like the first impression!</p>
+                <div class="guide-scores">
+                  <span class="badge bg-success">Good: Under 1.8s</span>
+                  <span class="badge bg-warning">Needs Work: 1.8s - 3.0s</span>
+                  <span class="badge bg-danger">Poor: Over 3.0s</span>
+                </div>
+                <p class="guide-impact mt-2"><strong>Why it matters:</strong> First impressions count! If nothing shows up quickly, visitors might leave.</p>
+              </div>
+            </div>
+
+            <div class="guide-item">
+              <div class="guide-icon">📊</div>
+              <div class="guide-content">
+                <h6>Speed Index</h6>
+                <p class="guide-analogy"><strong>Like loading a video:</strong> How fast does the screen fill up with content?</p>
+                <p>This shows how quickly the <em>majority</em> of your page becomes visible. Lower numbers are better!</p>
+                <div class="guide-scores">
+                  <span class="badge bg-success">Good: Under 3.4s</span>
+                  <span class="badge bg-warning">Needs Work: 3.4s - 5.8s</span>
+                  <span class="badge bg-danger">Poor: Over 5.8s</span>
+                </div>
+                <p class="guide-impact mt-2"><strong>Why it matters:</strong> Nobody likes staring at blank screens. Fast loading = happy visitors!</p>
+              </div>
+            </div>
+
+            <div class="guide-item">
+              <div class="guide-icon">🎯</div>
+              <div class="guide-content">
+                <h6>Largest Contentful Paint (LCP)</h6>
+                <p class="guide-analogy"><strong>Like the movie starting:</strong> When does the main attraction appear?</p>
+                <p>This measures when your <em>main content</em> (biggest image, headline, or video) becomes visible. This is usually what visitors came to see!</p>
+                <div class="guide-scores">
+                  <span class="badge bg-success">Good: Under 2.5s</span>
+                  <span class="badge bg-warning">Needs Work: 2.5s - 4.0s</span>
+                  <span class="badge bg-danger">Poor: Over 4.0s</span>
+                </div>
+                <p class="guide-impact mt-2"><strong>Why it matters:</strong> This is what visitors came for. Google uses this to rank your site!</p>
+              </div>
+            </div>
+
+            <div class="guide-item">
+              <div class="guide-icon">⏱️</div>
+              <div class="guide-content">
+                <h6>Total Blocking Time (TBT)</h6>
+                <p class="guide-analogy"><strong>Like a frozen screen:</strong> How long before you can click buttons?</p>
+                <p>This measures how long your page is <em>unresponsive</em> while loading. During this time, visitors can't click buttons or scroll smoothly.</p>
+                <div class="guide-scores">
+                  <span class="badge bg-success">Good: Under 200ms</span>
+                  <span class="badge bg-warning">Needs Work: 200ms - 600ms</span>
+                  <span class="badge bg-danger">Poor: Over 600ms</span>
+                </div>
+                <p class="guide-impact mt-2"><strong>Why it matters:</strong> Frustrating when you click but nothing happens. Lower is much better!</p>
+              </div>
+            </div>
+
+            <div class="guide-item">
+              <div class="guide-icon">📱</div>
+              <div class="guide-content">
+                <h6>Cumulative Layout Shift (CLS)</h6>
+                <p class="guide-analogy"><strong>Like text jumping while reading:</strong> Does content move around unexpectedly?</p>
+                <p>Ever tried to click a button, but it moved? This measures <em>unexpected movement</em> of content. Lower scores mean a stable, predictable page.</p>
+                <div class="guide-scores">
+                  <span class="badge bg-success">Good: Under 0.1</span>
+                  <span class="badge bg-warning">Needs Work: 0.1 - 0.25</span>
+                  <span class="badge bg-danger">Poor: Over 0.25</span>
+                </div>
+                <p class="guide-impact mt-2"><strong>Why it matters:</strong> Prevents accidental clicks and frustrated visitors. Essential for mobile!</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="alert alert-info mt-4">
+            <h6><i class="bi bi-lightbulb me-2"></i>Quick Tip:</h6>
+            <p class="mb-0">Focus on the metrics marked "Poor" or "Needs Work" first. Even small improvements can make a big difference in user experience and Google rankings!</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Got it!</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<style>
+  /* Header Styles */
+  .analysis-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 24px;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .analysis-header .btn-light {
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    font-weight: 500;
+  }
+
+  .analysis-header .btn-light:hover {
+    background: white;
+  }
+
+  .analysis-header h1 {
+    color: white;
+    font-weight: 600;
+  }
+
+  .analysis-header .badge {
+    font-size: 0.75rem;
+    padding: 6px 12px;
+    font-weight: 600;
+  }
+
+  .analysis-header .text-muted {
+    color: rgba(255, 255, 255, 0.8) !important;
+  }
+
+  /* Score Card Styles */
+  .score-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+    height: 100%;
+  }
+
+  .score-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .score-category {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+  }
+
+  .score-value {
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .score-status {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+
+  .score-bar {
+    width: 100%;
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .score-bar-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 1s ease;
+  }
+
+  /* Metric Card Styles */
+  .metric-card {
+    background: #f9fafb;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+    height: 100%;
+  }
+
+  .metric-card:hover {
+    background: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-color: #d1d5db;
+  }
+
+  .metric-title {
+    font-size: 0.9rem;
+    color: #374151;
+    font-weight: 600;
+  }
+
+  .metric-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-top: 8px;
+  }
+
+  .metric-badge {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .metric-progress-bar {
+    width: 100%;
+    height: 5px;
+    background: #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .metric-progress-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 1s ease;
+  }
+
+  /* Threshold Reference Styles */
+  .reference-metric {
+    padding: 12px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+  }
+
+  .reference-metric-title {
+    font-size: 0.85rem;
+    color: #1f2937;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .reference-gauge-bar {
+    display: flex;
+    height: 20px;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  }
+
+  .reference-gauge-section {
+    flex: 1;
+    position: relative;
+  }
+
+  .reference-gauge-section.good {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  }
+
+  .reference-gauge-section.needs {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  }
+
+  .reference-gauge-section.poor {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  }
+
+  .reference-gauge-marker {
+    position: absolute;
+    top: -4px;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 28px;
+    background: #1f2937;
+    z-index: 10;
+  }
+
+  .reference-gauge-labels {
+    position: relative;
+    height: 18px;
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .reference-threshold-label {
+    position: absolute;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #374151;
+    margin-top: 2px;
+  }
+
+  /* Gauge Styles */
+  .metric-gauge {
+    margin-top: 16px;
+  }
+
+  .gauge-bar {
+    display: flex;
+    height: 36px;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  .gauge-section {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .gauge-text {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: white;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    line-height: 1.3;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  .gauge-section.good {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  }
+
+  .gauge-section.needs {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  }
+
+  .gauge-section.poor {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  }
+
+  .gauge-marker {
+    position: absolute;
+    top: -8px;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 48px;
+    background: #1f2937;
+    border-radius: 1px;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+  }
+
+  .gauge-marker::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 10px;
+    height: 10px;
+    background: #1f2937;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+
+  .gauge-marker::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 10px;
+    height: 10px;
+    background: #1f2937;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+
+  .gauge-threshold-labels {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 2px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #6b7280;
+    position: relative;
+    height: 22px;
+    align-items: center;
+  }
+
+  .threshold-label {
+    position: absolute;
+    transform: translateX(-50%);
+    text-align: center;
+  }
+
+  .threshold-label::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 8px;
+    background: #374151;
+  }
+
+  /* Card Styles */
+  .card {
+    border-radius: 12px;
+  }
+
+  .card-header {
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    padding: 16px 24px;
+  }
+
+  .card-header h5 {
+    font-weight: 600;
+    font-size: 1.1rem;
+  }
+
+  /* Info Icon Styles */
+  .info-icon {
+    font-size: 0.875rem;
+    cursor: help;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+  }
+
+  .info-icon:hover {
+    opacity: 1;
+  }
+
+  .metric-help-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #f0f9ff;
+    color: #3b82f6;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    font-size: 1rem;
+    border: 1.5px solid #dbeafe;
+  }
+
+  .metric-help-link:hover {
+    background: #dbeafe;
+    color: #1e40af;
+    border-color: #bfdbfe;
+    transform: scale(1.1);
+  }
+
+  .metric-help-link i {
+    font-size: 0.9rem;
+  }
+
+  .metric-description {
+    font-size: 0.8rem;
+    color: #6b7280;
+    font-weight: 500;
+  }
+
+  /* Metric Ranges Styles */
+  .metric-ranges {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 140px;
+  }
+
+  .range-item {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .range-good {
+    background-color: #52C655;
+    color: #1f2937;
+  }
+
+  .range-needs {
+    background-color: #F5A623;
+    color: #1f2937;
+  }
+
+  .range-poor {
+    background-color: #EF5350;
+    color: #1f2937;
+  }
+
+  /* Tooltip Styles */
+  .tooltip-inner {
+    max-width: 300px;
+    text-align: left;
+    padding: 12px;
+    font-size: 0.875rem;
+  }
+
+  .tooltip-content strong {
+    color: #fbbf24;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  /* Modal Guide Styles */
+  .metric-guide {
+    padding: 10px 0;
+  }
+
+  .guide-item {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f9fafb;
+    border-radius: 12px;
+    border-left: 4px solid #3b82f6;
+  }
+
+  .guide-icon {
+    font-size: 2.5rem;
+    flex-shrink: 0;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .guide-content h6 {
+    color: #1f2937;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+  }
+
+  .guide-analogy {
+    background: #fff;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border-left: 3px solid #fbbf24;
+    margin: 10px 0;
+    font-size: 0.95rem;
+  }
+
+  .guide-analogy strong {
+    color: #f59e0b;
+  }
+
+  .guide-content p {
+    color: #4b5563;
+    line-height: 1.6;
+    margin-bottom: 10px;
+  }
+
+  .guide-scores {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0;
+  }
+
+  .guide-scores .badge {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+  }
+
+  .guide-impact {
+    font-size: 0.9rem;
+    color: #1f2937;
+    background: white;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border-left: 3px solid #3b82f6;
+  }
+
+  .guide-impact strong {
+    color: #3b82f6;
+  }
+
+  .modal-header.bg-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  }
+
+  /* Content Headers Styles */
+  .headers-container {
+    max-height: 600px;
+    overflow-y: auto;
+  }
+
+  .header-item {
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    border-left: 4px solid;
+    background: #f9fafb;
+    border-radius: 6px;
+    display: flex;
+    align-items: flex-start;
+    transition: all 0.2s ease;
+  }
+
+  .header-item:hover {
+    background: #f3f4f6;
+    transform: translateX(4px);
+  }
+
+  .header-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-right: 12px;
+    min-width: 40px;
+    text-align: center;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .header-text {
+    flex: 1;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #1f2937;
+  }
+
+  /* H1 - Purple */
+  .header-h1 {
+    border-left-color: #8b5cf6;
+  }
+
+  .header-h1 .header-tag {
+    background-color: #8b5cf6;
+  }
+
+  .header-h1 .header-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  /* H2 - Blue */
+  .header-h2 {
+    border-left-color: #3b82f6;
+    margin-left: 20px;
+  }
+
+  .header-h2 .header-tag {
+    background-color: #3b82f6;
+  }
+
+  .header-h2 .header-text {
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+
+  /* H3 - Cyan */
+  .header-h3 {
+    border-left-color: #06b6d4;
+    margin-left: 40px;
+  }
+
+  .header-h3 .header-tag {
+    background-color: #06b6d4;
+  }
+
+  /* H4 - Green */
+  .header-h4 {
+    border-left-color: #10b981;
+    margin-left: 60px;
+  }
+
+  .header-h4 .header-tag {
+    background-color: #10b981;
+  }
+
+  .header-h4 .header-text {
+    font-size: 0.9rem;
+  }
+
+  /* H5 - Yellow */
+  .header-h5 {
+    border-left-color: #f59e0b;
+    margin-left: 80px;
+  }
+
+  .header-h5 .header-tag {
+    background-color: #f59e0b;
+  }
+
+  .header-h5 .header-text {
+    font-size: 0.875rem;
+  }
+
+  /* H6 - Gray */
+  .header-h6 {
+    border-left-color: #6b7280;
+    margin-left: 100px;
+  }
+
+  .header-h6 .header-tag {
+    background-color: #6b7280;
+  }
+
+  .header-h6 .header-text {
+    font-size: 0.85rem;
+  }
+
+  /* Professional Metric Card Styling */
+  .metric-card-new {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+  }
+
+  .metric-card-new:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .metric-title-new {
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: #111827;
+    letter-spacing: -0.3px;
+  }
+
+  .metric-description-new {
+    font-size: 0.875rem;
+    color: #6b7280;
+    color: #6b7280;
+  }
+
+  .metric-value-new {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #111827;
+    line-height: 1;
+  }
+
+  .metric-badge-new {
+    font-size: 0.8rem !important;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  /* Simplified Metric Card Styling */
+  .metric-card-simple {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+    margin-bottom: 24px;
+  }
+
+  .metric-card-simple:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  .metric-simple-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    gap: 20px;
+  }
+
+  .metric-simple-left {
+    flex: 1;
+  }
+
+  .metric-simple-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 4px;
+  }
+
+  .metric-simple-desc {
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+
+  .metric-simple-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+
+  .metric-simple-value {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #111827;
+    line-height: 1;
+  }
+
+  .metric-simple-badge {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: white;
+    white-space: nowrap;
+  }
+
+  .metric-simple-gauge {
+    margin-bottom: 16px;
+  }
+
+  .metric-simple-message {
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    border-left: 4px solid transparent;
+  }
+
+  .info-icon-new {
+    cursor: help;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+  }
+
+  .info-icon-new:hover {
+    opacity: 1;
+  }
+
+  .metric-help-link-new {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #f0f9ff;
+    color: #0ea5e9;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .metric-help-link-new:hover {
+    background: #0ea5e9;
+    color: white;
+  }
+
+  .range-pills {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .range-pill {
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-align: center;
+    color: white;
+    letter-spacing: 0.3px;
+  }
+
+  .range-pill.range-good {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  }
+
+  .range-pill.range-needs {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  }
+
+  .range-pill.range-poor {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  }
+
+  .business-impact-box {
+    padding: 16px 18px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-top: 16px;
+  }
+
+  /* Action Plan Styles */
+  .action-item {
+    display: flex;
+    gap: 16px;
+  }
+
+  .action-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  /* Compact Action Items */
+  .action-item-compact {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .action-number-compact {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  /* Action List Styles */
+  .action-list {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 0;
+  }
+
+  .action-list li {
+    padding: 8px 0;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: #374151;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .action-list li:last-child {
+    border-bottom: none;
+  }
+
+  .metric-action-plan {
+    position: relative;
+  }
+
+  /* Single Column Metric Layout */
+  .col-12 .metric-card {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+  }
+
+  @media (max-width: 768px) {
+    .col-12 .metric-card {
+      flex-direction: column;
+    }
+  }
+
+  .col-12 .metric-card > div:first-child {
+    flex: 1;
+  }
+
+  .col-12 .metric-card .metric-value {
+    font-size: 2.5rem;
+    min-width: 150px;
+  }
+</style>
+
+<script>
+  // Initialize Bootstrap tooltips
+  document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl, {
+        html: true,
+        trigger: 'hover focus'
+      });
+    });
+  });
+</script>
+{% endblock %}

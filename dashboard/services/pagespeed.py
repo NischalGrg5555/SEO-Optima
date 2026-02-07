@@ -117,9 +117,79 @@ def parse_pagespeed_response(response: dict) -> dict:
                 'score': audits['cumulative-layout-shift'].get('score'),
             }
         
+        # Extract Field Data (Real User Data from Chrome UX Report)
+        field_data = {}
+        loading_experience = response.get('loadingExperience', {})
+        origin_loading_experience = response.get('originLoadingExperience', {})
+        
+        # Use origin data if available, otherwise use URL-specific data
+        experience_data = origin_loading_experience if origin_loading_experience else loading_experience
+        
+        if experience_data and 'metrics' in experience_data:
+            field_metrics = experience_data['metrics']
+            
+            # Overall assessment
+            field_data['overall_category'] = experience_data.get('overall_category', 'UNKNOWN')
+            
+            # Largest Contentful Paint (LCP) - Field Data
+            if 'LARGEST_CONTENTFUL_PAINT_MS' in field_metrics:
+                lcp_data = field_metrics['LARGEST_CONTENTFUL_PAINT_MS']
+                field_data['field_lcp'] = {
+                    'title': 'Largest Contentful Paint (LCP)',
+                    'value': format_field_value(lcp_data.get('percentile'), 'ms'),
+                    'category': lcp_data.get('category', 'UNKNOWN'),
+                    'percentile': lcp_data.get('percentile'),
+                    'distributions': lcp_data.get('distributions', [])
+                }
+            
+            # Interaction to Next Paint (INP) - Field Data
+            if 'INTERACTION_TO_NEXT_PAINT' in field_metrics:
+                inp_data = field_metrics['INTERACTION_TO_NEXT_PAINT']
+                field_data['field_inp'] = {
+                    'title': 'Interaction to Next Paint (INP)',
+                    'value': format_field_value(inp_data.get('percentile'), 'ms'),
+                    'category': inp_data.get('category', 'UNKNOWN'),
+                    'percentile': inp_data.get('percentile'),
+                    'distributions': inp_data.get('distributions', [])
+                }
+            
+            # Cumulative Layout Shift (CLS) - Field Data
+            if 'CUMULATIVE_LAYOUT_SHIFT_SCORE' in field_metrics:
+                cls_data = field_metrics['CUMULATIVE_LAYOUT_SHIFT_SCORE']
+                field_data['field_cls'] = {
+                    'title': 'Cumulative Layout Shift (CLS)',
+                    'value': format_cls_value(cls_data.get('percentile')),
+                    'category': cls_data.get('category', 'UNKNOWN'),
+                    'percentile': cls_data.get('percentile'),
+                    'distributions': cls_data.get('distributions', [])
+                }
+            
+            # First Contentful Paint (FCP) - Field Data
+            if 'FIRST_CONTENTFUL_PAINT_MS' in field_metrics:
+                fcp_data = field_metrics['FIRST_CONTENTFUL_PAINT_MS']
+                field_data['field_fcp'] = {
+                    'title': 'First Contentful Paint (FCP)',
+                    'value': format_field_value(fcp_data.get('percentile'), 'ms'),
+                    'category': fcp_data.get('category', 'UNKNOWN'),
+                    'percentile': fcp_data.get('percentile'),
+                    'distributions': fcp_data.get('distributions', [])
+                }
+            
+            # First Input Delay / Time to First Byte
+            if 'EXPERIMENTAL_TIME_TO_FIRST_BYTE' in field_metrics:
+                ttfb_data = field_metrics['EXPERIMENTAL_TIME_TO_FIRST_BYTE']
+                field_data['field_ttfb'] = {
+                    'title': 'Time to First Byte (TTFB)',
+                    'value': format_field_value(ttfb_data.get('percentile'), 'ms'),
+                    'category': ttfb_data.get('category', 'UNKNOWN'),
+                    'percentile': ttfb_data.get('percentile'),
+                    'distributions': ttfb_data.get('distributions', [])
+                }
+        
         return {
             'scores': scores,
             'metrics': metrics,
+            'field_data': field_data,
             'full_response': response,
         }
     
@@ -153,11 +223,114 @@ def get_metric_status(score):
         return 'Poor'
 
 
-    return {
-        "performance_score": round(categories["performance"]["score"] * 100),
+def format_field_value(value, unit='ms'):
+    """Format field data value for display"""
+    if value is None:
+        return 'N/A'
+    
+    if unit == 'ms':
+        # Convert to seconds if > 1000ms
+        if value >= 1000:
+            return f"{value / 1000:.1f} s"
+        return f"{value} ms"
+    
+    return str(value)
 
-        # Core Web Vitals (real SEO value)
-        "lcp": audits["largest-contentful-paint"]["displayValue"],
-        "cls": audits["cumulative-layout-shift"]["displayValue"],
-        "inp": audits["interaction-to-next-paint"]["displayValue"],
+
+def format_cls_value(value):
+    """Format CLS value (it's already a decimal)"""
+    if value is None:
+        return 'N/A'
+    # CLS values are between 0 and 1, display with 2 decimal places
+    return f"{value / 100:.2f}" if value > 1 else f"{value:.2f}"
+
+
+def get_field_category_badge(category):
+    """Convert Chrome UX Report category to badge class"""
+    category_map = {
+        'FAST': 'good',
+        'AVERAGE': 'fair',
+        'SLOW': 'poor',
+        'UNKNOWN': 'secondary'
     }
+    return category_map.get(category, 'secondary')
+
+
+def extract_field_data_from_response(response):
+    """
+    Extract field data from a stored PageSpeed API response
+    Used for displaying field data in analysis detail view
+    """
+    field_data = {}
+    
+    if not response:
+        return field_data
+    
+    loading_experience = response.get('loadingExperience', {})
+    origin_loading_experience = response.get('originLoadingExperience', {})
+    
+    # Use origin data if available, otherwise use URL-specific data
+    experience_data = origin_loading_experience if origin_loading_experience else loading_experience
+    
+    if experience_data and 'metrics' in experience_data:
+        field_metrics = experience_data['metrics']
+        
+        # Overall assessment
+        field_data['overall_category'] = experience_data.get('overall_category', 'UNKNOWN')
+        
+        # Largest Contentful Paint (LCP) - Field Data
+        if 'LARGEST_CONTENTFUL_PAINT_MS' in field_metrics:
+            lcp_data = field_metrics['LARGEST_CONTENTFUL_PAINT_MS']
+            field_data['field_lcp'] = {
+                'title': 'Largest Contentful Paint (LCP)',
+                'value': format_field_value(lcp_data.get('percentile'), 'ms'),
+                'category': lcp_data.get('category', 'UNKNOWN'),
+                'percentile': lcp_data.get('percentile'),
+                'distributions': lcp_data.get('distributions', [])
+            }
+        
+        # Interaction to Next Paint (INP) - Field Data
+        if 'INTERACTION_TO_NEXT_PAINT' in field_metrics:
+            inp_data = field_metrics['INTERACTION_TO_NEXT_PAINT']
+            field_data['field_inp'] = {
+                'title': 'Interaction to Next Paint (INP)',
+                'value': format_field_value(inp_data.get('percentile'), 'ms'),
+                'category': inp_data.get('category', 'UNKNOWN'),
+                'percentile': inp_data.get('percentile'),
+                'distributions': inp_data.get('distributions', [])
+            }
+        
+        # Cumulative Layout Shift (CLS) - Field Data
+        if 'CUMULATIVE_LAYOUT_SHIFT_SCORE' in field_metrics:
+            cls_data = field_metrics['CUMULATIVE_LAYOUT_SHIFT_SCORE']
+            field_data['field_cls'] = {
+                'title': 'Cumulative Layout Shift (CLS)',
+                'value': format_cls_value(cls_data.get('percentile')),
+                'category': cls_data.get('category', 'UNKNOWN'),
+                'percentile': cls_data.get('percentile'),
+                'distributions': cls_data.get('distributions', [])
+            }
+        
+        # First Contentful Paint (FCP) - Field Data
+        if 'FIRST_CONTENTFUL_PAINT_MS' in field_metrics:
+            fcp_data = field_metrics['FIRST_CONTENTFUL_PAINT_MS']
+            field_data['field_fcp'] = {
+                'title': 'First Contentful Paint (FCP)',
+                'value': format_field_value(fcp_data.get('percentile'), 'ms'),
+                'category': fcp_data.get('category', 'UNKNOWN'),
+                'percentile': fcp_data.get('percentile'),
+                'distributions': fcp_data.get('distributions', [])
+            }
+        
+        # Time to First Byte
+        if 'EXPERIMENTAL_TIME_TO_FIRST_BYTE' in field_metrics:
+            ttfb_data = field_metrics['EXPERIMENTAL_TIME_TO_FIRST_BYTE']
+            field_data['field_ttfb'] = {
+                'title': 'Time to First Byte (TTFB)',
+                'value': format_field_value(ttfb_data.get('percentile'), 'ms'),
+                'category': ttfb_data.get('category', 'UNKNOWN'),
+                'percentile': ttfb_data.get('percentile'),
+                'distributions': ttfb_data.get('distributions', [])
+            }
+    
+    return field_data

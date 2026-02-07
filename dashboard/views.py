@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
 from django.contrib import messages
 from django.conf import settings
-from .services.pagespeed import fetch_pagespeed_data, get_score_color
+from .services.pagespeed import fetch_pagespeed_data, get_score_color, extract_field_data_from_response
 from .services.header_extractor import extract_headers, get_header_hierarchy
 from .services.image_extractor import extract_images, get_image_stats
 from .services.keyword_extractor import generate_mock_keywords, get_keyword_stats, fetch_gsc_keywords
@@ -87,6 +87,9 @@ def page_speed_insights(request):
                 full_response=api_data.get('full_response', {}),
             )
             
+            # Attach field_data for template rendering
+            analysis.field_data = api_data.get('field_data', {})
+            
             messages.success(request, f"Analysis completed for {url}")
             
         except Exception as e:
@@ -114,9 +117,13 @@ def analysis_detail(request, pk):
     """View detailed analysis results"""
     analysis = get_object_or_404(PageSpeedAnalysis, pk=pk, user=request.user)
     
+    # Extract field_data from stored full_response
+    field_data = extract_field_data_from_response(analysis.full_response)
+    
     context = {
         'analysis': analysis,
         'get_score_color': get_score_color,
+        'field_data': field_data,
     }
     
     return render(request, 'dashboard/analysis_detail.html', context)
