@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import PageSpeedAnalysis, ImageAltAnalysis, KeywordAnalysis, GSCConnection
+from .models import PageSpeedAnalysis, ImageAltAnalysis, KeywordAnalysis, GSCConnection, PDFReport
 
 
 @admin.register(PageSpeedAnalysis)
@@ -102,6 +102,34 @@ class GSCConnectionAdmin(admin.ModelAdmin):
         }),
         ('Timestamps', {
             'fields': ('connected_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(PDFReport)
+class PDFReportAdmin(admin.ModelAdmin):
+    list_display = ('title', 'user', 'report_type', 'created_at', 'pdf_file')
+    list_filter = ('report_type', 'created_at')
+    search_fields = ('title', 'user__email', 'description')
+    readonly_fields = ('created_at', 'updated_at', 'pdf_file')
+    ordering = ('-created_at',)
+    
+    fieldsets = (
+        ('Report Information', {
+            'fields': ('user', 'title', 'description', 'report_type')
+        }),
+        ('Analysis Data', {
+            'fields': ('pagespeed_analysis', 'keyword_analysis', 'image_analysis', 'headers_data')
+        }),
+        ('Report Options', {
+            'fields': ('include_recommendations', 'include_charts')
+        }),
+        ('Generated PDF', {
+            'fields': ('pdf_file',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )

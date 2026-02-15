@@ -79,10 +79,6 @@ def page_speed_insights(request):
                 user=request.user,
                 url=url,
                 strategy=strategy,
-                performance_score=api_data['scores'].get('performance'),
-                accessibility_score=api_data['scores'].get('accessibility'),
-                best_practices_score=api_data['scores'].get('best_practices'),
-                seo_score=api_data['scores'].get('seo'),
                 metrics=api_data.get('metrics', {}),
                 full_response=api_data.get('full_response', {}),
             )
@@ -96,9 +92,10 @@ def page_speed_insights(request):
             error = str(e)
             messages.error(request, f"Error: {error}")
     
-    # Get recent analyses for this user
+    # Get recent analyses for this user (excluding deleted)
     recent_analyses = PageSpeedAnalysis.objects.filter(
-        user=request.user
+        user=request.user,
+        is_deleted=False
     ).order_by('-created_at')[:5]
     
     context = {
@@ -137,7 +134,10 @@ class AnalysisListView(ListView):
     paginate_by = 10
     
     def get_queryset(self):
-        queryset = PageSpeedAnalysis.objects.filter(user=self.request.user)
+        queryset = PageSpeedAnalysis.objects.filter(
+            user=self.request.user,
+            is_deleted=False
+        )
         
         # Filter by strategy
         strategy = self.request.GET.get('strategy')
@@ -158,12 +158,13 @@ class AnalysisListView(ListView):
 
 @login_required
 def delete_analysis(request, pk):
-    """Delete an analysis"""
+    """Soft delete an analysis"""
     analysis = get_object_or_404(PageSpeedAnalysis, pk=pk, user=request.user)
     
     if request.method == 'POST':
         url = analysis.url
-        analysis.delete()
+        analysis.is_deleted = True
+        analysis.save()
         messages.success(request, f"Analysis for {url} deleted successfully.")
         return redirect('dashboard:analysis_list')
     

@@ -31,6 +31,11 @@
       <span>Extract Headers</span>
     </a>
 
+    <a class="menu-item {% if request.resolver_match.url_name == 'pdf_reports_list' or request.resolver_match.url_name == 'generate_pdf_report' or request.resolver_match.url_name == 'pdf_report_detail' %}active{% endif %}" href="{% url 'dashboard:pdf_reports_list' %}">
+      <i class="bi bi-file-pdf"></i>
+      <span>PDF Reports</span>
+    </a>
+
     <div class="menu-section">COMING SOON</div>
 
     <a class="menu-item {% if request.resolver_match.url_name == 'image_alt_finder' or request.resolver_match.url_name == 'image_alt_list' or request.resolver_match.url_name == 'image_alt_detail' %}active{% endif %}" href="{% url 'dashboard:image_alt_finder' %}">
@@ -41,11 +46,6 @@
     <a class="menu-item {% if request.resolver_match.url_name == 'keywords_finder' or request.resolver_match.url_name == 'keywords_list' or request.resolver_match.url_name == 'keywords_detail' %}active{% endif %}" href="{% url 'dashboard:keywords_finder' %}">
       <i class="bi bi-search"></i>
       <span>Keywords Finder</span>
-    </a>
-
-    <a class="menu-item menu-item-disabled" href="#">
-      <i class="bi bi-file-pdf"></i>
-      <span>PDF Reports</span>
     </a>
 
     <div class="menu-divider"></div>

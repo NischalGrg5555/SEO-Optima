@@ -1,0 +1,183 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}{{ report.title }} - SEO Optima{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Report Header -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row align-items-start">
+                        <div class="col">
+                            <h1 class="mb-1">
+                                <i class="fas fa-file-pdf text-danger"></i> {{ report.title }}
+                            </h1>
+                            <p class="text-muted mb-2">Generated on {{ created_date }} at {{ created_time }}</p>
+                            <span class="badge {% if report.report_type == 'free' %}bg-warning{% else %}bg-success{% endif %}">
+                                {{ report_type_display }}
+                            </span>
+                        </div>
+                        <div class="col text-end">
+                            <a href="{% url 'dashboard:download_pdf_report' report.pk %}" 
+                               class="btn btn-success">
+                                <i class="fas fa-download"></i> Download PDF
+                            </a>
+                        </div>
+                    </div>
+                    
+                    {% if report.description %}
+                        <hr class="my-3">
+                        <p class="text-muted mb-0">{{ report.description }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Report Contents -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list"></i> Report Contents
+                    </h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% if report.pagespeed_analysis %}
+                        <a href="#pagespeed" class="list-group-item list-group-item-action">
+                            <i class="fas fa-tachometer-alt"></i> Page Speed Insights
+                            <small class="d-block text-muted">Performance analysis for {{ report.pagespeed_analysis.url }}</small>
+                        </a>
+                    {% endif %}
+                    
+                    {% if report.keyword_analysis %}
+                        <a href="#keywords" class="list-group-item list-group-item-action">
+                            <i class="fas fa-search"></i> Keywords Analysis
+                            <small class="d-block text-muted">{{ report.keyword_analysis.total_keywords }} keywords tracked</small>
+                        </a>
+                    {% endif %}
+                    
+                    {% if report.image_analysis %}
+                        <a href="#images" class="list-group-item list-group-item-action">
+                            <i class="fas fa-image"></i> Image & Alt Text Analysis
+                            <small class="d-block text-muted">{{ report.image_analysis.total_images }} images analyzed</small>
+                        </a>
+                    {% endif %}
+                    
+                    {% if report.headers_data %}
+                        <a href="#headers" class="list-group-item list-group-item-action">
+                            <i class="fas fa-heading"></i> Headers Structure
+                            <small class="d-block text-muted">Content hierarchy analysis</small>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Report Details Box -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle"></i> Report Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p class="text-muted mb-1">Report Type</p>
+                            <span class="badge {% if report.report_type == 'free' %}bg-warning{% else %}bg-success{% endif %}">
+                                {{ report.get_report_type_display }}
+                            </span>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="text-muted mb-1">Generated Date & Time</p>
+                            <p class="mb-0">{{ created_date }}, {{ created_time }}</p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p class="text-muted mb-1">Includes Recommendations</p>
+                            <i class="fas {% if report.include_recommendations %}fa-check text-success{% else %}fa-times text-danger{% endif %}"></i>
+                            {{ report.include_recommendations|yesno:"Yes,No" }}
+                        </div>
+                        <div class="col-md-6">
+                            <p class="text-muted mb-1">Includes Charts</p>
+                            <i class="fas {% if report.include_charts %}fa-check text-success{% else %}fa-times text-danger{% endif %}"></i>
+                            {{ report.include_charts|yesno:"Yes,No" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt"></i> Actions
+                    </h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'dashboard:download_pdf_report' report.pk %}" 
+                       class="list-group-item list-group-item-action text-primary">
+                        <i class="fas fa-download"></i> Download PDF
+                    </a>
+                    <a href="{% url 'dashboard:regenerate_pdf_report' report.pk %}" 
+                       class="list-group-item list-group-item-action text-info">
+                        <i class="fas fa-sync"></i> Regenerate Report
+                        <small class="d-block text-muted">Update with latest data</small>
+                    </a>
+                    <a href="{% url 'dashboard:delete_pdf_report' report.pk %}" 
+                       class="list-group-item list-group-item-action text-danger">
+                        <i class="fas fa-trash"></i> Delete Report
+                    </a>
+                </div>
+            </div>
+
+            <!-- Report Statistics -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-pie"></i> Coverage
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small>Report Completeness</small>
+                            <small class="text-muted">{{ report.report_sections|length }}/4 sections</small>
+                        </div>
+                        <div class="progress" style="height: 0.5rem;">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: {{ report.report_sections|length|multiply:25 }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Helpful Tips -->
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body">
+                    <h6 class="card-title mb-2">
+                        <i class="fas fa-lightbulb"></i> Tips
+                    </h6>
+                    <ul class="small ps-3 mb-0">
+                        <li>Download the PDF to share with your team</li>
+                        <li>Regenerate to get the latest analysis data</li>
+                        <li>Create multiple versions for tracking progress</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back Link -->
+    <div class="mt-4">
+        <a href="{% url 'dashboard:pdf_reports_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Reports
+        </a>
+    </div>
+</div>
+{% endblock %}

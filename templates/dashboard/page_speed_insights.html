@@ -129,121 +129,6 @@
     </div>
   </div>
 
-  <!-- Score Cards -->
-  <div class="score-cards-grid">
-    <div class="score-card-modern">
-      <div class="score-header">
-        <div class="score-icon score-icon-performance">
-          <i class="bi bi-speedometer2"></i>
-        </div>
-        <span class="score-category">Performance</span>
-      </div>
-      <div class="score-display">
-        <div class="score-circle score-{{ analysis.performance_score|default:0 }}">
-          <svg viewBox="0 0 100 100">
-            <circle class="score-circle-bg" cx="50" cy="50" r="40"></circle>
-            <circle class="score-circle-fill" cx="50" cy="50" r="40" 
-                    style="stroke-dashoffset: {{ analysis.performance_score|default:0|add:"-100"|floatformat:0|add:"251.2" }}"></circle>
-          </svg>
-          <div class="score-number">{{ analysis.performance_score|default:"--" }}</div>
-        </div>
-      </div>
-      <p class="score-description">
-        {% if analysis.performance_score >= 90 %}
-          Excellent! Your site loads quickly.
-        {% elif analysis.performance_score >= 50 %}
-          Good, but needs optimization.
-        {% else %}
-          Needs significant improvement.
-        {% endif %}
-      </p>
-    </div>
-
-    <div class="score-card-modern">
-      <div class="score-header">
-        <div class="score-icon score-icon-accessibility">
-          <i class="bi bi-universal-access"></i>
-        </div>
-        <span class="score-category">Accessibility</span>
-      </div>
-      <div class="score-display">
-        <div class="score-circle score-{{ analysis.accessibility_score|default:0 }}">
-          <svg viewBox="0 0 100 100">
-            <circle class="score-circle-bg" cx="50" cy="50" r="40"></circle>
-            <circle class="score-circle-fill" cx="50" cy="50" r="40"
-                    style="stroke-dashoffset: {{ analysis.accessibility_score|default:0|add:"-100"|floatformat:0|add:"251.2" }}"></circle>
-          </svg>
-          <div class="score-number">{{ analysis.accessibility_score|default:"--" }}</div>
-        </div>
-      </div>
-      <p class="score-description">
-        {% if analysis.accessibility_score >= 90 %}
-          Great accessibility standards!
-        {% elif analysis.accessibility_score >= 50 %}
-          Room for accessibility improvements.
-        {% else %}
-          Critical accessibility issues found.
-        {% endif %}
-      </p>
-    </div>
-
-    <div class="score-card-modern">
-      <div class="score-header">
-        <div class="score-icon score-icon-practices">
-          <i class="bi bi-shield-check"></i>
-        </div>
-        <span class="score-category">Best Practices</span>
-      </div>
-      <div class="score-display">
-        <div class="score-circle score-{{ analysis.best_practices_score|default:0 }}">
-          <svg viewBox="0 0 100 100">
-            <circle class="score-circle-bg" cx="50" cy="50" r="40"></circle>
-            <circle class="score-circle-fill" cx="50" cy="50" r="40"
-                    style="stroke-dashoffset: {{ analysis.best_practices_score|default:0|add:"-100"|floatformat:0|add:"251.2" }}"></circle>
-          </svg>
-          <div class="score-number">{{ analysis.best_practices_score|default:"--" }}</div>
-        </div>
-      </div>
-      <p class="score-description">
-        {% if analysis.best_practices_score >= 90 %}
-          Following industry best practices!
-        {% elif analysis.best_practices_score >= 50 %}
-          Some best practices need attention.
-        {% else %}
-          Many best practices violations.
-        {% endif %}
-      </p>
-    </div>
-
-    <div class="score-card-modern">
-      <div class="score-header">
-        <div class="score-icon score-icon-seo">
-          <i class="bi bi-search"></i>
-        </div>
-        <span class="score-category">SEO</span>
-      </div>
-      <div class="score-display">
-        <div class="score-circle score-{{ analysis.seo_score|default:0 }}">
-          <svg viewBox="0 0 100 100">
-            <circle class="score-circle-bg" cx="50" cy="50" r="40"></circle>
-            <circle class="score-circle-fill" cx="50" cy="50" r="40"
-                    style="stroke-dashoffset: {{ analysis.seo_score|default:0|add:"-100"|floatformat:0|add:"251.2" }}"></circle>
-          </svg>
-          <div class="score-number">{{ analysis.seo_score|default:"--" }}</div>
-        </div>
-      </div>
-      <p class="score-description">
-        {% if analysis.seo_score >= 90 %}
-          Well optimized for search engines!
-        {% elif analysis.seo_score >= 50 %}
-          SEO can be improved.
-        {% else %}
-          Critical SEO issues detected.
-        {% endif %}
-      </p>
-    </div>
-  </div>
-
   <!-- Core Web Vitals -->
   {% if analysis.field_data %}
   <div class="metrics-section">
@@ -393,8 +278,6 @@
         <tr>
           <th>Website</th>
           <th>Device</th>
-          <th>Performance</th>
-          <th>SEO</th>
           <th>Date</th>
           <th>Actions</th>
         </tr>
@@ -416,21 +299,14 @@
               {{ item.strategy|title }}
             </span>
           </td>
-          <td>
-            <div class="score-badge score-{{ item.performance_score|default:0 }}">
-              {{ item.performance_score|default:"--" }}
-            </div>
-          </td>
-          <td>
-            <div class="score-badge score-{{ item.seo_score|default:0 }}">
-              {{ item.seo_score|default:"--" }}
-            </div>
-          </td>
           <td>{{ item.created_at|date:"M d, Y" }}</td>
           <td>
             <div class="action-buttons">
               <a href="{% url 'dashboard:analysis_detail' item.pk %}" class="btn-icon" title="View Details">
                 <i class="bi bi-eye"></i>
+              </a>
+              <a href="{% url 'dashboard:delete_analysis' item.pk %}" class="btn-icon" title="Delete Analysis" onclick="return confirm('Are you sure you want to delete this analysis?');">
+                <i class="bi bi-trash" style="color: #ef4444;"></i>
               </a>
             </div>
           </td>

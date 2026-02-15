@@ -1,0 +1,198 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Generate PDF Report - SEO Optima{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="mb-4">
+                <h1 class="mb-2">
+                    <i class="fas fa-file-pdf"></i> Generate PDF Report
+                </h1>
+                <p class="text-muted">Create a comprehensive SEO analysis report to share with your team or clients</p>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if not has_analyses %}
+                <div class="alert alert-warning">
+                    <h5><i class="fas fa-exclamation-triangle"></i> No Data Available</h5>
+                    <p class="mb-0">You need to run at least one analysis before generating a report. 
+                       Start with <a href="{% url 'dashboard:page_speed_insights' %}">Page Speed Insights</a> or complete other analyses.</p>
+                </div>
+            {% endif %}
+
+            <form method="post" class="needs-validation">
+                {% csrf_token %}
+
+                <!-- Report Type Selection -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light border-bottom">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-crown"></i> Report Type
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            {% for choice in form.report_type %}
+                                <div class="form-check">
+                                    {{ choice.tag }}
+                                    <label class="form-check-label">
+                                        {% if 'free' in choice.value %}
+                                            <strong>Free Report</strong> - Basic summary with key metrics
+                                        {% else %}
+                                            <strong>Premium Report</strong> - Comprehensive analysis with detailed insights
+                                        {% endif %}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Details -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light border-bottom">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle"></i> Report Details
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            {{ form.title.label_tag }}
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                                <small class="text-danger d-block mt-1">{{ form.title.errors }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.description.label_tag }}
+                            {{ form.description }}
+                            <small class="d-block text-muted mt-1">Optional: Add notes about this report</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analyses Selection -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light border-bottom">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-bar"></i> Select Analyses to Include
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-3">Choose which analyses to include in your report:</p>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.include_pagespeed }}
+                                <label class="form-check-label">
+                                    {{ form.include_pagespeed.label }}
+                                    {% if pagespeed_analyses %}
+                                        <small class="text-muted d-block ms-4">Latest: {{ pagespeed_analyses.0.created_at|date:"M d, Y g:i A" }}</small>
+                                    {% else %}
+                                        <small class="text-danger d-block ms-4">No Page Speed data available</small>
+                                    {% endif %}
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.include_keywords }}
+                                <label class="form-check-label">
+                                    {{ form.include_keywords.label }}
+                                    {% if keyword_analyses %}
+                                        <small class="text-muted d-block ms-4">Latest: {{ keyword_analyses.0.created_at|date:"M d, Y g:i A" }}</small>
+                                    {% else %}
+                                        <small class="text-danger d-block ms-4">No Keywords data available</small>
+                                    {% endif %}
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.include_images }}
+                                <label class="form-check-label">
+                                    {{ form.include_images.label }}
+                                    {% if image_analyses %}
+                                        <small class="text-muted d-block ms-4">Latest: {{ image_analyses.0.created_at|date:"M d, Y g:i A" }}</small>
+                                    {% else %}
+                                        <small class="text-danger d-block ms-4">No Image Alt data available</small>
+                                    {% endif %}
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.include_headers }}
+                                <label class="form-check-label">
+                                    {{ form.include_headers.label }}
+                                    <small class="text-muted d-block ms-4">Header structure analysis</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Options -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light border-bottom">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-cog"></i> Report Options
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.include_recommendations }}
+                                <label class="form-check-label">
+                                    {{ form.include_recommendations.label }}
+                                </label>
+                                <small class="d-block text-muted">Actionable recommendations to improve your website</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.include_charts }}
+                                <label class="form-check-label">
+                                    {{ form.include_charts.label }}
+                                </label>
+                                <small class="d-block text-muted">Visual charts and graphs for better visualization</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg" {% if not has_analyses %}disabled{% endif %}>
+                        <i class="fas fa-file-pdf"></i> Generate PDF Report
+                    </button>
+                    <a href="{% url 'dashboard:pdf_reports_list' %}" class="btn btn-outline-secondary">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-check-input {
+    border-radius: 0.25em;
+}
+</style>
+{% endblock %}

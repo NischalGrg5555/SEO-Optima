@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{{ report.title }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        page {
+            display: block;
+            page-break-after: always;
+            page-break-inside: avoid;
+        }
+        
+        .page {
+            width: 21cm;
+            height: 29.7cm;
+            padding: 1cm;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2cm 1cm;
+            text-align: center;
+            margin-bottom: 2cm;
+            border-radius: 5px;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 0.5cm;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.95;
+        }
+        
+        .meta-info {
+            background: #f5f5f5;
+            padding: 0.5cm;
+            border-left: 4px solid #667eea;
+            margin-bottom: 1.5cm;
+            font-size: 12px;
+        }
+        
+        .section {
+            margin-bottom: 1.5cm;
+            page-break-inside: avoid;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 0.3cm;
+            margin-bottom: 0.8cm;
+            font-weight: bold;
+        }
+        
+        .score-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5cm;
+            margin-bottom: 1cm;
+        }
+        
+        .score-card {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 0.6cm;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .score-card .label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 0.2cm;
+        }
+        
+        .score-card .value {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 0.2cm;
+        }
+        
+        .score-card .status {
+            font-size: 11px;
+            padding: 0.2cm 0.4cm;
+            border-radius: 3px;
+            display: inline-block;
+            font-weight: bold;
+        }
+        
+        .score-green { background: #0CCE6B; color: white; }
+        .score-orange { background: #FFA400; color: white; }
+        .score-red { background: #FF6B6B; color: white; }
+        .score-dark-red { background: #8B0000; color: white; }
+        
+        .metric {
+            background: #f9f9f9;
+            padding: 0.4cm;
+            margin-bottom: 0.3cm;
+            border-left: 3px solid #667eea;
+            font-size: 12px;
+            page-break-inside: avoid;
+        }
+        
+        .metric-title {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .metric-value {
+            color: #666;
+        }
+        
+        .recommendation {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 0.4cm;
+            margin-bottom: 0.4cm;
+            font-size: 12px;
+            page-break-inside: avoid;
+        }
+        
+        .recommendation-title {
+            font-weight: bold;
+            color: #856404;
+        }
+        
+        .recommendation-text {
+            color: #856404;
+            margin-top: 0.2cm;
+        }
+        
+        .keyword-list {
+            margin: 0;
+            padding-left: 0.5cm;
+            font-size: 12px;
+        }
+        
+        .keyword-item {
+            margin-bottom: 0.2cm;
+            list-style-type: none;
+            padding: 0.2cm;
+            background: #f5f5f5;
+            border-radius: 3px;
+        }
+        
+        .keyword-item strong {
+            color: #667eea;
+        }
+        
+        .footer {
+            font-size: 10px;
+            color: #999;
+            text-align: center;
+            margin-top: 1cm;
+            border-top: 1px solid #ddd;
+            padding-top: 0.4cm;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.2cm 0.4cm;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-right: 0.3cm;
+        }
+        
+        .badge-free { background: #ffc107; color: #333; }
+        .badge-paid { background: #28a745; color: white; }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-bottom: 0.8cm;
+        }
+        
+        th, td {
+            padding: 0.4cm;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <!-- Title Page -->
+    <page>
+        <div class="page">
+            <div class="header">
+                <h1>{{ report.title }}</h1>
+                <p>SEO Website Analysis Report</p>
+            </div>
+            
+            <div style="margin-top: 2.5cm; text-align: center;">
+                <p style="font-size: 16px; margin-bottom: 0.5cm;">
+                    <span class="badge {% if report.report_type == 'free' %}badge-free{% else %}badge-paid{% endif %}">
+                        {{ report.get_report_type_display }}
+                    </span>
+                </p>
+                
+                {% if report.description %}
+                    <p style="font-style: italic; color: #666; margin-bottom: 1.5cm;">
+                        {{ report.description }}
+                    </p>
+                {% endif %}
+                
+                <div style="margin-top: 3cm;">
+                    <p style="font-size: 12px; color: #999;">
+                        <strong>Generated:</strong> {{ generated_at|date:"F d, Y \a\t g:i A" }}<br>
+                        <strong>Report Type:</strong> {{ report.get_report_type_display }}<br>
+                    </p>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <p>Powered by SEO Optima - Professional Website Analysis Tool</p>
+            </div>
+        </div>
+    </page>
+
+    <!-- Page Speed Insights Section -->
+    {% if pagespeed %}
+    <page>
+        <div class="page">
+            <div class="section">
+                <div class="section-title">📊 Page Speed Performance</div>
+                
+                <div class="meta-info">
+                    <strong>Website URL:</strong> {{ pagespeed.url }}<br>
+                    <strong>Device Type:</strong> {{ pagespeed.strategy }}<br>
+                </div>
+                
+                <div class="score-grid">
+                    <div class="score-card">
+                        <div class="label">Performance</div>
+                        <div class="value">{{ pagespeed.scores.performance }}</div>
+                        <div class="status score-{% if pagespeed.scores.performance >= 90 %}green{% elif pagespeed.scores.performance >= 80 %}orange{% elif pagespeed.scores.performance >= 60 %}red{% else %}dark-red{% endif %}">
+                            {% if pagespeed.scores.performance >= 90 %}Excellent{% elif pagespeed.scores.performance >= 80 %}Good{% elif pagespeed.scores.performance >= 60 %}Needs Work{% else %}Poor{% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="score-card">
+                        <div class="label">Accessibility</div>
+                        <div class="value">{{ pagespeed.scores.accessibility }}</div>
+                        <div class="status score-{% if pagespeed.scores.accessibility >= 90 %}green{% elif pagespeed.scores.accessibility >= 80 %}orange{% elif pagespeed.scores.accessibility >= 60 %}red{% else %}dark-red{% endif %}">
+                            {% if pagespeed.scores.accessibility >= 90 %}Excellent{% elif pagespeed.scores.accessibility >= 80 %}Good{% elif pagespeed.scores.accessibility >= 60 %}Needs Work{% else %}Poor{% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="score-card">
+                        <div class="label">Best Practices</div>
+                        <div class="value">{{ pagespeed.scores.best_practices }}</div>
+                        <div class="status score-{% if pagespeed.scores.best_practices >= 90 %}green{% elif pagespeed.scores.best_practices >= 80 %}orange{% elif pagespeed.scores.best_practices >= 60 %}red{% else %}dark-red{% endif %}">
+                            {% if pagespeed.scores.best_practices >= 90 %}Excellent{% elif pagespeed.scores.best_practices >= 80 %}Good{% elif pagespeed.scores.best_practices >= 60 %}Needs Work{% else %}Poor{% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="score-card">
+                        <div class="label">SEO</div>
+                        <div class="value">{{ pagespeed.scores.seo }}</div>
+                        <div class="status score-{% if pagespeed.scores.seo >= 90 %}green{% elif pagespeed.scores.seo >= 80 %}orange{% elif pagespeed.scores.seo >= 60 %}red{% else %}dark-red{% endif %}">
+                            {% if pagespeed.scores.seo >= 90 %}Excellent{% elif pagespeed.scores.seo >= 80 %}Good{% elif pagespeed.scores.seo >= 60 %}Needs Work{% else %}Poor{% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="metric">
+                    <div class="metric-title">📈 Overall Score: {{ pagespeed.overall_score }}/100 - {{ pagespeed.score_category }}</div>
+                    <div class="metric-value">
+                        Your website's overall performance is rated as "{{ pagespeed.score_category }}". 
+                        This rating is based on four key metrics that measure how well your website performs for visitors.
+                    </div>
+                </div>
+                
+                <div style="margin-top: 0.8cm;">
+                    <div class="metric">
+                        <div class="metric-title">What do these scores mean?</div>
+                        <div class="metric-value">
+                            <strong>Performance:</strong> How fast your website loads. Higher scores mean faster loading times.<br>
+                            <strong>Accessibility:</strong> How easy your website is to use for all visitors, including those with disabilities.<br>
+                            <strong>Best Practices:</strong> How well your website follows web development standards and security practices.<br>
+                            <strong>SEO:</strong> How well your website is optimized for search engines like Google.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <p>Page {{ forloop.counter }} - Page Speed Insights Report</p>
+            </div>
+        </div>
+    </page>
+
+    {% if pagespeed.recommendations %}
+    <page>
+        <div class="page">
+            <div class="section">
+                <div class="section-title">💡 Recommendations to Improve Page Speed</div>
+                
+                <p style="font-size: 12px; margin-bottom: 0.8cm; color: #666;">
+                    Below are the top recommendations to help improve your website's performance:
+                </p>
+                
+                {% for rec in pagespeed.recommendations %}
+                <div class="recommendation">
+                    <div class="recommendation-title">{{ rec.title }}</div>
+                    <div class="recommendation-text">{{ rec.description }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="footer">
+                <p>Page Speed Recommendations</p>
+            </div>
+        </div>
+    </page>
+    {% endif %}
+    {% endif %}
+
+    <!-- Keywords Section -->
+    {% if keywords %}
+    <page>
+        <div class="page">
+            <div class="section">
+                <div class="section-title">🔍 Keywords Analysis</div>
+                
+                <div class="meta-info">
+                    <strong>Website URL:</strong> {{ keywords.url }}
+                </div>
+                
+                <div class="score-grid">
+                    <div class="score-card">
+                        <div class="label">Total Keywords</div>
+                        <div class="value">{{ keywords.total_keywords }}</div>
+                    </div>
+                    
+                    <div class="score-card">
+                        <div class="label">Top 10 Positions</div>
+                        <div class="value">{{ keywords.top_10_percentage }}%</div>
+                        <div class="status" style="background: #667eea; color: white;">{{ keywords.top_10_positions }} keywords</div>
+                    </div>
+                    
+                    <div class="score-card">
+                        <div class="label">Total Monthly Volume</div>
+                        <div class="value">{{ keywords.total_volume }}</div>
+                    </div>
+                    
+                    <div class="score-card">
+                        <div class="label">Average Position</div>
+                        <div class="value">{{ keywords.avg_position }}</div>
+                    </div>
+                </div>
+                
+                <div class="metric">
+                    <div class="metric-title">📊 Keywords Performance</div>
+                    <div class="metric-value">
+                        Your website is ranking for {{ keywords.total_keywords }} keywords with a 
+                        combined monthly search volume of {{ keywords.total_volume }}. 
+                        {{ keywords.top_10_percentage }}% of your keywords are ranking in the top 10 positions on Google.
+                    </div>
+                </div>
+                
+                {% if keywords.top_keywords %}
+                <div style="margin-top: 1cm;">
+                    <div style="font-weight: bold; margin-bottom: 0.4cm;">Top Performing Keywords:</div>
+                    <table>
+                        <tr>
+                            <th>Keyword</th>
+                            <th>Position</th>
+                            <th>Volume</th>
+                        </tr>
+                        {% for kw in keywords.top_keywords|slice:":10" %}
+                        <tr>
+                            <td>{{ kw.keyword }}</td>
+                            <td>{{ kw.position }}</td>
+                            <td>{{ kw.volume }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="footer">
+                <p>Keywords Performance Report</p>
+            </div>
+        </div>
+    </page>
+    {% endif %}
+
+    <!-- Images Section -->
+    {% if images %}
+    <page>
+        <div class="page">
+            <div class="section">
+                <div class="section-title">🖼️ Image & Alt Text Analysis</div>
+                
+                <div class="meta-info">
+                    <strong>Website URL:</strong> {{ images.url }}
+                </div>
+                
+                <div class="score-grid">
+                    <div class="score-card">
+                        <div class="label">Total Images</div>
+                        <div class="value">{{ images.total_images }}</div>
+                    </div>
+                    
+                    <div class="score-card">
+                        <div class="label">Alt Text Coverage</div>
+                        <div class="value">{{ images.alt_text_percentage }}%</div>
+                        <div class="status score-{% if images.alt_text_percentage >= 90 %}green{% elif images.alt_text_percentage >= 70 %}orange{% else %}red{% endif %}">
+                            {% if images.alt_text_percentage >= 90 %}Good{% elif images.alt_text_percentage >= 70 %}Fair{% else %}Needs Work{% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="score-card">
+                        <div class="label">Images With Alt Text</div>
+                        <div class="value">{{ images.images_with_alt }}</div>
+                    </div>
+                    
+                    <div class="score-card">
+                        <div class="label">Images Missing Alt Text</div>
+                        <div class="value">{{ images.images_without_alt }}</div>
+                    </div>
+                </div>
+                
+                <div class="metric">
+                    <div class="metric-title">📷 Alt Text Importance</div>
+                    <div class="metric-value">
+                        Alt text (alternative text) describes images on your website. It's important for:
+                        <br>• <strong>Accessibility:</strong> Helps visually impaired visitors understand images
+                        <br>• <strong>SEO:</strong> Search engines use alt text to understand image content
+                        <br>• <strong>User Experience:</strong> Shows text if images fail to load
+                    </div>
+                </div>
+                
+                {% if images.recommendations %}
+                <div style="margin-top: 1cm;">
+                    {% for rec in images.recommendations %}
+                    <div class="recommendation">
+                        <div class="recommendation-title">{{ rec.title }}</div>
+                        <div class="recommendation-text">{{ rec.description }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="footer">
+                <p>Image Alt Text Report</p>
+            </div>
+        </div>
+    </page>
+    {% endif %}
+
+    <!-- Headers Section -->
+    {% if headers %}
+    <page>
+        <div class="page">
+            <div class="section">
+                <div class="section-title">📝 Content Headers Structure</div>
+                
+                <div class="score-grid">
+                    <div class="score-card">
+                        <div class="label">H1 Headers</div>
+                        <div class="value">{{ headers.h1_count }}</div>
+                    </div>
+                    
+                    <div class="score-card">
+                        <div class="label">H2 Headers</div>
+                        <div class="value">{{ headers.h2_count }}</div>
+                    </div>
+                    
+                    <div class="score-card">
+                        <div class="label">H3 Headers</div>
+                        <div class="value">{{ headers.h3_count }}</div>
+                    </div>
+                </div>
+                
+                <div class="metric">
+                    <div class="metric-title">🎯 Header Hierarchy</div>
+                    <div class="metric-value">
+                        Headers (H1, H2, H3, etc.) help structure your content and make it easier for both users and search engines to understand your page. 
+                        Best practice is to have one main H1 header, followed by H2 headers for subsections, and H3 for sub-subsections.
+                    </div>
+                </div>
+                
+                {% if headers.h1_items %}
+                <div style="margin-top: 1cm;">
+                    <div style="font-weight: bold; margin-bottom: 0.4cm;">Main Header (H1):</div>
+                    <ul class="keyword-list">
+                        {% for h1 in headers.h1_items %}
+                        <li class="keyword-item">{{ h1 }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                {% if headers.h2_items %}
+                <div style="margin-top: 0.6cm;">
+                    <div style="font-weight: bold; margin-bottom: 0.4cm;">Sub Headers (H2) - First 3:</div>
+                    <ul class="keyword-list">
+                        {% for h2 in headers.h2_items %}
+                        <li class="keyword-item">{{ h2 }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                {% if headers.recommendations %}
+                <div style="margin-top: 1cm;">
+                    {% for rec in headers.recommendations %}
+                    <div class="recommendation">
+                        <div class="recommendation-title">{{ rec.title }}</div>
+                        <div class="recommendation-text">{{ rec.description }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="footer">
+                <p>Headers Structure Report</p>
+            </div>
+        </div>
+    </page>
+    {% endif %}
+
+    <!-- Summary Page -->
+    <page>
+        <div class="page">
+            <div class="section">
+                <div class="section-title">📋 Report Summary</div>
+                
+                <div style="margin-top: 1.5cm;">
+                    <div class="metric">
+                        <div class="metric-title">Report Information</div>
+                        <div class="metric-value">
+                            <strong>Report Type:</strong> {{ report.get_report_type_display }}<br>
+                            <strong>Generated Date:</strong> {{ generated_at|date:"F d, Y g:i A" }}<br>
+                            <strong>Sections Included:</strong> {% for section in report.report_sections %}{{ section|title }}{% if not forloop.last %}, {% endif %}{% endfor %}<br>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 1.2cm;">
+                    <div class="metric">
+                        <div class="metric-title">How to Use This Report</div>
+                        <div class="metric-value">
+                            1. <strong>Review the Scores:</strong> Check your current performance metrics
+                            <br>2. <strong>Read Recommendations:</strong> Understand what needs improvement
+                            <br>3. <strong>Take Action:</strong> Implement recommended changes
+                            <br>4. <strong>Track Progress:</strong> Generate new reports to monitor improvements
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 1.2cm;">
+                    <div class="metric">
+                        <div class="metric-title">Next Steps</div>
+                        <div class="metric-value">
+                            <strong>For Students & Beginners:</strong> Focus on one area at a time. Start with the highest priority recommendations.<br>
+                            <strong>For Business Owners:</strong> Consider hiring a professional SEO specialist to help implement these recommendations.<br>
+                            <strong>For Developers:</strong> Use technical details to optimize your website performance.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <p>© SEO Optima - Professional Website Analysis. Report generated on {{ generated_at|date:"F d, Y" }}</p>
+            </div>
+        </div>
+    </page>
+</body>
+</html>
