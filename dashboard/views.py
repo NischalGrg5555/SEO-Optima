@@ -6,13 +6,83 @@ from django.conf import settings
 from .services.pagespeed import fetch_pagespeed_data, get_score_color, extract_field_data_from_response
 from .services.header_extractor import extract_headers, get_header_hierarchy
 from .services.image_extractor import extract_images, get_image_stats
-from .services.keyword_extractor import generate_mock_keywords, get_keyword_stats, fetch_gsc_keywords
+from .services.keyword_extractor import get_keyword_stats, fetch_gsc_keywords
 from .models import PageSpeedAnalysis, ImageAltAnalysis, KeywordAnalysis, GSCConnection
 from .forms import PageSpeedForm, PageSpeedFilterForm, HeaderExtractorForm
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 import json
+from urllib.parse import urlparse
+from collections import defaultdict
+
+
+def _group_properties_by_domain(properties_list):
+    """
+    Group GSC properties by domain for better UI display
+    
+    Example input:
+    ["sc-domain:homeschool.asia", "https://homeschool.asia/", "https://www.ciepastpapers.com/", "sc-domain:ciepastpapers.com"]
+    
+    Example output:
+    [
+        {
+            'domain': 'homeschool.asia',
+            'primary_display': 'HOMESCHOOL.ASIA',
+            'properties': [
+                {'type': 'domain', 'url': 'sc-domain:homeschool.asia', 'display': 'homeschool.asia'},
+                {'type': 'url', 'url': 'https://homeschool.asia/', 'display': 'https://homeschool.asia/'}
+            ]
+        },
+        {
+            'domain': 'ciepastpapers.com',
+            'primary_display': 'CIEPASTPAPERS.COM',
+            'properties': [
+                {'type': 'domain', 'url': 'sc-domain:ciepastpapers.com', 'display': 'ciepastpapers.com'},
+                {'type': 'url', 'url': 'https://www.ciepastpapers.com/', 'display': 'https://www.ciepastpapers.com/'}
+            ]
+        }
+    ]
+    """
+    grouped = defaultdict(list)
+    
+    for prop in properties_list:
+        # Extract domain and determine type
+        if prop.startswith('sc-domain:'):
+            domain = prop.replace('sc-domain:', '').lower()
+            prop_type = 'domain'
+            display = domain
+        elif prop.startswith('http'):
+            try:
+                parsed = urlparse(prop.lower())
+                domain = parsed.netloc.replace('www.', '')
+                prop_type = 'url'
+                display = prop.rstrip('/').lower()
+            except:
+                continue
+        else:
+            continue
+        
+        grouped[domain].append({
+            'type': prop_type,
+            'url': prop,
+            'display': display
+        })
+    
+    # Convert to list of dicts with proper formatting
+    result = []
+    for domain in sorted(grouped.keys()):
+        props = grouped[domain]
+        # Sort so domain properties come first
+        props.sort(key=lambda x: (x['type'] != 'domain', x['display']))
+        
+        result.append({
+            'domain': domain,
+            'primary_display': domain.upper(),
+            'properties': props
+        })
+    
+    return result
 
 
 @login_required
@@ -340,38 +410,45 @@ def keywords_finder(request):
         use_real_data = request.POST.get('use_gsc', 'false') == 'true'
         
         try:
-            # Try to fetch from GSC if connected and user wants real data
-            if use_gsc and use_real_data and gsc_connection:
+            # If GSC is connected, ONLY fetch real data - NO FALLBACK to mock
+            if use_gsc and gsc_connection:
                 try:
-                    keywords = fetch_gsc_keywords(url, gsc_connection.credentials)
-                    messages.success(request, f'Successfully fetched {len(keywords)} keywords from Google Search Console')
+                    # Pass the properties list to help with matching
+                    keywords = fetch_gsc_keywords(
+                        url, 
+                        gsc_connection.credentials,
+                        properties_list=gsc_connection.properties
+                    )
+                    if not keywords:
+                        error = "No keyword data found for this property in Google Search Console. This might mean no search traffic data is available yet."
+                        messages.error(request, error)
+                    else:
+                        messages.success(request, f'Successfully fetched {len(keywords)} keywords from Google Search Console')
                 except Exception as gsc_error:
-                    # Fallback to mock data if GSC fails
-                    keywords = generate_mock_keywords(url)
-                    messages.warning(request, f'GSC Error: {str(gsc_error)}. Using demo data instead.')
+                    # Show error but DON'T fall back to mock data
+                    error = f"Error fetching from Google Search Console: {str(gsc_error)}"
+                    messages.error(request, error)
             else:
-                # Use mock data
-                keywords = generate_mock_keywords(url)
-                if not use_gsc:
-                    messages.info(request, f'Using demo data. Connect Google Search Console for real keywords.')
-                else:
-                    messages.success(request, f'Generated {len(keywords)} demo keywords')
+                # GSC not connected - don't allow submission
+                error = "Google Search Console is not connected. Please connect your GSC account first."
+                messages.error(request, error)
             
-            # Get statistics
-            stats = get_keyword_stats(keywords)
-            
-            # Save to database
-            analysis = KeywordAnalysis.objects.create(
-                user=request.user,
-                url=url,
-                total_keywords=stats['total_keywords'],
-                top_3_positions=stats['top_3_positions'],
-                top_10_positions=stats['top_10_positions'],
-                top_20_positions=stats['top_20_positions'],
-                total_volume=stats['total_volume'],
-                avg_position=stats['avg_position'],
-                keywords_data=keywords
-            )
+            if keywords:
+                # Get statistics
+                stats = get_keyword_stats(keywords)
+                
+                # Save to database - ONLY REAL GSC DATA
+                analysis = KeywordAnalysis.objects.create(
+                    user=request.user,
+                    url=url,
+                    total_keywords=stats['total_keywords'],
+                    top_3_positions=stats['top_3_positions'],
+                    top_10_positions=stats['top_10_positions'],
+                    top_20_positions=stats['top_20_positions'],
+                    total_volume=stats['total_volume'],
+                    avg_position=stats['avg_position'],
+                    keywords_data=keywords
+                )
             
         except Exception as e:
             error = str(e)
@@ -386,6 +463,7 @@ def keywords_finder(request):
         'analysis': analysis,
         'gsc_connected': use_gsc,
         'gsc_connection': gsc_connection,
+        'grouped_properties': _group_properties_by_domain(gsc_connection.properties) if gsc_connection else [],
     }
     
     return render(request, 'dashboard/keywords_finder.html', context)

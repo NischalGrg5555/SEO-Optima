@@ -9,13 +9,14 @@ from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 
 
-def fetch_gsc_keywords(url: str, credentials_dict: dict, days: int = 90) -> List[Dict[str, any]]:
+def fetch_gsc_keywords(url: str, credentials_dict: dict, properties_list: list = None, days: int = 90) -> List[Dict[str, any]]:
     """
     Fetch real keyword data from Google Search Console API
     
     Args:
         url: The URL/property to fetch keywords for
         credentials_dict: OAuth2 credentials as dictionary
+        properties_list: List of available properties from GSC (for smart matching)
         days: Number of days of data to fetch (default: 90)
         
     Returns:
@@ -48,41 +49,198 @@ def fetch_gsc_keywords(url: str, credentials_dict: dict, days: int = 90) -> List
             'startRow': 0
         }
         
-        # Execute the request
-        response = service.searchanalytics().query(
-            siteUrl=url,
-            body=request
-        ).execute()
+        # Generate different URL format variations to try, including domain properties
+        url_variations = _generate_url_variations(url, properties_list)
         
         keywords_data = []
+        last_error = None
         
-        if 'rows' in response:
-            for row in response['rows']:
-                keyword = row['keys'][0]  # query
-                ranked_url = row['keys'][1] if len(row['keys']) > 1 else url  # page
+        # Try each URL variation
+        for site_url in url_variations:
+            try:
+                # Execute the request
+                response = service.searchanalytics().query(
+                    siteUrl=site_url,
+                    body=request
+                ).execute()
                 
-                # Get metrics
-                clicks = int(row.get('clicks', 0))
-                impressions = int(row.get('impressions', 0))
-                ctr = float(row.get('ctr', 0))
-                position = round(float(row.get('position', 0)), 1)
-                
-                keywords_data.append({
-                    'keyword': keyword,
-                    'volume': impressions,  # Using impressions as volume
-                    'position': position,
-                    'url': ranked_url,
-                    'clicks': clicks,
-                    'ctr': round(ctr * 100, 2)  # Convert to percentage
-                })
+                if 'rows' in response:
+                    for row in response['rows']:
+                        keyword = row['keys'][0]  # query
+                        ranked_url = row['keys'][1] if len(row['keys']) > 1 else url  # page
+                        
+                        # Get metrics
+                        clicks = int(row.get('clicks', 0))
+                        impressions = int(row.get('impressions', 0))
+                        ctr = float(row.get('ctr', 0))
+                        position = round(float(row.get('position', 0)), 1)
+                        
+                        keywords_data.append({
+                            'keyword': keyword,
+                            'volume': impressions,  # Using impressions as volume
+                            'position': position,
+                            'url': ranked_url,
+                            'clicks': clicks,
+                            'ctr': round(ctr * 100, 2)  # Convert to percentage
+                        })
+                    
+                    # If we got data, sort and return
+                    if keywords_data:
+                        keywords_data.sort(key=lambda x: x['volume'], reverse=True)
+                        return keywords_data
+                    
+            except Exception as e:
+                last_error = str(e)
+                continue
+        
+        # If no data found with any variation, raise the last error
+        if not keywords_data and last_error:
+            available_props = f"\n\nAvailable properties in your GSC account:\n" + \
+                            "\n".join([f"  • {p}" for p in (properties_list or [])])
+            raise Exception(f"Property not found in Google Search Console for '{url}'. Tried variations: {', '.join(url_variations)}. {available_props}\n\nLast error: {last_error}")
         
         # Sort by impressions (volume) descending
         keywords_data.sort(key=lambda x: x['volume'], reverse=True)
-        
         return keywords_data
         
     except Exception as e:
         raise Exception(f"Error fetching from Google Search Console: {str(e)}")
+
+
+def _generate_url_variations(url: str, properties_list: list = None) -> List[str]:
+    """
+    Generate different URL format variations for GSC property matching
+    GSC properties can be registered as:
+    1. Domain properties: sc-domain:example.com
+    2. URL properties: https://example.com/
+    
+    Prioritizes exact matches from properties_list first!
+    
+    Args:
+        url: The base URL
+        properties_list: List of available properties to match against
+        
+    Returns:
+        List of URL variations to try (prioritized by relevance)
+    """
+    from urllib.parse import urlparse
+    
+    # Ensure URL has a protocol
+    if not url.startswith(('http://', 'https://')):
+        base_url = f'https://{url}'
+    else:
+        base_url = url
+    
+    # Remove trailing slash and path for domain extraction
+    base_url_clean = base_url.rstrip('/')
+    parsed = urlparse(base_url_clean)
+    domain = parsed.netloc
+    path = parsed.path
+    protocol = parsed.scheme
+    
+    # Extract base domain (without www)
+    if domain.startswith('www.'):
+        base_domain = domain[4:]
+    else:
+        base_domain = domain
+    
+    variations = []
+    matched_properties = []
+    
+    # FIRST: If properties_list is provided, find exact or close matches
+    if properties_list:
+        for prop in properties_list:
+            # Check if this property matches the user's input domain
+            if _property_matches_domain(prop, base_domain, domain):
+                matched_properties.append(prop)
+        
+        # Add matched properties first (highest priority)
+        variations.extend(matched_properties)
+    
+    # SECOND: Add all other properties from the list (they might have path variations)
+    if properties_list:
+        for prop in properties_list:
+            if prop not in variations:
+                variations.append(prop)
+    
+    # THIRD: Add generated variations for the user's input
+    generated = set()
+    
+    # Protocol + domain variations
+    generated.add(f'{protocol}://{domain}')
+    generated.add(f'{protocol}://{domain}/')
+    generated.add(f'sc-domain:{base_domain}')
+    generated.add(f'sc-domain:www.{base_domain}')
+    
+    # With and without www
+    if domain.startswith('www.'):
+        non_www = domain[4:]
+        generated.add(f'{protocol}://{non_www}')
+        generated.add(f'{protocol}://{non_www}/')
+        generated.add(f'sc-domain:{non_www}')
+    else:
+        with_www = f'www.{domain}'
+        generated.add(f'{protocol}://{with_www}')
+        generated.add(f'{protocol}://{with_www}/')
+        generated.add(f'sc-domain:www.{domain}')
+    
+    # With path if provided
+    if path and path != '/':
+        generated.add(f'{protocol}://{domain}{path}')
+        generated.add(f'{protocol}://{domain}{path}/')
+    
+    variations.extend(list(generated))
+    
+    # Remove any duplicates while preserving order
+    seen = set()
+    unique_variations = []
+    for v in variations:
+        if v not in seen:
+            unique_variations.append(v)
+            seen.add(v)
+    
+    return unique_variations
+
+
+def _property_matches_domain(property_str: str, base_domain: str, domain_with_www: str) -> bool:
+    """
+    Check if a GSC property matches the given domain
+    
+    Args:
+        property_str: The GSC property (e.g., "sc-domain:example.com" or "https://example.com/")
+        base_domain: The base domain without www (e.g., "example.com")
+        domain_with_www: The domain as entered (e.g., "www.example.com" or "example.com")
+        
+    Returns:
+        True if the property matches
+    """
+    property_lower = property_str.lower()
+    base_domain_lower = base_domain.lower()
+    domain_www_lower = domain_with_www.lower()
+    
+    # Domain property match
+    if property_lower.startswith('sc-domain:'):
+        prop_domain = property_lower.replace('sc-domain:', '').rstrip('/')
+        # Match if exactly same, or one with www and one without
+        return (prop_domain == base_domain_lower or 
+                prop_domain == domain_www_lower or
+                prop_domain == f'www.{base_domain_lower}')
+    
+    # URL property match
+    elif property_lower.startswith('http'):
+        from urllib.parse import urlparse
+        try:
+            prop_parsed = urlparse(property_lower)
+            prop_domain = prop_parsed.netloc.lower()
+            # Match if domain is the same
+            return (prop_domain == domain_www_lower or 
+                    prop_domain == base_domain_lower or
+                    prop_domain == f'www.{base_domain_lower}')
+        except:
+            return False
+    
+    return False
+
 
 
 def generate_mock_keywords(url: str) -> List[Dict[str, any]]:

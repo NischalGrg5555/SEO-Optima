@@ -14,18 +14,60 @@
         </div>
         <div>
           {% if gsc_connected %}
-            <div class="card border-success">
-              <div class="card-body p-3">
-                <div class="d-flex align-items-center">
-                  <i class="bi bi-check-circle-fill text-success me-2"></i>
+            <div class="card border-success gsc-connection-card">
+              <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                  <i class="bi bi-check-circle-fill text-success me-2" style="font-size: 1.5rem;"></i>
                   <div>
-                    <strong class="text-success">Connected</strong>
-                    <p class="mb-0 small text-muted">{{ gsc_connection.properties|length }} properties found</p>
+                    <strong class="text-success d-block">Connected to Google Search Console</strong>
+                    <small class="text-muted">{{ gsc_connection.properties|length }} properties found</small>
                   </div>
-                  <a href="{% url 'dashboard:disconnect_gsc' %}" class="btn btn-sm btn-outline-danger ms-3">
+                  <button class="btn btn-sm btn-outline-secondary me-2 properties-toggle" data-bs-toggle="collapse" data-bs-target="#propertiesList" aria-expanded="false">
+                    <i class="bi bi-chevron-down me-1"></i>
+                    <span class="toggle-text">Show</span>
+                  </button>
+                  <a href="{% url 'dashboard:disconnect_gsc' %}" class="btn btn-sm btn-outline-danger">
                     <i class="bi bi-x-circle me-1"></i> Disconnect
                   </a>
                 </div>
+                
+                <!-- Grouped Properties Display (Collapsible & Scrollable) -->
+                {% if grouped_properties %}
+                <div class="collapse" id="propertiesList">
+                  <div class="properties-list mt-3">
+                    {% for group in grouped_properties %}
+                    <div class="property-group">
+                      <div class="property-header">
+                        <small class="text-muted text-uppercase fw-bold">{{ group.primary_display }}</small>
+                      </div>
+                      <div class="property-items">
+                        {% for prop in group.properties %}
+                        <div class="property-item">
+                          <div class="d-flex align-items-center">
+                            {% if prop.type == 'domain' %}
+                              <i class="bi bi-globe text-primary me-2"></i>
+                            {% else %}
+                              <i class="bi bi-link-45deg text-info me-2"></i>
+                            {% endif %}
+                            <div class="flex-grow-1 min-width-0">
+                              <strong class="d-block text-truncate">{{ prop.display }}</strong>
+                              <small class="text-muted">
+                                {% if prop.type == 'domain' %}
+                                  Domain property
+                                {% else %}
+                                  URL property
+                                {% endif %}
+                              </small>
+                            </div>
+                          </div>
+                        </div>
+                        {% endfor %}
+                      </div>
+                    </div>
+                    {% endfor %}
+                  </div>
+                </div>
+                {% endif %}
               </div>
             </div>
           {% else %}
@@ -47,9 +89,9 @@
         </div>
       </div>
       {% if not gsc_connected %}
-      <div class="alert alert-info mt-3">
-        <i class="bi bi-info-circle me-2"></i>
-        <strong>Note:</strong> Currently showing mock/demo data. Connect Google Search Console for real keyword rankings from your verified properties.
+      <div class="alert alert-warning mt-3">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <strong>Google Search Console Required:</strong> You must connect your Google Search Console account to see real keyword rankings. We no longer show demo data to ensure 100% accuracy.
       </div>
       {% endif %}
     </div>
@@ -82,26 +124,10 @@
               </div>
             </div>
 
-            {% if gsc_connected %}
-            <div class="mb-4">
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="useGSC" name="use_gsc" value="true" checked>
-                <label class="form-check-label" for="useGSC">
-                  <strong>Use Real Data from Google Search Console</strong>
-                  <p class="text-muted small mb-0">Uncheck to use demo data instead</p>
-                </label>
-              </div>
-            </div>
-            {% endif %}
-
             <div class="d-grid">
-              <button type="submit" class="btn btn-primary btn-lg" id="analyzeBtn">
+              <button type="submit" class="btn btn-primary btn-lg" id="analyzeBtn" {% if not gsc_connected %}disabled{% endif %}>
                 <span id="btnText">
-                  {% if gsc_connected %}
-                    🔍 Fetch Keywords from GSC
-                  {% else %}
-                    🔍 Generate Demo Keywords
-                  {% endif %}
+                  🔍 Fetch Keywords from Google Search Console
                 </span>
                 <span id="btnLoading" class="d-none">
                   <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
@@ -223,8 +249,8 @@
                     {% endif %}
                   </td>
                   <td>
-                    <a href="{{ keyword.url }}" target="_blank" class="text-break small text-decoration-none">
-                      {{ keyword.url|truncatechars:50 }}
+                    <a href="{{ keyword.url }}" target="_blank" class="text-break small text-decoration-none" style="word-break: break-all;">
+                      {{ keyword.url }}
                     </a>
                   </td>
                 </tr>
@@ -307,6 +333,107 @@
   color: #f59e0b;
 }
 
+/* GSC Connection Card & Properties */
+.gsc-connection-card {
+  border-left: 4px solid #16a34a !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.properties-toggle {
+  transition: all 0.3s ease;
+}
+
+.properties-toggle[aria-expanded="true"] i {
+  transform: rotate(180deg);
+  transition: transform 0.3s ease;
+}
+
+.properties-toggle[aria-expanded="false"] i {
+  transform: rotate(0deg);
+  transition: transform 0.3s ease;
+}
+
+.properties-list {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+}
+
+/* Custom scrollbar for properties list */
+.properties-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.properties-list::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.properties-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.properties-list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.property-group {
+  background: white;
+  border-radius: 6px;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 8px;
+}
+
+.property-group:last-child {
+  margin-bottom: 0;
+}
+
+.property-header {
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f3f4f6;
+  margin-bottom: 8px;
+}
+
+.property-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.property-item {
+  padding: 8px;
+  background: #fafbfc;
+  border-radius: 6px;
+  border: 1px solid #f0f1f3;
+  transition: all 0.2s ease;
+}
+
+.property-item:hover {
+  background: #f0f9ff;
+  border-color: #bfdbfe;
+}
+
+.property-item strong {
+  font-size: 0.85rem;
+  color: #1f2937;
+  display: block;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.property-item .text-muted {
+  font-size: 0.75rem;
+}
+
+.min-width-0 {
+  min-width: 0;
+}
+
 .table th {
   font-weight: 600;
   font-size: 0.875rem;
@@ -354,6 +481,20 @@ document.getElementById('keywordsForm')?.addEventListener('submit', function() {
   btnText.classList.add('d-none');
   btnLoading.classList.remove('d-none');
 });
+
+// Handle properties toggle button text and animation
+const propertiesToggle = document.querySelector('.properties-toggle');
+const propertiesList = document.getElementById('propertiesList');
+
+if (propertiesToggle && propertiesList) {
+  propertiesList.addEventListener('show.bs.collapse', function() {
+    propertiesToggle.querySelector('.toggle-text').textContent = 'Hide';
+  });
+  
+  propertiesList.addEventListener('hide.bs.collapse', function() {
+    propertiesToggle.querySelector('.toggle-text').textContent = 'Show';
+  });
+}
 
 function exportToCSV() {
   const table = document.getElementById('keywordsTable');
