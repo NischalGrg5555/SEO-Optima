@@ -26,14 +26,9 @@
       <span>My Analyses</span>
     </a>
     
-    <a class="menu-item {% if request.resolver_match.url_name == 'extract_headers' %}active{% endif %}" href="{% url 'dashboard:extract_headers' %}">
+    <a class="menu-item {% if request.resolver_match.url_name == 'extract_headers' or request.resolver_match.url_name == 'header_analysis_detail' or request.resolver_match.url_name == 'delete_header_analysis' %}active{% endif %}" href="{% url 'dashboard:extract_headers' %}">
       <i class="bi bi-list-nested"></i>
       <span>Extract Headers</span>
-    </a>
-
-    <a class="menu-item {% if request.resolver_match.url_name == 'header_analysis_list' or request.resolver_match.url_name == 'header_analysis_detail' or request.resolver_match.url_name == 'delete_header_analysis' %}active{% endif %}" href="{% url 'dashboard:header_analysis_list' %}">
-      <i class="bi bi-file-text"></i>
-      <span>Header Analyses</span>
     </a>
 
     <a class="menu-item {% if request.resolver_match.url_name == 'pdf_reports_list' or request.resolver_match.url_name == 'generate_pdf_report' or request.resolver_match.url_name == 'pdf_report_detail' %}active{% endif %}" href="{% url 'dashboard:pdf_reports_list' %}">

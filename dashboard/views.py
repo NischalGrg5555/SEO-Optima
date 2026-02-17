@@ -289,6 +289,9 @@ def extract_headers_view(request):
             error = str(e)
             messages.error(request, f"Error extracting headers: {error}")
     
+    # Get all previous analyses for this user
+    analyses = HeaderAnalysis.objects.filter(user=request.user).order_by('-created_at')[:10]
+    
     context = {
         'form': form,
         'headers': headers,
@@ -296,6 +299,7 @@ def extract_headers_view(request):
         'url': url,
         'error': error,
         'analysis': analysis,
+        'analyses': analyses,
     }
     
     return render(request, 'dashboard/extract_headers.html', context)
