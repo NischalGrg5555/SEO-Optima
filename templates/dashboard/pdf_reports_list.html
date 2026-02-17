@@ -1,0 +1,79 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}PDF Reports - SEO Optima{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>PDF Reports</h1>
+            <p class="text-muted">Manage your generated PDF reports</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'dashboard:generate_pdf_report' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Generate New Report
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="alert-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if reports %}
+    <div class="row">
+        {% for report in reports %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title mb-0">{{ report.title }}</h5>
+                        {% if report.report_type == 'free' %}
+                        <span class="badge bg-success">Basic</span>
+                        {% else %}
+                        <span class="badge bg-info">Premium</span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if report.description %}
+                    <p class="card-text text-muted small">{{ report.description|truncatewords:15 }}</p>
+                    {% endif %}
+                    
+                    <div class="small text-muted mb-3">
+                        <div><strong>Created:</strong> {{ report.created_at|date:"M d, Y H:i" }}</div>
+                        {% if report.pagespeed_analysis %}
+                        <div><strong>URL:</strong> {{ report.pagespeed_analysis.url }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-transparent">
+                    <div class="btn-group w-100" role="group">
+                        <a href="{% url 'dashboard:download_pdf_report' report.pk %}" class="btn btn-sm btn-success">
+                            <i class="bi bi-download"></i> Download
+                        </a>
+                        <a href="{% url 'dashboard:delete_pdf_report' report.pk %}" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i> Delete
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info" role="alert">
+        <h5>No reports yet</h5>
+        <p>Start by <a href="{% url 'dashboard:generate_pdf_report' %}">generating a new report</a> to see your reports here.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Delete Report - SEO Optima{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-5">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card border-danger">
+                <div class="card-body">
+                    <h5 class="card-title text-danger mb-4">
+                        <i class="bi bi-exclamation-triangle"></i> Delete Report
+                    </h5>
+                    
+                    <p>Are you sure you want to delete this report?</p>
+                    
+                    <div class="alert alert-light">
+                        <strong>{{ report.title }}</strong>
+                        <p class="mb-0 text-muted">Created: {{ report.created_at|date:"M d, Y H:i" }}</p>
+                    </div>
+                    
+                    <p class="text-muted">This action cannot be undone.</p>
+                    
+                    <div class="d-grid gap-2">
+                        <form method="post" class="d-grid">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="bi bi-trash"></i> Yes, Delete Report
+                            </button>
+                        </form>
+                        <a href="{% url 'dashboard:pdf_reports_list' %}" class="btn btn-secondary btn-lg">
+                            Cancel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

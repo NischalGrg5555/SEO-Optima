@@ -1,0 +1,263 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Generate PDF Report - SEO Optima{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-5">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="mb-4">Generate PDF Report</h1>
+            <p class="text-muted">Select a report type and source analysis to generate your report.</p>
+        </div>
+    </div>
+
+    <!-- Report Type Selection -->
+    <div class="row mb-5">
+        <div class="col-md-12">
+            <h3 class="mb-4">Choose Report Type</h3>
+        </div>
+        
+        {% for report_type in report_types %}
+        <div class="col-md-6 mb-4">
+            <div class="card report-type-card {% if report_type.locked %}locked-card{% else %}available-card{% endif %}" 
+                 id="report-{{ report_type.id }}"
+                 onclick="selectReportType('{{ report_type.id }}', {{ report_type.locked|lower}})"
+                 style="cursor: {% if report_type.locked %}not-allowed{% else %}pointer{% endif %}; position: relative;">
+                
+                {% if report_type.locked %}
+                <div class="badge badge-warning position-absolute" style="top: 10px; right: 10px;">
+                    🔒 Coming Soon
+                </div>
+                {% endif %}
+                
+                <div class="card-body">
+                    <div style="font-size: 2.5rem; margin-bottom: 15px;">{{ report_type.icon }}</div>
+                    <h5 class="card-title">{{ report_type.name }}</h5>
+                    <p class="card-text text-muted">{{ report_type.description }}</p>
+                    
+                    {% if report_type.id == 'basic' %}
+                    <div class="badge badge-success">Free</div>
+                    {% else %}
+                    <div class="badge badge-info">Premium</div>
+                    {% endif %}
+                </div>
+                
+                <input type="radio" name="report-type-select" value="{{ report_type.id }}" 
+                       class="report-type-input" 
+                       {% if report_type.locked %}disabled{% endif %}
+                       style="display: none;">
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Basic Report Configuration Form (Hidden by default) -->
+    <form method="post" id="generate-report-form" style="display: none;">
+        {% csrf_token %}
+        
+        <!-- Report Type (Hidden) -->
+        <input type="hidden" name="report_type" id="report-type-input" value="basic">
+
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">📋 Configure Basic Report</h5>
+            </div>
+            <div class="card-body">
+                <!-- Data Selection -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <h6 class="mb-3">Select Data Sources <small class="text-muted">(Choose at least one)</small></h6>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <!-- PageSpeed Analysis -->
+                    <div class="col-md-6 mb-3">
+                        <div class="card border">
+                            <div class="card-body">
+                                <h6 class="card-title">📊 PageSpeed Insights</h6>
+                                <select class="form-control form-control-sm" name="pagespeed_analysis_id">
+                                    <option value="">-- Select analysis --</option>
+                                    {% for analysis in pagespeed_analyses %}
+                                    <option value="{{ analysis.id }}">
+                                        {{ analysis.url|truncatechars:40 }} ({{ analysis.created_at|date:"M d" }})
+                                    </option>
+                                    {% empty %}
+                                    <option disabled>No analyses available</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Shows LCP, INP, CLS metrics with recommendations</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Keyword Analysis -->
+                    <div class="col-md-6 mb-3">
+                        <div class="card border">
+                            <div class="card-body">
+                                <h6 class="card-title">🔍 Keywords Finder</h6>
+                                <select class="form-control form-control-sm" name="keyword_analysis_id">
+                                    <option value="">-- Select analysis --</option>
+                                    {% for analysis in keyword_analyses %}
+                                    <option value="{{ analysis.id }}">
+                                        {{ analysis.url|truncatechars:40 }} ({{ analysis.created_at|date:"M d" }})
+                                    </option>
+                                    {% empty %}
+                                    <option disabled>No analyses available</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Shows keyword rankings and action plan</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Image Analysis -->
+                    <div class="col-md-6 mb-3">
+                        <div class="card border">
+                            <div class="card-body">
+                                <h6 class="card-title">🖼️ Image & Alt Text Finder</h6>
+                                <select class="form-control form-control-sm" name="image_analysis_id">
+                                    <option value="">-- Select analysis --</option>
+                                    {% for analysis in image_analyses %}
+                                    <option value="{{ analysis.id }}">
+                                        {{ analysis.url|truncatechars:40 }} ({{ analysis.created_at|date:"M d" }})
+                                    </option>
+                                    {% empty %}
+                                    <option disabled>No analyses available</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Shows image statistics and improvement tips</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- URL for Header Extraction -->
+                    <div class="col-md-6 mb-3">
+                        <div class="card border">
+                            <div class="card-body">
+                                <h6 class="card-title">📄 Extract Content Headers</h6>
+                                <input type="url" class="form-control form-control-sm" name="header_url" 
+                                       placeholder="Enter URL to extract headers">
+                                <small class="text-muted">Analyzes H1, H2, H3 structure with guidelines</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Title -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="report-title" class="form-label fw-bold">Report Title</label>
+                            <input type="text" class="form-control" id="report-title" name="title" 
+                                   placeholder="e.g., Website SEO Analysis Report" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <button type="button" class="btn btn-secondary" onclick="hideForm()">Back</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-file-pdf"></i> Generate Report
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+    .report-type-card {
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .report-type-card.available-card:hover {
+        border-color: #007bff;
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .report-type-card.available-card.selected {
+        border-color: #007bff;
+        background-color: #f8f9ff;
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.25);
+    }
+
+    .report-type-card.locked-card {
+        opacity: 0.6;
+        background-color: #f8f9fa;
+        position: relative;
+    }
+
+    .report-type-card.locked-card:hover {
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+
+    .report-type-card.locked-card:hover::after {
+        content: "Coming Soon";
+        position: absolute;
+        bottom: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #6c757d;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        white-space: nowrap;
+        z-index: 100;
+    }
+
+    .badge {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.8rem;
+    }
+</style>
+
+<script>
+    function selectReportType(typeId, isLocked) {
+        if (isLocked) {
+            return;
+        }
+
+        // Hide report type selection cards
+        document.querySelectorAll('.report-type-card').forEach(card => {
+            card.parentElement.style.display = 'none';
+        });
+        
+        // Hide the heading
+        const heading = document.querySelector('.row.mb-5 .col-md-12 h3');
+        if (heading) heading.style.display = 'none';
+
+        // Show the form
+        document.getElementById('generate-report-form').style.display = 'block';
+        
+        // Scroll to form
+        document.getElementById('generate-report-form').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function hideForm() {
+        // Hide the form
+        document.getElementById('generate-report-form').style.display = 'none';
+        
+        // Show report type selection cards
+        document.querySelectorAll('.report-type-card').forEach(card => {
+            card.parentElement.style.display = 'block';
+        });
+        
+        // Show the heading
+        const heading = document.querySelector('.row.mb-5 .col-md-12 h3');
+        if (heading) heading.style.display = 'block';
+        
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+</script>
+{% endblock %}
