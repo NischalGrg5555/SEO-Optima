@@ -16,14 +16,9 @@
 
     <div class="menu-section">SEO TOOLS</div>
 
-    <a class="menu-item {% if request.resolver_match.url_name == 'page_speed_insights' %}active{% endif %}" href="{% url 'dashboard:page_speed_insights' %}">
+    <a class="menu-item {% if request.resolver_match.url_name == 'page_speed_insights' or request.resolver_match.url_name == 'analysis_detail' or request.resolver_match.url_name == 'delete_analysis' %}active{% endif %}" href="{% url 'dashboard:page_speed_insights' %}">
       <i class="bi bi-speedometer2"></i>
       <span>PageSpeed Insights</span>
-    </a>
-
-    <a class="menu-item {% if request.resolver_match.url_name == 'analysis_list' %}active{% endif %}" href="{% url 'dashboard:analysis_list' %}">
-      <i class="bi bi-file-earmark-text"></i>
-      <span>My Analyses</span>
     </a>
     
     <a class="menu-item {% if request.resolver_match.url_name == 'extract_headers' or request.resolver_match.url_name == 'header_analysis_detail' or request.resolver_match.url_name == 'delete_header_analysis' %}active{% endif %}" href="{% url 'dashboard:extract_headers' %}">

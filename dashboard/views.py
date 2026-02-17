@@ -170,11 +170,11 @@ def page_speed_insights(request):
             error = str(e)
             messages.error(request, f"Error: {error}")
     
-    # Get recent analyses for this user (excluding deleted)
+    # Get all previous analyses for this user (excluding deleted)
     recent_analyses = PageSpeedAnalysis.objects.filter(
         user=request.user,
         is_deleted=False
-    ).order_by('-created_at')[:5]
+    ).order_by('-created_at')[:10]
     
     context = {
         'form': form,
