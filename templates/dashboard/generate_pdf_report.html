@@ -139,7 +139,7 @@
                                 <h6 class="card-title">📄 Extract Content Headers</h6>
                                 <select class="form-control form-control-sm" name="header_analysis_id">
                                     <option value="">-- Select analysis --</option>
-                                    {% for analysis in pagespeed_analyses %}
+                                    {% for analysis in header_analyses %}
                                     <option value="{{ analysis.id }}">
                                         {{ analysis.url|truncatechars:40 }} ({{ analysis.created_at|date:"M d" }})
                                     </option>

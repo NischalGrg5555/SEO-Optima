@@ -7,7 +7,7 @@ from .services.pagespeed import fetch_pagespeed_data, get_score_color, extract_f
 from .services.header_extractor import extract_headers, get_header_hierarchy
 from .services.image_extractor import extract_images, get_image_stats
 from .services.keyword_extractor import get_keyword_stats, fetch_gsc_keywords
-from .models import PageSpeedAnalysis, ImageAltAnalysis, KeywordAnalysis, GSCConnection
+from .models import PageSpeedAnalysis, ImageAltAnalysis, KeywordAnalysis, GSCConnection, HeaderAnalysis
 from .forms import PageSpeedForm, PageSpeedFilterForm, HeaderExtractorForm
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
@@ -257,6 +257,7 @@ def extract_headers_view(request):
     hierarchy = None
     url = None
     error = None
+    analysis = None
     
     if request.method == 'POST' and form.is_valid():
         url = form.cleaned_data['url']
@@ -265,6 +266,24 @@ def extract_headers_view(request):
             # Extract headers from the URL
             headers = extract_headers(url)
             hierarchy = get_header_hierarchy(headers)
+            
+            # Calculate statistics
+            h1_count = len(hierarchy.get('h1', []))
+            h2_count = len(hierarchy.get('h2', []))
+            h3_count = len(hierarchy.get('h3', []))
+            total_headers = h1_count + h2_count + h3_count
+            
+            # Save to database
+            analysis = HeaderAnalysis.objects.create(
+                user=request.user,
+                url=url,
+                total_headers=total_headers,
+                h1_count=h1_count,
+                h2_count=h2_count,
+                h3_count=h3_count,
+                headers_data=headers
+            )
+            
             messages.success(request, f"Successfully extracted {len(headers)} headers from {url}")
         except Exception as e:
             error = str(e)
@@ -276,9 +295,57 @@ def extract_headers_view(request):
         'hierarchy': hierarchy,
         'url': url,
         'error': error,
+        'analysis': analysis,
     }
     
     return render(request, 'dashboard/extract_headers.html', context)
+
+
+@login_required
+def header_analysis_list(request):
+    """List all header analyses for the current user"""
+    analyses = HeaderAnalysis.objects.filter(user=request.user).order_by('-created_at')
+    
+    context = {
+        'analyses': analyses,
+    }
+    
+    return render(request, 'dashboard/header_analysis_list.html', context)
+
+
+@login_required  
+def header_analysis_detail(request, pk):
+    """View details of a specific header analysis"""
+    analysis = get_object_or_404(HeaderAnalysis, pk=pk, user=request.user)
+    
+    # Get hierarchy from headers data
+    from .services.header_extractor import get_header_hierarchy
+    hierarchy = get_header_hierarchy(analysis.headers_data)
+    
+    context = {
+        'analysis': analysis,
+        'hierarchy': hierarchy,
+    }
+    
+    return render(request, 'dashboard/header_analysis_detail.html', context)
+
+
+@login_required
+def delete_header_analysis(request, pk):
+    """Delete a header analysis"""
+    analysis = get_object_or_404(HeaderAnalysis, pk=pk, user=request.user)
+    
+    if request.method == 'POST':
+        analysis.delete()
+        messages.success(request, 'Header analysis deleted successfully!')
+        return redirect('dashboard:header_analysis_list')
+    
+    context = {
+        'analysis': analysis,
+    }
+    
+    return render(request, 'dashboard/delete_header_analysis.html', context)
+
 
 @login_required
 def image_alt_finder(request):

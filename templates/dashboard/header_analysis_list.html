@@ -1,0 +1,94 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Header Analyses - SEO Optima{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>Header Analyses</h1>
+            <p class="text-muted">View all your content header analyses</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'dashboard:extract_headers' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Extract New Headers
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="alert-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if analyses %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>URL</th>
+                            <th>Total Headers</th>
+                            <th>H1</th>
+                            <th>H2</th>
+                            <th>H3</th>
+                            <th>Analyzed</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for analysis in analyses %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'dashboard:header_analysis_detail' analysis.pk %}">
+                                    {{ analysis.url|truncatechars:60 }}
+                                </a>
+                            </td>
+                            <td><span class="badge bg-primary">{{ analysis.total_headers }}</span></td>
+                            <td>
+                                {% if analysis.h1_count == 1 %}
+                                <span class="badge bg-success">{{ analysis.h1_count }}</span>
+                                {% elif analysis.h1_count == 0 %}
+                                <span class="badge bg-danger">0</span>
+                                {% else %}
+                                <span class="badge bg-warning">{{ analysis.h1_count }}</span>
+                                {% endif %}
+                            </td>
+                            <td><span class="badge bg-info">{{ analysis.h2_count }}</span></td>
+                            <td><span class="badge bg-secondary">{{ analysis.h3_count }}</span></td>
+                            <td>{{ analysis.created_at|date:"M d, Y H:i" }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'dashboard:header_analysis_detail' analysis.pk %}" 
+                                       class="btn btn-outline-primary" title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'dashboard:delete_header_analysis' analysis.pk %}" 
+                                       class="btn btn-outline-danger" title="Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info" role="alert">
+        <h5>No header analyses yet</h5>
+        <p>Start by <a href="{% url 'dashboard:extract_headers' %}">extracting headers</a> from a webpage.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

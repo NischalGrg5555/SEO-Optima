@@ -100,6 +100,41 @@ class ImageAltAnalysis(models.Model):
         return round((self.images_with_alt / self.total_images) * 100, 1)
 
 
+class HeaderAnalysis(models.Model):
+    """Model to store content header analysis results"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='header_analyses')
+    url = models.URLField(max_length=500)
+    
+    # Statistics
+    total_headers = models.IntegerField(default=0)
+    h1_count = models.IntegerField(default=0)
+    h2_count = models.IntegerField(default=0)
+    h3_count = models.IntegerField(default=0)
+    
+    # Header data (stored as JSON)
+    # Format: [{'tag': 'h1', 'text': 'Header text'}]
+    headers_data = models.JSONField(default=list, blank=True)
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['url']),
+        ]
+    
+    def __str__(self):
+        return f"{self.url} - {self.total_headers} headers"
+    
+    @property
+    def has_single_h1(self):
+        """Check if page has exactly one H1 tag"""
+        return self.h1_count == 1
+
+
 class KeywordAnalysis(models.Model):
     """Model to store keyword ranking analysis results"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='keyword_analyses')

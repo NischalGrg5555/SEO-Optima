@@ -1,0 +1,155 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Header Analysis Details - SEO Optima{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>Header Analysis</h1>
+            <p class="text-muted">{{ analysis.url }}</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'dashboard:header_analysis_list' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+            <a href="{% url 'dashboard:delete_header_analysis' analysis.pk %}" class="btn btn-danger">
+                <i class="bi bi-trash"></i> Delete
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Statistics Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">📊 Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Total Headers:</strong>
+                        <span class="badge bg-primary float-end">{{ analysis.total_headers }}</span>
+                    </div>
+                    <div class="mb-3">
+                        <strong>H1 Tags:</strong>
+                        {% if analysis.h1_count == 1 %}
+                        <span class="badge bg-success float-end">{{ analysis.h1_count }} ✓</span>
+                        {% elif analysis.h1_count == 0 %}
+                        <span class="badge bg-danger float-end">{{ analysis.h1_count }} ✗</span>
+                        {% else %}
+                        <span class="badge bg-warning float-end">{{ analysis.h1_count }} ⚠</span>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <strong>H2 Tags:</strong>
+                        <span class="badge bg-info float-end">{{ analysis.h2_count }}</span>
+                    </div>
+                    <div class="mb-3">
+                        <strong>H3 Tags:</strong>
+                        <span class="badge bg-secondary float-end">{{ analysis.h3_count }}</span>
+                    </div>
+                    <hr>
+                    <div>
+                        <small class="text-muted">
+                            <i class="bi bi-clock"></i> Analyzed: {{ analysis.created_at|date:"M d, Y H:i" }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEO Health Card -->
+            <div class="card mt-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">✓ SEO Health</h5>
+                </div>
+                <div class="card-body">
+                    {% if analysis.has_single_h1 %}
+                    <p class="text-success"><i class="bi bi-check-circle-fill"></i> Perfect! Exactly one H1 tag</p>
+                    {% elif analysis.h1_count == 0 %}
+                    <p class="text-danger"><i class="bi bi-x-circle-fill"></i> Missing H1 tag</p>
+                    {% else %}
+                    <p class="text-warning"><i class="bi bi-exclamation-triangle-fill"></i> Multiple H1 tags ({{ analysis.h1_count }})</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Headers Detail -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📄 Content Header Structure</h5>
+                </div>
+                <div class="card-body">
+                    {% if hierarchy.h1 %}
+                    <h6 class="text-primary">H1 Tags ({{ hierarchy.h1|length }})</h6>
+                    <ul class="list-group mb-4">
+                        {% for header in hierarchy.h1 %}
+                        <li class="list-group-item">
+                            <strong>{{ header }}</strong>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+
+                    {% if hierarchy.h2 %}
+                    <h6 class="text-info">H2 Tags ({{ hierarchy.h2|length }})</h6>
+                    <ul class="list-group mb-4">
+                        {% for header in hierarchy.h2 %}
+                        <li class="list-group-item">{{ header }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+
+                    {% if hierarchy.h3 %}
+                    <h6 class="text-secondary">H3 Tags ({{ hierarchy.h3|length }})</h6>
+                    <ul class="list-group mb-4">
+                        {% for header in hierarchy.h3 %}
+                        <li class="list-group-item">{{ header }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recommendations Card -->
+            <div class="card mt-4">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0">💡 Recommendations</h5>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li>
+                            <strong>Use exactly one H1 tag per page</strong> 
+                            {% if analysis.has_single_h1 %}
+                            <span class="badge bg-success">✓ Current: {{ analysis.h1_count }}</span>
+                            {% else %}
+                            <span class="badge bg-warning">⚠ Current: {{ analysis.h1_count }}</span>
+                            {% endif %}
+                            <p class="text-muted small mb-2">The H1 should contain your primary keyword and describe the page topic.</p>
+                        </li>
+                        <li>
+                            <strong>Maintain proper hierarchy:</strong> H1 → H2 → H3 (don't skip levels)
+                            <p class="text-muted small mb-2">This helps search engines understand content structure.</p>
+                        </li>
+                        <li>
+                            <strong>Include keywords:</strong> Use relevant keywords in your headings naturally
+                            <p class="text-muted small mb-2">Balance SEO with readability.</p>
+                        </li>
+                        <li>
+                            <strong>Keep headers descriptive:</strong> Headers should clearly describe the content that follows
+                            <p class="text-muted small mb-2">Avoid vague titles.</p>
+                        </li>
+                        <li>
+                            <strong>Make them engaging:</strong> Headers help users scan and understand your content quickly
+                            <p class="text-muted small">Use action words when appropriate.</p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

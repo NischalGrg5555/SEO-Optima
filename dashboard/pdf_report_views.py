@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .models import PDFReport, PageSpeedAnalysis, KeywordAnalysis, ImageAltAnalysis
+from .models import PDFReport, PageSpeedAnalysis, KeywordAnalysis, ImageAltAnalysis, HeaderAnalysis
 from .services.pdf_generator import generate_basic_report
 
 
@@ -66,19 +66,19 @@ def generate_pdf_report(request):
                     messages.warning(request, 'Selected Image analysis not found.')
             
             if header_analysis_id:
-                # Extract headers from selected PageSpeed analysis
+                # Extract headers from selected HeaderAnalysis
                 try:
-                    header_source = PageSpeedAnalysis.objects.get(id=header_analysis_id, user=request.user)
-                    if header_source.content_headers:
+                    header_source = HeaderAnalysis.objects.get(id=header_analysis_id, user=request.user)
+                    if header_source.headers_data:
                         from .services.header_extractor import get_header_hierarchy
                         headers_data = {
                             'url': header_source.url,
-                            'headers': header_source.content_headers,
-                            'hierarchy': get_header_hierarchy(header_source.content_headers)
+                            'headers': header_source.headers_data,
+                            'hierarchy': get_header_hierarchy(header_source.headers_data)
                         }
                     else:
                         messages.warning(request, 'Selected analysis has no header data.')
-                except PageSpeedAnalysis.DoesNotExist:
+                except HeaderAnalysis.DoesNotExist:
                     messages.warning(request, 'Selected header analysis not found.')
             
             # Generate the PDF
@@ -135,10 +135,15 @@ def generate_pdf_report(request):
         user=request.user
     ).order_by('-created_at')[:10]
     
+    header_analyses = HeaderAnalysis.objects.filter(
+        user=request.user
+    ).order_by('-created_at')[:10]
+    
     context = {
         'pagespeed_analyses': pagespeed_analyses,
         'keyword_analyses': keyword_analyses,
         'image_analyses': image_analyses,
+        'header_analyses': header_analyses,
         'report_types': [
             {'id': 'basic', 'name': 'Basic Report', 'description': 'Free report with core metrics', 'locked': False, 'icon': '📋'},
             {'id': 'premium', 'name': 'Premium Report', 'description': 'Advanced report with detailed insights and recommendations', 'locked': True, 'icon': '⭐'},
