@@ -137,8 +137,16 @@
                         <div class="card border">
                             <div class="card-body">
                                 <h6 class="card-title">📄 Extract Content Headers</h6>
-                                <input type="url" class="form-control form-control-sm" name="header_url" 
-                                       placeholder="Enter URL to extract headers">
+                                <select class="form-control form-control-sm" name="header_analysis_id">
+                                    <option value="">-- Select analysis --</option>
+                                    {% for analysis in pagespeed_analyses %}
+                                    <option value="{{ analysis.id }}">
+                                        {{ analysis.url|truncatechars:40 }} ({{ analysis.created_at|date:"M d" }})
+                                    </option>
+                                    {% empty %}
+                                    <option disabled>No analyses available</option>
+                                    {% endfor %}
+                                </select>
                                 <small class="text-muted">Analyzes H1, H2, H3 structure with guidelines</small>
                             </div>
                         </div>

@@ -33,10 +33,10 @@ def generate_pdf_report(request):
         pagespeed_id = request.POST.get('pagespeed_analysis_id')
         keyword_id = request.POST.get('keyword_analysis_id')
         image_id = request.POST.get('image_analysis_id')
-        header_url = request.POST.get('header_url', '').strip()
+        header_analysis_id = request.POST.get('header_analysis_id', '').strip()
         
         # Validate at least one data source is selected
-        if not any([pagespeed_id, keyword_id, image_id, header_url]):
+        if not any([pagespeed_id, keyword_id, image_id, header_analysis_id]):
             messages.error(request, 'Please select at least one data source for your report.')
             return redirect('dashboard:generate_pdf_report')
         
@@ -65,18 +65,21 @@ def generate_pdf_report(request):
                 except ImageAltAnalysis.DoesNotExist:
                     messages.warning(request, 'Selected Image analysis not found.')
             
-            if header_url:
-                # Extract headers from URL
+            if header_analysis_id:
+                # Extract headers from selected PageSpeed analysis
                 try:
-                    from .services.header_extractor import extract_headers, get_header_hierarchy
-                    headers = extract_headers(header_url)
-                    headers_data = {
-                        'url': header_url,
-                        'headers': headers,
-                        'hierarchy': get_header_hierarchy(headers)
-                    }
-                except Exception as e:
-                    messages.warning(request, f'Could not extract headers: {str(e)}')
+                    header_source = PageSpeedAnalysis.objects.get(id=header_analysis_id, user=request.user)
+                    if header_source.content_headers:
+                        from .services.header_extractor import get_header_hierarchy
+                        headers_data = {
+                            'url': header_source.url,
+                            'headers': header_source.content_headers,
+                            'hierarchy': get_header_hierarchy(header_source.content_headers)
+                        }
+                    else:
+                        messages.warning(request, 'Selected analysis has no header data.')
+                except PageSpeedAnalysis.DoesNotExist:
+                    messages.warning(request, 'Selected header analysis not found.')
             
             # Generate the PDF
             pdf_file = generate_basic_report(

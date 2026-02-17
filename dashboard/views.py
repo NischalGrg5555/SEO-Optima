@@ -144,6 +144,13 @@ def page_speed_insights(request):
             # Fetch data from Google PageSpeed API
             api_data = fetch_pagespeed_data(url, strategy)
             
+            # Extract headers from the URL
+            try:
+                from .services.header_extractor import extract_headers
+                content_headers = extract_headers(url)
+            except Exception:
+                content_headers = []
+            
             # Save to database
             analysis = PageSpeedAnalysis.objects.create(
                 user=request.user,
@@ -151,6 +158,7 @@ def page_speed_insights(request):
                 strategy=strategy,
                 metrics=api_data.get('metrics', {}),
                 full_response=api_data.get('full_response', {}),
+                content_headers=content_headers,
             )
             
             # Attach field_data for template rendering
