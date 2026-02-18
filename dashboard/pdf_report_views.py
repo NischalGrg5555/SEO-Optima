@@ -186,6 +186,24 @@ def download_pdf_report(request, pk):
 
 
 @login_required
+def preview_pdf_report(request, pk):
+    """Preview a PDF report inline in browser"""
+    report = get_object_or_404(PDFReport, pk=pk, user=request.user)
+
+    if report.pdf_file:
+        from django.http import FileResponse
+
+        response = FileResponse(report.pdf_file.open('rb'), as_attachment=False)
+        response['Content-Type'] = 'application/pdf'
+        response['Content-Disposition'] = f'inline; filename="{report.title.replace(" ", "_")}.pdf"'
+        response['X-Frame-Options'] = 'SAMEORIGIN'
+        return response
+
+    messages.error(request, 'Report file not found.')
+    return redirect('dashboard:pdf_report_detail', pk=pk)
+
+
+@login_required
 def delete_pdf_report(request, pk):
     """Delete a PDF report"""
     report = get_object_or_404(PDFReport, pk=pk, user=request.user)
