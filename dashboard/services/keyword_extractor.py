@@ -9,7 +9,7 @@ from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 
 
-def fetch_gsc_keywords(url: str, credentials_dict: dict, properties_list: list = None, days: int = 90) -> List[Dict[str, any]]:
+def fetch_gsc_keywords(url: str, credentials_dict: dict, properties_list: list = None, days: int = 7) -> List[Dict[str, any]]:
     """
     Fetch real keyword data from Google Search Console API
     
@@ -17,7 +17,7 @@ def fetch_gsc_keywords(url: str, credentials_dict: dict, properties_list: list =
         url: The URL/property to fetch keywords for
         credentials_dict: OAuth2 credentials as dictionary
         properties_list: List of available properties from GSC (for smart matching)
-        days: Number of days of data to fetch (default: 90)
+        days: Number of days of data to fetch (default: 7)
         
     Returns:
         List of dictionaries containing keyword data
@@ -40,13 +40,15 @@ def fetch_gsc_keywords(url: str, credentials_dict: dict, properties_list: list =
         end_date = datetime.now().date()
         start_date = end_date - timedelta(days=days)
         
-        # Prepare the request
-        request = {
+        # Prepare the base request for paginated fetching
+        page_size = 500
+        max_total_rows = 10000
+        base_request = {
             'startDate': start_date.strftime('%Y-%m-%d'),
             'endDate': end_date.strftime('%Y-%m-%d'),
-            'dimensions': ['query', 'page'],
-            'rowLimit': 100,  # Get top 100 keywords
-            'startRow': 0
+            'dimensions': ['query'],
+            'type': 'web',
+            'rowLimit': page_size,
         }
         
         # Generate different URL format variations to try, including domain properties
@@ -58,23 +60,36 @@ def fetch_gsc_keywords(url: str, credentials_dict: dict, properties_list: list =
         # Try each URL variation
         for site_url in url_variations:
             try:
-                # Execute the request
-                response = service.searchanalytics().query(
-                    siteUrl=site_url,
-                    body=request
-                ).execute()
-                
-                if 'rows' in response:
-                    for row in response['rows']:
+                start_row = 0
+                fetched_any_rows = False
+
+                while start_row < max_total_rows:
+                    request_body = {
+                        **base_request,
+                        'startRow': start_row,
+                    }
+
+                    response = service.searchanalytics().query(
+                        siteUrl=site_url,
+                        body=request_body
+                    ).execute()
+
+                    rows = response.get('rows', [])
+                    if not rows:
+                        break
+
+                    fetched_any_rows = True
+
+                    for row in rows:
                         keyword = row['keys'][0]  # query
                         ranked_url = row['keys'][1] if len(row['keys']) > 1 else url  # page
-                        
+
                         # Get metrics
                         clicks = int(row.get('clicks', 0))
                         impressions = int(row.get('impressions', 0))
                         ctr = float(row.get('ctr', 0))
                         position = round(float(row.get('position', 0)), 1)
-                        
+
                         keywords_data.append({
                             'keyword': keyword,
                             'volume': impressions,  # Using impressions as volume
@@ -83,11 +98,17 @@ def fetch_gsc_keywords(url: str, credentials_dict: dict, properties_list: list =
                             'clicks': clicks,
                             'ctr': round(ctr * 100, 2)  # Convert to percentage
                         })
-                    
-                    # If we got data, sort and return
-                    if keywords_data:
-                        keywords_data.sort(key=lambda x: x['volume'], reverse=True)
-                        return keywords_data
+
+                    # If fewer than page_size rows returned, this is the last page
+                    if len(rows) < page_size:
+                        break
+
+                    start_row += page_size
+
+                # If we got data, sort and return
+                if fetched_any_rows and keywords_data:
+                    keywords_data.sort(key=lambda x: x['volume'], reverse=True)
+                    return keywords_data
                     
             except Exception as e:
                 last_error = str(e)

@@ -483,6 +483,9 @@ def keywords_finder(request):
         use_gsc = True
     except GSCConnection.DoesNotExist:
         gsc_connection = None
+
+    # Get recent keyword analyses for current user
+    analyses = KeywordAnalysis.objects.filter(user=request.user).order_by('-created_at')[:10]
     
     if request.method == 'POST' and form.is_valid():
         url = form.cleaned_data['url']
@@ -540,6 +543,7 @@ def keywords_finder(request):
         'url': url,
         'error': error,
         'analysis': analysis,
+        'analyses': analyses,
         'gsc_connected': use_gsc,
         'gsc_connection': gsc_connection,
         'grouped_properties': _group_properties_by_domain(gsc_connection.properties) if gsc_connection else [],
