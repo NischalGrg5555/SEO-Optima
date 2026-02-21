@@ -85,6 +85,13 @@ def _group_properties_by_domain(properties_list):
     return result
 
 
+def _property_to_display_url(property_value):
+    """Convert GSC property value to a clickable display URL for UI/storage."""
+    if property_value and property_value.startswith('sc-domain:'):
+        return f"https://{property_value.replace('sc-domain:', '').strip('/')}"
+    return property_value
+
+
 @login_required
 def dashboard_home(request):
     """Dashboard home page - overview of all features"""
@@ -468,8 +475,9 @@ def delete_keyword_analysis(request, pk):
 def keywords_finder(request):
     """Keywords Finder page with GSC integration"""
     from .forms import KeywordsFinderForm
-    
-    form = KeywordsFinderForm(request.POST or None)
+
+    selected_property_post = request.POST.get('selected_property', '').strip() if request.method == 'POST' else ''
+    form = KeywordsFinderForm(None if selected_property_post else (request.POST or None))
     keywords = []
     stats = {}
     url = None
@@ -489,7 +497,6 @@ def keywords_finder(request):
     
     if request.method == 'POST' and form.is_valid():
         url = form.cleaned_data['url']
-        use_real_data = request.POST.get('use_gsc', 'false') == 'true'
         
         try:
             # If GSC is connected, ONLY fetch real data - NO FALLBACK to mock
@@ -522,7 +529,7 @@ def keywords_finder(request):
                 # Save to database - ONLY REAL GSC DATA
                 analysis = KeywordAnalysis.objects.create(
                     user=request.user,
-                    url=url,
+                    url=_property_to_display_url(url),
                     total_keywords=stats['total_keywords'],
                     top_3_positions=stats['top_3_positions'],
                     top_10_positions=stats['top_10_positions'],
@@ -531,10 +538,52 @@ def keywords_finder(request):
                     avg_position=stats['avg_position'],
                     keywords_data=keywords
                 )
+                url = _property_to_display_url(url)
             
         except Exception as e:
             error = str(e)
             messages.error(request, f'Error finding keywords: {error}')
+    elif request.method == 'POST':
+        selected_property = request.POST.get('selected_property', '').strip()
+        if selected_property:
+            if not use_gsc or not gsc_connection:
+                error = "Google Search Console is not connected. Please connect your GSC account first."
+                messages.error(request, error)
+            elif selected_property not in (gsc_connection.properties or []):
+                error = "Selected property is not available in your connected Google Search Console account."
+                messages.error(request, error)
+            else:
+                try:
+                    url = selected_property
+                    keywords = fetch_gsc_keywords(
+                        selected_property,
+                        gsc_connection.credentials,
+                        properties_list=gsc_connection.properties
+                    )
+                    if not keywords:
+                        error = "No keyword data found for this property in Google Search Console. This might mean no search traffic data is available yet."
+                        messages.error(request, error)
+                    else:
+                        messages.success(request, f'Successfully fetched {len(keywords)} keywords from Google Search Console')
+
+                    if keywords:
+                        stats = get_keyword_stats(keywords)
+                        display_url = _property_to_display_url(selected_property)
+                        analysis = KeywordAnalysis.objects.create(
+                            user=request.user,
+                            url=display_url,
+                            total_keywords=stats['total_keywords'],
+                            top_3_positions=stats['top_3_positions'],
+                            top_10_positions=stats['top_10_positions'],
+                            top_20_positions=stats['top_20_positions'],
+                            total_volume=stats['total_volume'],
+                            avg_position=stats['avg_position'],
+                            keywords_data=keywords
+                        )
+                        url = display_url
+                except Exception as gsc_error:
+                    error = f"Error fetching from Google Search Console: {str(gsc_error)}"
+                    messages.error(request, error)
     
     context = {
         'form': form,

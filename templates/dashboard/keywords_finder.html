@@ -4,6 +4,11 @@
 
 {% block content %}
 <div class="container-fluid mt-4">
+  <form method="post" id="propertyAnalyzeForm" class="d-none">
+    {% csrf_token %}
+    <input type="hidden" name="selected_property" id="selectedPropertyInput">
+  </form>
+
   <!-- Header -->
   <div class="row mb-4">
     <div class="col-12">
@@ -42,7 +47,7 @@
                       </div>
                       <div class="property-items">
                         {% for prop in group.properties %}
-                        <div class="property-item">
+                        <div class="property-item property-item-clickable" data-property="{{ prop.url }}" role="button" tabindex="0" aria-label="Analyze {{ prop.display }}">
                           <div class="d-flex align-items-center">
                             {% if prop.type == 'domain' %}
                               <i class="bi bi-globe text-primary me-2"></i>
@@ -59,6 +64,7 @@
                                 {% endif %}
                               </small>
                             </div>
+                            <i class="bi bi-chevron-right text-muted ms-2"></i>
                           </div>
                         </div>
                         {% endfor %}
@@ -117,7 +123,7 @@
               {% endif %}
               <div class="form-text">
                 {% if gsc_connected %}
-                  Enter a URL from your Search Console properties: {{ gsc_connection.properties|join:", " }}
+                  Enter a URL from your Search Console properties, or click Analyze on a property above.
                 {% else %}
                   Example: https://example.com or https://blog.example.com
                 {% endif %}
@@ -506,6 +512,15 @@
   border-color: #bfdbfe;
 }
 
+.property-item-clickable {
+  cursor: pointer;
+}
+
+.property-item-clickable:focus {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+}
+
 .property-item strong {
   font-size: 0.85rem;
   color: #1f2937;
@@ -584,6 +599,8 @@ document.getElementById('keywordsForm')?.addEventListener('submit', function() {
 // Handle properties toggle button text and animation
 const propertiesToggle = document.querySelector('.properties-toggle');
 const propertiesList = document.getElementById('propertiesList');
+const propertyAnalyzeForm = document.getElementById('propertyAnalyzeForm');
+const selectedPropertyInput = document.getElementById('selectedPropertyInput');
 
 if (propertiesToggle && propertiesList) {
   propertiesList.addEventListener('show.bs.collapse', function() {
@@ -594,6 +611,24 @@ if (propertiesToggle && propertiesList) {
     propertiesToggle.querySelector('.toggle-text').textContent = 'Show';
   });
 }
+
+document.querySelectorAll('.property-item-clickable').forEach((item) => {
+  const submitSelectedProperty = () => {
+    const property = item.getAttribute('data-property');
+    if (!property || !propertyAnalyzeForm || !selectedPropertyInput) return;
+
+    selectedPropertyInput.value = property;
+    propertyAnalyzeForm.submit();
+  };
+
+  item.addEventListener('click', submitSelectedProperty);
+  item.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      submitSelectedProperty();
+    }
+  });
+});
 
 function exportToCSV() {
   const table = document.getElementById('keywordsTable');

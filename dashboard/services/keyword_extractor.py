@@ -9,6 +9,13 @@ from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 
 
+def _to_display_url(value: str) -> str:
+    """Convert GSC property value to a clickable URL for UI fallback values."""
+    if value and value.startswith('sc-domain:'):
+        return f"https://{value.replace('sc-domain:', '').strip('/')}"
+    return value
+
+
 def fetch_gsc_keywords(url: str, credentials_dict: dict, properties_list: list = None, days: int = 7) -> List[Dict[str, any]]:
     """
     Fetch real keyword data from Google Search Console API
@@ -82,7 +89,7 @@ def fetch_gsc_keywords(url: str, credentials_dict: dict, properties_list: list =
 
                     for row in rows:
                         keyword = row['keys'][0]  # query
-                        ranked_url = row['keys'][1] if len(row['keys']) > 1 else url  # page
+                        ranked_url = row['keys'][1] if len(row['keys']) > 1 else _to_display_url(url)  # page
 
                         # Get metrics
                         clicks = int(row.get('clicks', 0))
@@ -146,26 +153,37 @@ def _generate_url_variations(url: str, properties_list: list = None) -> List[str
     """
     from urllib.parse import urlparse
     
-    # Ensure URL has a protocol
-    if not url.startswith(('http://', 'https://')):
-        base_url = f'https://{url}'
+    input_url = (url or '').strip()
+
+    # Handle direct domain property selection from GSC
+    if input_url.startswith('sc-domain:'):
+        domain = input_url.replace('sc-domain:', '').rstrip('/')
+        base_domain = domain[4:] if domain.startswith('www.') else domain
+        protocol = 'https'
+        path = ''
+        variations = [input_url]
     else:
-        base_url = url
-    
-    # Remove trailing slash and path for domain extraction
-    base_url_clean = base_url.rstrip('/')
-    parsed = urlparse(base_url_clean)
-    domain = parsed.netloc
-    path = parsed.path
-    protocol = parsed.scheme
-    
-    # Extract base domain (without www)
-    if domain.startswith('www.'):
-        base_domain = domain[4:]
-    else:
-        base_domain = domain
-    
-    variations = []
+        # Ensure URL has a protocol
+        if not input_url.startswith(('http://', 'https://')):
+            base_url = f'https://{input_url}'
+        else:
+            base_url = input_url
+
+        # Remove trailing slash and path for domain extraction
+        base_url_clean = base_url.rstrip('/')
+        parsed = urlparse(base_url_clean)
+        domain = parsed.netloc
+        path = parsed.path
+        protocol = parsed.scheme
+
+        # Extract base domain (without www)
+        if domain.startswith('www.'):
+            base_domain = domain[4:]
+        else:
+            base_domain = domain
+
+        variations = []
+
     matched_properties = []
     
     # FIRST: If properties_list is provided, find exact or close matches
