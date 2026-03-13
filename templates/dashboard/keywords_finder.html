@@ -103,47 +103,57 @@
     </div>
   </div>
 
-  <!-- Analyze Form -->
+  <!-- Custom URL Fallback -->
   <div class="row mb-4">
     <div class="col-lg-8 mx-auto">
+      {% if gsc_connected %}
       <div class="card shadow-sm">
-        <div class="card-body p-4">
-          <form method="post" id="keywordsForm">
-            {% csrf_token %}
-            
-            <div class="mb-4">
-              <label for="{{ form.url.id_for_label }}" class="form-label fw-bold">
-                Enter Website URL
-              </label>
-              {{ form.url }}
-              {% if form.url.errors %}
-                <div class="invalid-feedback d-block">
-                  {{ form.url.errors.0 }}
-                </div>
-              {% endif %}
-              <div class="form-text">
-                {% if gsc_connected %}
-                  Enter a URL from your Search Console properties, or click Analyze on a property above.
-                {% else %}
-                  Example: https://example.com or https://blog.example.com
-                {% endif %}
-              </div>
+        <div class="card-body p-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="mb-1">Analyze by clicking a property above</h6>
+              <small class="text-muted">Use manual URL only if needed.</small>
             </div>
+            <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#customUrlAnalyze" aria-expanded="{% if form.url.errors %}true{% else %}false{% endif %}" aria-controls="customUrlAnalyze">
+              <i class="bi bi-link-45deg me-1"></i> Use custom URL instead
+            </button>
+          </div>
 
-            <div class="d-grid">
-              <button type="submit" class="btn btn-primary btn-lg" id="analyzeBtn" {% if not gsc_connected %}disabled{% endif %}>
-                <span id="btnText">
-                  🔍 Fetch Keywords from Google Search Console
-                </span>
-                <span id="btnLoading" class="d-none">
-                  <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Analyzing...
-                </span>
-              </button>
-            </div>
-          </form>
+          <div class="collapse mt-3{% if form.url.errors %} show{% endif %}" id="customUrlAnalyze">
+            <form method="post" id="keywordsForm">
+              {% csrf_token %}
+              
+              <div class="mb-3">
+                <label for="{{ form.url.id_for_label }}" class="form-label fw-bold">
+                  Enter Website URL
+                </label>
+                {{ form.url }}
+                {% if form.url.errors %}
+                  <div class="invalid-feedback d-block">
+                    {{ form.url.errors.0 }}
+                  </div>
+                {% endif %}
+                <div class="form-text">
+                  Paste a full URL from your verified Search Console property.
+                </div>
+              </div>
+
+              <div class="d-grid">
+                <button type="submit" class="btn btn-primary" id="analyzeBtn">
+                  <span id="btnText">
+                    🔍 Fetch Keywords from Google Search Console
+                  </span>
+                  <span id="btnLoading" class="d-none">
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Analyzing...
+                  </span>
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
+      {% endif %}
       <div class="mt-3 d-flex justify-content-start">
         <a href="{% url 'dashboard:keywords_list' %}" class="btn btn-outline-primary btn-sm">
           <i class="bi bi-list"></i> View All Analyses

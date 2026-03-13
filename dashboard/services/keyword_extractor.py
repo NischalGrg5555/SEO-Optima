@@ -7,6 +7,28 @@ from urllib.parse import urlparse
 from datetime import datetime, timedelta
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request
+from google.auth.exceptions import RefreshError
+
+
+class GSCAuthError(Exception):
+    """Raised when stored Google credentials are invalid or revoked."""
+
+
+def _is_auth_error(error_text: str) -> bool:
+    """Detect OAuth auth/refresh failures from API/client exceptions."""
+    if not error_text:
+        return False
+    text = error_text.lower()
+    indicators = [
+        'invalid_grant',
+        'expired or revoked',
+        'token has been expired or revoked',
+        'invalid credentials',
+        'unauthorized',
+        'insufficient authentication',
+    ]
+    return any(token in text for token in indicators)
 
 
 def _to_display_url(value: str) -> str:
@@ -39,6 +61,22 @@ def fetch_gsc_keywords(url: str, credentials_dict: dict, properties_list: list =
             client_secret=credentials_dict.get('client_secret'),
             scopes=credentials_dict.get('scopes', ['https://www.googleapis.com/auth/webmasters.readonly'])
         )
+
+        # Refresh proactively so auth failures surface clearly to callers.
+        if credentials.expired and credentials.refresh_token:
+            try:
+                credentials.refresh(Request())
+            except RefreshError as e:
+                raise GSCAuthError(
+                    "Google Search Console connection expired or revoked. "
+                    "Please reconnect your Google account."
+                ) from e
+
+        if not credentials.valid and not credentials.refresh_token:
+            raise GSCAuthError(
+                "Google Search Console credentials are incomplete. "
+                "Please reconnect your Google account."
+            )
         
         # Build the Search Console service
         service = build('searchconsole', 'v1', credentials=credentials)
@@ -118,6 +156,11 @@ def fetch_gsc_keywords(url: str, credentials_dict: dict, properties_list: list =
                     return keywords_data
                     
             except Exception as e:
+                if _is_auth_error(str(e)):
+                    raise GSCAuthError(
+                        "Google Search Console connection expired or revoked. "
+                        "Please reconnect your Google account."
+                    ) from e
                 last_error = str(e)
                 continue
         
@@ -131,6 +174,8 @@ def fetch_gsc_keywords(url: str, credentials_dict: dict, properties_list: list =
         keywords_data.sort(key=lambda x: x['volume'], reverse=True)
         return keywords_data
         
+    except GSCAuthError:
+        raise
     except Exception as e:
         raise Exception(f"Error fetching from Google Search Console: {str(e)}")
 

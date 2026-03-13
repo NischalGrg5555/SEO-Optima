@@ -6,7 +6,7 @@ from django.conf import settings
 from .services.pagespeed import fetch_pagespeed_data, get_score_color, extract_field_data_from_response
 from .services.header_extractor import extract_headers, get_header_hierarchy
 from .services.image_extractor import extract_images, get_image_stats
-from .services.keyword_extractor import get_keyword_stats, fetch_gsc_keywords
+from .services.keyword_extractor import get_keyword_stats, fetch_gsc_keywords, GSCAuthError
 from .models import PageSpeedAnalysis, ImageAltAnalysis, KeywordAnalysis, GSCConnection, HeaderAnalysis
 from .forms import PageSpeedForm, PageSpeedFilterForm, HeaderExtractorForm
 from google_auth_oauthlib.flow import Flow
@@ -514,8 +514,16 @@ def keywords_finder(request):
                     else:
                         messages.success(request, f'Successfully fetched {len(keywords)} keywords from Google Search Console')
                 except Exception as gsc_error:
-                    # Show error but DON'T fall back to mock data
-                    error = f"Error fetching from Google Search Console: {str(gsc_error)}"
+                    # Expired/revoked tokens should force reconnect instead of noisy property errors.
+                    if isinstance(gsc_error, GSCAuthError):
+                        gsc_connection.is_active = False
+                        gsc_connection.save(update_fields=['is_active', 'updated_at'])
+                        use_gsc = False
+                        gsc_connection = None
+                        error = str(gsc_error)
+                    else:
+                        # Show error but DON'T fall back to mock data
+                        error = f"Error fetching from Google Search Console: {str(gsc_error)}"
                     messages.error(request, error)
             else:
                 # GSC not connected - don't allow submission
@@ -582,7 +590,14 @@ def keywords_finder(request):
                         )
                         url = display_url
                 except Exception as gsc_error:
-                    error = f"Error fetching from Google Search Console: {str(gsc_error)}"
+                    if isinstance(gsc_error, GSCAuthError):
+                        gsc_connection.is_active = False
+                        gsc_connection.save(update_fields=['is_active', 'updated_at'])
+                        use_gsc = False
+                        gsc_connection = None
+                        error = str(gsc_error)
+                    else:
+                        error = f"Error fetching from Google Search Console: {str(gsc_error)}"
                     messages.error(request, error)
     
     context = {
