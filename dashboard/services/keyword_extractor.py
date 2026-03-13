@@ -85,13 +85,14 @@ def fetch_gsc_keywords(url: str, credentials_dict: dict, properties_list: list =
         end_date = datetime.now().date()
         start_date = end_date - timedelta(days=days)
         
-        # Prepare the base request for paginated fetching
+        # Prepare the base request for paginated fetching.
+        # We request query+page so each keyword row contains the exact ranked URL.
         page_size = 500
         max_total_rows = 10000
         base_request = {
             'startDate': start_date.strftime('%Y-%m-%d'),
             'endDate': end_date.strftime('%Y-%m-%d'),
-            'dimensions': ['query'],
+            'dimensions': ['query', 'page'],
             'type': 'web',
             'rowLimit': page_size,
         }
@@ -107,6 +108,8 @@ def fetch_gsc_keywords(url: str, credentials_dict: dict, properties_list: list =
             try:
                 start_row = 0
                 fetched_any_rows = False
+
+                keyword_aggregates = {}
 
                 while start_row < max_total_rows:
                     request_body = {
@@ -126,23 +129,40 @@ def fetch_gsc_keywords(url: str, credentials_dict: dict, properties_list: list =
                     fetched_any_rows = True
 
                     for row in rows:
-                        keyword = row['keys'][0]  # query
-                        ranked_url = row['keys'][1] if len(row['keys']) > 1 else _to_display_url(url)  # page
+                        keys = row.get('keys', [])
+                        if len(keys) < 2:
+                            # Skip malformed rows rather than injecting a fallback URL,
+                            # to keep keyword->page mapping accurate.
+                            continue
+
+                        keyword = keys[0]  # query
+                        ranked_url = keys[1]  # page
 
                         # Get metrics
                         clicks = int(row.get('clicks', 0))
                         impressions = int(row.get('impressions', 0))
-                        ctr = float(row.get('ctr', 0))
-                        position = round(float(row.get('position', 0)), 1)
+                        position = float(row.get('position', 0))
 
-                        keywords_data.append({
-                            'keyword': keyword,
-                            'volume': impressions,  # Using impressions as volume
-                            'position': position,
-                            'url': ranked_url,
-                            'clicks': clicks,
-                            'ctr': round(ctr * 100, 2)  # Convert to percentage
-                        })
+                        agg = keyword_aggregates.setdefault(
+                            keyword,
+                            {
+                                'keyword': keyword,
+                                'clicks': 0,
+                                'volume': 0,
+                                'weighted_position_sum': 0.0,
+                                'url': ranked_url,
+                                'best_url_impressions': -1,
+                            }
+                        )
+
+                        agg['clicks'] += clicks
+                        agg['volume'] += impressions
+                        agg['weighted_position_sum'] += (position * impressions)
+
+                        # Keep the URL from the strongest page impression for this keyword.
+                        if impressions > agg['best_url_impressions']:
+                            agg['url'] = ranked_url
+                            agg['best_url_impressions'] = impressions
 
                     # If fewer than page_size rows returned, this is the last page
                     if len(rows) < page_size:
@@ -150,8 +170,23 @@ def fetch_gsc_keywords(url: str, credentials_dict: dict, properties_list: list =
 
                     start_row += page_size
 
-                # If we got data, sort and return
-                if fetched_any_rows and keywords_data:
+                if fetched_any_rows and keyword_aggregates:
+                    keywords_data = []
+                    for agg in keyword_aggregates.values():
+                        impressions = agg['volume']
+                        clicks = agg['clicks']
+                        ctr_percentage = (clicks / impressions * 100) if impressions else 0
+                        avg_position = (agg['weighted_position_sum'] / impressions) if impressions else 0
+
+                        keywords_data.append({
+                            'keyword': agg['keyword'],
+                            'volume': impressions,
+                            'position': round(avg_position, 1),
+                            'url': agg['url'],
+                            'clicks': clicks,
+                            'ctr': round(ctr_percentage, 2),
+                        })
+
                     keywords_data.sort(key=lambda x: x['volume'], reverse=True)
                     return keywords_data
                     
