@@ -92,6 +92,60 @@ def _property_to_display_url(property_value):
     return property_value
 
 
+def _compute_header_stats(headers_data):
+    """Compute header counts and grouped text from stored header JSON."""
+    counts = {
+        'H1': 0,
+        'H2': 0,
+        'H3': 0,
+        'H4': 0,
+        'H5': 0,
+        'H6': 0,
+    }
+    grouped = {
+        'h1': [],
+        'h2': [],
+        'h3': [],
+        'h4': [],
+        'h5': [],
+        'h6': [],
+    }
+
+    if not isinstance(headers_data, list):
+        return 0, counts, grouped
+
+    for header in headers_data:
+        if not isinstance(header, dict):
+            continue
+
+        level = str(header.get('level') or header.get('tag') or '').upper()
+        text = str(header.get('text') or '').strip()
+
+        if level in counts and text:
+            counts[level] += 1
+            grouped[level.lower()].append(text)
+
+    total_headers = sum(counts.values())
+    return total_headers, counts, grouped
+
+
+def _sync_header_analysis_counts(analysis):
+    """Backfill and correct persisted header counters from headers_data."""
+    total_headers, counts, _ = _compute_header_stats(analysis.headers_data)
+
+    if (
+        analysis.total_headers != total_headers
+        or analysis.h1_count != counts['H1']
+        or analysis.h2_count != counts['H2']
+        or analysis.h3_count != counts['H3']
+    ):
+        analysis.total_headers = total_headers
+        analysis.h1_count = counts['H1']
+        analysis.h2_count = counts['H2']
+        analysis.h3_count = counts['H3']
+        analysis.save()
+
+
 @login_required
 def dashboard_home(request):
     """Dashboard home page - overview of all features"""
@@ -275,10 +329,10 @@ def extract_headers_view(request):
             hierarchy = get_header_hierarchy(headers)
             
             # Calculate statistics
-            h1_count = len(hierarchy.get('h1', []))
-            h2_count = len(hierarchy.get('h2', []))
-            h3_count = len(hierarchy.get('h3', []))
-            total_headers = h1_count + h2_count + h3_count
+            h1_count = hierarchy.get('H1', 0)
+            h2_count = hierarchy.get('H2', 0)
+            h3_count = hierarchy.get('H3', 0)
+            total_headers = sum(hierarchy.values())
             
             # Save to database
             analysis = HeaderAnalysis.objects.create(
@@ -297,7 +351,9 @@ def extract_headers_view(request):
             messages.error(request, f"Error extracting headers: {error}")
     
     # Get all previous analyses for this user
-    analyses = HeaderAnalysis.objects.filter(user=request.user).order_by('-created_at')[:10]
+    analyses = list(HeaderAnalysis.objects.filter(user=request.user).order_by('-created_at')[:10])
+    for saved_analysis in analyses:
+        _sync_header_analysis_counts(saved_analysis)
     
     context = {
         'form': form,
@@ -315,7 +371,9 @@ def extract_headers_view(request):
 @login_required
 def header_analysis_list(request):
     """List all header analyses for the current user"""
-    analyses = HeaderAnalysis.objects.filter(user=request.user).order_by('-created_at')
+    analyses = list(HeaderAnalysis.objects.filter(user=request.user).order_by('-created_at'))
+    for analysis in analyses:
+        _sync_header_analysis_counts(analysis)
     
     context = {
         'analyses': analyses,
@@ -328,14 +386,16 @@ def header_analysis_list(request):
 def header_analysis_detail(request, pk):
     """View details of a specific header analysis"""
     analysis = get_object_or_404(HeaderAnalysis, pk=pk, user=request.user)
-    
-    # Get hierarchy from headers data
-    from .services.header_extractor import get_header_hierarchy
-    hierarchy = get_header_hierarchy(analysis.headers_data)
+
+    # Ensure legacy rows with bad counters are corrected when opened.
+    _sync_header_analysis_counts(analysis)
+
+    # Build grouped header text so the template can render header structure lists.
+    _, _, grouped_headers = _compute_header_stats(analysis.headers_data)
     
     context = {
         'analysis': analysis,
-        'hierarchy': hierarchy,
+        'hierarchy': grouped_headers,
     }
     
     return render(request, 'dashboard/header_analysis_detail.html', context)
