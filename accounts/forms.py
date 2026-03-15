@@ -1,6 +1,8 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 
 from .models import UserProfile
 
@@ -117,4 +119,83 @@ class PersonalInformationForm(forms.ModelForm):
             profile.user = self.user
             profile.save()
         return profile
+
+
+class SettingsForm(forms.Form):
+    username = forms.CharField(
+        max_length=150,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter username',
+        })
+    )
+    current_password = forms.CharField(
+        required=True,
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Current password',
+        })
+    )
+    new_password = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter new password',
+        })
+    )
+    confirm_password = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Confirm new password',
+        })
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user')
+        super().__init__(*args, **kwargs)
+        self.fields['username'].initial = self.user.username
+        if not self.user.has_usable_password():
+            self.fields['current_password'].required = False
+
+    def clean_username(self):
+        username = self.cleaned_data['username'].strip()
+        if User.objects.filter(username=username).exclude(pk=self.user.pk).exists():
+            raise ValidationError('This username is already taken.')
+        return username
+
+    def clean_current_password(self):
+        current_password = self.cleaned_data.get('current_password', '')
+        if not self.user.has_usable_password():
+            return current_password  # Google users have no password — skip check
+        if not current_password:
+            raise ValidationError('Current password is required.')
+        if not self.user.check_password(current_password):
+            raise ValidationError('Current password is incorrect.')
+        return current_password
+
+    def clean(self):
+        cleaned_data = super().clean()
+        new_password = cleaned_data.get('new_password', '')
+        confirm_password = cleaned_data.get('confirm_password', '')
+
+        if new_password or confirm_password:
+            if not new_password:
+                self.add_error('new_password', 'Please enter a new password.')
+            if not confirm_password:
+                self.add_error('confirm_password', 'Please confirm your new password.')
+            if new_password and confirm_password and new_password != confirm_password:
+                self.add_error('confirm_password', 'New password and confirm password must match.')
+            if new_password and new_password == confirm_password:
+                validate_password(new_password, self.user)
+
+        return cleaned_data
+
+    def save(self):
+        self.user.username = self.cleaned_data['username']
+        if self.cleaned_data.get('new_password'):
+            self.user.set_password(self.cleaned_data['new_password'])
+        self.user.save()
+        return self.user
 

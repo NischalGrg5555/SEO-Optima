@@ -1,4 +1,5 @@
 from django.contrib.auth import logout, login
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -14,7 +15,7 @@ import importlib
 import json
 import requests
 
-from .forms import RegisterForm, LoginForm, OTPVerifyForm, PersonalInformationForm
+from .forms import RegisterForm, LoginForm, OTPVerifyForm, PersonalInformationForm, SettingsForm
 from .models import OTP, UserProfile
 
 class RegisterView(CreateView):
@@ -129,14 +130,11 @@ class OTPVerifyView(FormView):
             del self.request.session['otp_user_id']
             self.request.session.pop('otp_action', None)
 
-            if action == 'google_login':
+            if action in ('google_login', 'google_signup'):
+                user.backend = 'django.contrib.auth.backends.ModelBackend'
                 login(self.request, user)
-                messages.success(self.request, "Signed in with Google after OTP verification.")
-                return redirect('core:home')
-
-            if action == 'google_signup':
-                login(self.request, user)
-                messages.success(self.request, "Account created and verified! Welcome to SEO Optima.")
+                msg = "Signed in with Google." if action == 'google_login' else "Account created and verified! Welcome to SEO Optima."
+                messages.success(self.request, msg)
                 return redirect('core:home')
 
             messages.success(self.request, "Email verified successfully! You can now sign in.")
@@ -452,6 +450,32 @@ class ProfileView(LoginRequiredMixin, View):
         ]
         completed = sum(fields)
         return round((completed / len(fields)) * 100)
+
+
+class SettingsView(LoginRequiredMixin, View):
+    template_name = 'accounts/settings.html'
+
+    def get(self, request):
+        settings_form = SettingsForm(user=request.user)
+        context = {
+            'settings_form': settings_form,
+            'has_usable_password': request.user.has_usable_password(),
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        settings_form = SettingsForm(request.POST, user=request.user)
+        if settings_form.is_valid():
+            user = settings_form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Settings updated successfully.')
+            return redirect('accounts:settings')
+
+        context = {
+            'settings_form': settings_form,
+            'has_usable_password': request.user.has_usable_password(),
+        }
+        return render(request, self.template_name, context)
 
 
 
