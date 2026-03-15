@@ -13,6 +13,10 @@ class UserProfile(models.Model):
         ('28d', 'Last 28 days'),
         ('90d', 'Last 90 days'),
     ]
+    DEVICE_CHOICES = [
+        ('mobile', 'Mobile'),
+        ('desktop', 'Desktop'),
+    ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     company = models.CharField(max_length=150, blank=True)
@@ -20,6 +24,14 @@ class UserProfile(models.Model):
     phone = models.CharField(max_length=30, blank=True)
     timezone = models.CharField(max_length=100, default='UTC')
     bio = models.TextField(blank=True)
+    profile_photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True)
+    facebook_url = models.URLField(blank=True)
+    x_url = models.URLField(blank=True)
+    linkedin_url = models.URLField(blank=True)
+    instagram_url = models.URLField(blank=True)
+    brand_client_name = models.CharField(max_length=150, blank=True)
+    default_country = models.CharField(max_length=100, blank=True)
+    default_device = models.CharField(max_length=10, choices=DEVICE_CHOICES, default='mobile')
     default_property = models.CharField(max_length=255, blank=True)
     preferred_date_range = models.CharField(max_length=10, choices=DATE_RANGE_CHOICES, default='28d')
     receive_report_emails = models.BooleanField(default=True)

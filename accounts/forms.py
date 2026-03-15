@@ -69,11 +69,7 @@ class OTPVerifyForm(forms.Form):
 class PersonalInformationForm(forms.ModelForm):
     first_name = forms.CharField(max_length=150, required=True, widget=forms.TextInput(attrs={
         'class': 'form-control',
-        'placeholder': 'First name',
-    }))
-    last_name = forms.CharField(max_length=150, required=False, widget=forms.TextInput(attrs={
-        'class': 'form-control',
-        'placeholder': 'Last name',
+        'placeholder': 'Name',
     }))
     email = forms.EmailField(disabled=True, required=False, widget=forms.EmailInput(attrs={
         'class': 'form-control',
@@ -82,16 +78,25 @@ class PersonalInformationForm(forms.ModelForm):
     class Meta:
         model = UserProfile
         fields = [
+            'profile_photo',
+            'facebook_url',
+            'x_url',
+            'linkedin_url',
+            'instagram_url',
             'first_name',
-            'last_name',
             'email',
+            'company',
             'job_title',
-            'phone',
             'bio',
         ]
         widgets = {
+            'profile_photo': forms.FileInput(attrs={'class': 'profile-v2-photo-input', 'accept': 'image/*'}),
+            'facebook_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://www.facebook.com/your-page'}),
+            'x_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://x.com/your-handle'}),
+            'linkedin_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://linkedin.com/in/your-profile'}),
+            'instagram_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://instagram.com/your-handle'}),
+            'company': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Company'}),
             'job_title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'SEO Analyst'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+977...'}),
             'bio': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Tell people what you focus on.'}),
         }
 
@@ -99,22 +104,14 @@ class PersonalInformationForm(forms.ModelForm):
         user = kwargs.pop('user')
         super().__init__(*args, **kwargs)
         self.user = user
-        initial_first_name = user.first_name or ''
-        initial_last_name = user.last_name or ''
-
-        if initial_first_name and not initial_last_name and ' ' in initial_first_name:
-            name_parts = initial_first_name.split(None, 1)
-            initial_first_name = name_parts[0]
-            initial_last_name = name_parts[1]
-
-        self.fields['first_name'].initial = initial_first_name or user.username
-        self.fields['last_name'].initial = initial_last_name
+        self.fields['first_name'].initial = user.get_full_name().strip() or user.first_name or user.username
         self.fields['email'].initial = user.email
+        self.fields['profile_photo'].required = False
 
     def save(self, commit=True):
         profile = super().save(commit=False)
         self.user.first_name = self.cleaned_data['first_name'].strip()
-        self.user.last_name = self.cleaned_data['last_name'].strip()
+        self.user.last_name = ''
         if commit:
             self.user.save(update_fields=['first_name', 'last_name'])
             profile.user = self.user

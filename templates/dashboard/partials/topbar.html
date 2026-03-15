@@ -27,8 +27,12 @@
         <span class="user-name">{{ request.user.get_full_name|default:request.user.username }}</span>
         <span class="user-role">SEO Analyst</span>
       </div>
-      <div class="avatar">
-        {{ request.user.first_name|slice:":1"|upper }}
+      <div class="topbar-avatar" style="width: 40px; height: 40px; min-width: 40px; border-radius: 999px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #3B82F6, #2563EB); flex-shrink: 0;">
+        {% if request.user.profile.profile_photo %}
+        <img class="topbar-avatar-image" src="{{ request.user.profile.profile_photo.url }}" alt="{{ request.user.get_full_name|default:request.user.username }} profile photo" style="width: 40px; height: 40px; min-width: 40px; object-fit: cover; object-position: center; border-radius: 999px; display: block; flex-shrink: 0;">
+        {% else %}
+        <span class="topbar-avatar-fallback" style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; color: #ffffff; font-weight: 700; font-size: 16px; line-height: 1;">{{ request.user.first_name|slice:":1"|upper }}</span>
+        {% endif %}
       </div>
       <i class="bi bi-chevron-down"></i>
     </div>

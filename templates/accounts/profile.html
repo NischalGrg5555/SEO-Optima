@@ -36,12 +36,6 @@
     padding: 18px;
   }
 
-  .profile-v2 .profile-v2-shell-title {
-    font-size: 32px;
-    font-weight: 700;
-    margin: 8px 8px 18px;
-  }
-
   .profile-v2 .profile-v2-card {
     border: 1px solid #e2e8f0;
     border-radius: 16px;
@@ -74,6 +68,14 @@
     justify-content: center;
     font-size: 24px;
     font-weight: 700;
+    overflow: hidden;
+  }
+
+  .profile-v2 .profile-v2-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
 
   .profile-v2 .profile-v2-name {
@@ -112,6 +114,19 @@
     text-decoration: none;
   }
 
+  .profile-v2 .profile-v2-icon-btn:hover,
+  .profile-v2 .profile-v2-edit-btn:hover {
+    border-color: #c7d3e3;
+    background: #f8fbff;
+    color: #0f172a;
+  }
+
+  .profile-v2 .profile-v2-icon-btn-disabled {
+    opacity: 0.45;
+    cursor: default;
+    pointer-events: none;
+  }
+
   .profile-v2 .profile-v2-icon-btn {
     width: 42px;
   }
@@ -139,6 +154,19 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 24px 40px;
+    align-items: start;
+  }
+
+  .profile-v2 .profile-v2-grid.profile-v2-personal-grid {
+    grid-template-columns: repeat(2, minmax(280px, 1fr));
+    gap: 14px;
+  }
+
+  .profile-v2 .profile-v2-personal-grid .profile-v2-item {
+    border: 1px solid #e7edf5;
+    border-radius: 12px;
+    padding: 12px 14px;
+    background: #fcfdff;
   }
 
   .profile-v2 .profile-v2-item {
@@ -155,13 +183,14 @@
     font-size: 13px;
     color: #64748b;
     font-weight: 500;
+    margin-bottom: 2px;
   }
 
   .profile-v2 .profile-v2-value {
-    font-size: 20px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 700;
     color: #0f172a;
-    line-height: 1.35;
+    line-height: 1.4;
     word-break: break-word;
   }
 
@@ -209,6 +238,10 @@
     margin-bottom: 10px;
   }
 
+  .profile-v2 .profile-v2-modal-section-title-centered {
+    text-align: center;
+  }
+
   .profile-v2 .profile-v2-modal-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -250,6 +283,90 @@
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
 
+  .profile-v2 .profile-v2-photo-panel {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    justify-content: center;
+    margin: 0 auto;
+  }
+
+  .profile-v2 .profile-v2-photo-preview {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex: 0 0 72px;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 24px;
+    cursor: pointer;
+    border: 1px solid #d7dfeb;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  }
+
+  .profile-v2 .profile-v2-photo-preview:focus-visible {
+    outline: 3px solid rgba(59, 130, 246, 0.25);
+    outline-offset: 3px;
+  }
+
+  .profile-v2 .profile-v2-photo-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .profile-v2 .profile-v2-photo-overlay {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.42);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+    pointer-events: none;
+  }
+
+  .profile-v2 .profile-v2-photo-preview:hover .profile-v2-photo-overlay,
+  .profile-v2 .profile-v2-photo-preview:focus-visible .profile-v2-photo-overlay {
+    opacity: 1;
+  }
+
+  .profile-v2 .profile-v2-photo-overlay svg {
+    width: 34px;
+    height: 34px;
+    filter: drop-shadow(0 3px 10px rgba(15, 23, 42, 0.22));
+  }
+
+  .profile-v2 .profile-v2-photo-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .profile-v2 .profile-v2-photo-hint {
+    font-size: 12px;
+    color: #64748b;
+    margin: 0;
+  }
+
   .profile-v2 .profile-v2-modal-actions {
     margin-top: 18px;
     display: flex;
@@ -264,6 +381,7 @@
   }
 
   @media (max-width: 900px) {
+
     .profile-v2 .profile-v2-hero,
     .profile-v2 .profile-v2-card-head,
     .profile-v2 .profile-v2-header {
@@ -273,6 +391,10 @@
 
     .profile-v2 .profile-v2-grid,
     .profile-v2 .profile-v2-modal-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .profile-v2 .profile-v2-grid.profile-v2-personal-grid {
       grid-template-columns: 1fr;
     }
   }
@@ -300,27 +422,67 @@
   {% endif %}
 
   <div class="profile-v2-shell">
-    <h2 class="profile-v2-shell-title">Profile</h2>
-
     <section class="profile-v2-card">
       <div class="profile-v2-hero">
         <div class="profile-v2-identity">
-          <div class="profile-v2-avatar">{{ request.user.first_name|default:request.user.email|slice:":1"|upper }}</div>
+          <div class="profile-v2-avatar">
+            {% if profile.profile_photo %}
+            <img src="{{ profile.profile_photo.url }}" alt="{{ request.user.get_full_name|default:request.user.username }} profile photo">
+            {% else %}
+            {{ request.user.first_name|default:request.user.email|slice:":1"|upper }}
+            {% endif %}
+          </div>
           <div>
             <h3 class="profile-v2-name">{{ request.user.get_full_name|default:request.user.username }}</h3>
             <div class="profile-v2-role">
-              <span>{{ profile.job_title|default:"Team Manager" }}</span>
+              <span>{{ profile.job_title|default:"Not set" }}</span>
               <span>|</span>
-              <span>{{ profile.timezone|default:"Arizona, United States." }}</span>
+              <span>{{ profile.company|default:"Not set" }}</span>
             </div>
           </div>
         </div>
 
         <div class="profile-v2-actions">
-          <button type="button" class="profile-v2-icon-btn" data-bs-toggle="modal" data-bs-target="#personalInfoModal"><i class="bi bi-facebook"></i></button>
-          <button type="button" class="profile-v2-icon-btn" data-bs-toggle="modal" data-bs-target="#personalInfoModal"><i class="bi bi-twitter-x"></i></button>
-          <button type="button" class="profile-v2-icon-btn" data-bs-toggle="modal" data-bs-target="#personalInfoModal"><i class="bi bi-linkedin"></i></button>
-          <button type="button" class="profile-v2-icon-btn" data-bs-toggle="modal" data-bs-target="#personalInfoModal"><i class="bi bi-instagram"></i></button>
+          {% if profile.facebook_url %}
+          <a href="{{ profile.facebook_url }}" class="profile-v2-icon-btn" target="_blank" rel="noopener noreferrer" aria-label="Facebook profile">
+            <i class="bi bi-facebook"></i>
+          </a>
+          {% else %}
+          <span class="profile-v2-icon-btn profile-v2-icon-btn-disabled" aria-label="Facebook link not set">
+            <i class="bi bi-facebook"></i>
+          </span>
+          {% endif %}
+
+          {% if profile.x_url %}
+          <a href="{{ profile.x_url }}" class="profile-v2-icon-btn" target="_blank" rel="noopener noreferrer" aria-label="X profile">
+            <i class="bi bi-twitter-x"></i>
+          </a>
+          {% else %}
+          <span class="profile-v2-icon-btn profile-v2-icon-btn-disabled" aria-label="X link not set">
+            <i class="bi bi-twitter-x"></i>
+          </span>
+          {% endif %}
+
+          {% if profile.linkedin_url %}
+          <a href="{{ profile.linkedin_url }}" class="profile-v2-icon-btn" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn profile">
+            <i class="bi bi-linkedin"></i>
+          </a>
+          {% else %}
+          <span class="profile-v2-icon-btn profile-v2-icon-btn-disabled" aria-label="LinkedIn link not set">
+            <i class="bi bi-linkedin"></i>
+          </span>
+          {% endif %}
+
+          {% if profile.instagram_url %}
+          <a href="{{ profile.instagram_url }}" class="profile-v2-icon-btn" target="_blank" rel="noopener noreferrer" aria-label="Instagram profile">
+            <i class="bi bi-instagram"></i>
+          </a>
+          {% else %}
+          <span class="profile-v2-icon-btn profile-v2-icon-btn-disabled" aria-label="Instagram link not set">
+            <i class="bi bi-instagram"></i>
+          </span>
+          {% endif %}
+
           <button type="button" class="profile-v2-edit-btn" data-bs-toggle="modal" data-bs-target="#personalInfoModal">
             <i class="bi bi-pencil"></i>
             Edit
@@ -338,22 +500,23 @@
         </button>
       </div>
 
-      <div class="profile-v2-grid">
+      <div class="profile-v2-grid profile-v2-personal-grid">
         <div class="profile-v2-item">
-          <span class="profile-v2-label">First Name</span>
+          <span class="profile-v2-label">Name</span>
           <span class="profile-v2-value">{{ name_parts.first_name|default:'Not set' }}</span>
         </div>
         <div class="profile-v2-item">
-          <span class="profile-v2-label">Last Name</span>
-          <span class="profile-v2-value">{{ name_parts.last_name|default:'Not set' }}</span>
-        </div>
-        <div class="profile-v2-item">
-          <span class="profile-v2-label">Email address</span>
+          <span class="profile-v2-label">Email</span>
           <span class="profile-v2-value">{{ request.user.email }}</span>
         </div>
+
         <div class="profile-v2-item">
-          <span class="profile-v2-label">Phone</span>
-          <span class="profile-v2-value">{{ profile.phone|default:'Not set' }}</span>
+          <span class="profile-v2-label">Company</span>
+          <span class="profile-v2-value">{{ profile.company|default:'Not set' }}</span>
+        </div>
+        <div class="profile-v2-item">
+          <span class="profile-v2-label">Job Title</span>
+          <span class="profile-v2-value">{{ profile.job_title|default:'Not set' }}</span>
         </div>
         <div class="profile-v2-item profile-v2-item-wide">
           <span class="profile-v2-label">Bio</span>
@@ -362,37 +525,10 @@
       </div>
     </section>
 
-    <section class="profile-v2-card">
-      <div class="profile-v2-card-head">
-        <h3 class="profile-v2-card-title">Address</h3>
-        <button type="button" class="profile-v2-edit-btn" data-bs-toggle="modal" data-bs-target="#personalInfoModal">
-          <i class="bi bi-pencil"></i>
-          Edit
-        </button>
-      </div>
-
-      <div class="profile-v2-grid">
-        <div class="profile-v2-item">
-          <span class="profile-v2-label">Country</span>
-          <span class="profile-v2-value">{{ profile.company|default:'United States' }}</span>
-        </div>
-        <div class="profile-v2-item">
-          <span class="profile-v2-label">City/State</span>
-          <span class="profile-v2-value">{{ profile.timezone|default:'Arizona, United States.' }}</span>
-        </div>
-        <div class="profile-v2-item">
-          <span class="profile-v2-label">Postal Code</span>
-          <span class="profile-v2-value">N/A</span>
-        </div>
-        <div class="profile-v2-item">
-          <span class="profile-v2-label">TAX ID</span>
-          <span class="profile-v2-value">N/A</span>
-        </div>
-      </div>
-    </section>
   </div>
 
-  <div class="modal fade profile-v2-modal" id="personalInfoModal" tabindex="-1" aria-labelledby="personalInfoModalLabel" aria-hidden="true">
+  <div class="modal fade profile-v2-modal" id="personalInfoModal" tabindex="-1" aria-labelledby="personalInfoModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
@@ -403,27 +539,63 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <form method="post" novalidate>
+          <form method="post" enctype="multipart/form-data" novalidate>
             {% csrf_token %}
+
+            <div class="profile-v2-modal-section">
+              <h4 class="profile-v2-modal-section-title profile-v2-modal-section-title-centered">Profile Photo</h4>
+              <div class="profile-v2-photo-panel">
+                <label class="profile-v2-photo-preview" for="{{ personal_form.profile_photo.id_for_label }}" aria-label="Upload profile photo">
+                  {% if profile.profile_photo %}
+                  <img id="profilePhotoPreviewImage" src="{{ profile.profile_photo.url }}" alt="Current profile photo">
+                  {% else %}
+                  <span id="profilePhotoPreviewInitial">{{ request.user.first_name|default:request.user.email|slice:":1"|upper }}</span>
+                  {% endif %}
+                  <span class="profile-v2-photo-overlay" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M9 5L7.8 6.6C7.5 7 7.04 7.24 6.54 7.24H5C3.9 7.24 3 8.14 3 9.24V17C3 18.1 3.9 19 5 19H19C20.1 19 21 18.1 21 17V9.24C21 8.14 20.1 7.24 19 7.24H17.46C16.96 7.24 16.5 7 16.2 6.6L15 5H9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                      <path d="M12 16.25C13.7949 16.25 15.25 14.7949 15.25 13C15.25 11.2051 13.7949 9.75 12 9.75C10.2051 9.75 8.75 11.2051 8.75 13C8.75 14.7949 10.2051 16.25 12 16.25Z" stroke="currentColor" stroke-width="1.8"/>
+                      <path d="M18 10H18.01" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                    </svg>
+                  </span>
+                </label>
+                {{ personal_form.profile_photo }}
+                {% for error in personal_form.profile_photo.errors %}
+                <div class="text-danger small">{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
 
             <div class="profile-v2-modal-section">
               <h4 class="profile-v2-modal-section-title">Social Links</h4>
               <div class="profile-v2-modal-grid">
                 <div class="profile-v2-modal-field">
-                  <label>Facebook</label>
-                  <input type="url" class="form-control" placeholder="https://www.facebook.com/..." disabled>
+                  <label for="{{ personal_form.facebook_url.id_for_label }}">Facebook</label>
+                  {{ personal_form.facebook_url }}
+                  {% for error in personal_form.facebook_url.errors %}
+                  <div class="text-danger small mt-1">{{ error }}</div>
+                  {% endfor %}
                 </div>
                 <div class="profile-v2-modal-field">
-                  <label>X.com</label>
-                  <input type="url" class="form-control" placeholder="https://x.com/..." disabled>
+                  <label for="{{ personal_form.x_url.id_for_label }}">X.com</label>
+                  {{ personal_form.x_url }}
+                  {% for error in personal_form.x_url.errors %}
+                  <div class="text-danger small mt-1">{{ error }}</div>
+                  {% endfor %}
                 </div>
                 <div class="profile-v2-modal-field">
-                  <label>LinkedIn</label>
-                  <input type="url" class="form-control" placeholder="https://linkedin.com/..." disabled>
+                  <label for="{{ personal_form.linkedin_url.id_for_label }}">LinkedIn</label>
+                  {{ personal_form.linkedin_url }}
+                  {% for error in personal_form.linkedin_url.errors %}
+                  <div class="text-danger small mt-1">{{ error }}</div>
+                  {% endfor %}
                 </div>
                 <div class="profile-v2-modal-field">
-                  <label>Instagram</label>
-                  <input type="url" class="form-control" placeholder="https://instagram.com/..." disabled>
+                  <label for="{{ personal_form.instagram_url.id_for_label }}">Instagram</label>
+                  {{ personal_form.instagram_url }}
+                  {% for error in personal_form.instagram_url.errors %}
+                  <div class="text-danger small mt-1">{{ error }}</div>
+                  {% endfor %}
                 </div>
               </div>
             </div>
@@ -431,29 +603,37 @@
             <div class="profile-v2-modal-section">
               <h4 class="profile-v2-modal-section-title">Personal Information</h4>
               <div class="profile-v2-modal-grid">
-                <div class="profile-v2-modal-field">
-                  <label for="{{ personal_form.first_name.id_for_label }}">First Name</label>
+                <div class="profile-v2-modal-field profile-v2-modal-field-wide">
+                  <label for="{{ personal_form.first_name.id_for_label }}">Name</label>
                   {{ personal_form.first_name }}
-                  {% for error in personal_form.first_name.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
-                </div>
-                <div class="profile-v2-modal-field">
-                  <label for="{{ personal_form.last_name.id_for_label }}">Last Name</label>
-                  {{ personal_form.last_name }}
-                  {% for error in personal_form.last_name.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                  {% for error in personal_form.first_name.errors %}
+                  <div class="text-danger small mt-1">{{ error }}</div>
+                  {% endfor %}
                 </div>
                 <div class="profile-v2-modal-field">
                   <label for="{{ personal_form.email.id_for_label }}">Email Address</label>
                   {{ personal_form.email }}
                 </div>
                 <div class="profile-v2-modal-field">
-                  <label for="{{ personal_form.phone.id_for_label }}">Phone</label>
-                  {{ personal_form.phone }}
-                  {% for error in personal_form.phone.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                  <label for="{{ personal_form.company.id_for_label }}">Company</label>
+                  {{ personal_form.company }}
+                  {% for error in personal_form.company.errors %}
+                  <div class="text-danger small mt-1">{{ error }}</div>
+                  {% endfor %}
+                </div>
+                <div class="profile-v2-modal-field">
+                  <label for="{{ personal_form.job_title.id_for_label }}">Job Title</label>
+                  {{ personal_form.job_title }}
+                  {% for error in personal_form.job_title.errors %}
+                  <div class="text-danger small mt-1">{{ error }}</div>
+                  {% endfor %}
                 </div>
                 <div class="profile-v2-modal-field profile-v2-modal-field-wide">
                   <label for="{{ personal_form.bio.id_for_label }}">Bio</label>
                   {{ personal_form.bio }}
-                  {% for error in personal_form.bio.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                  {% for error in personal_form.bio.errors %}
+                  <div class="text-danger small mt-1">{{ error }}</div>
+                  {% endfor %}
                 </div>
               </div>
             </div>
@@ -471,11 +651,45 @@
 {% endblock %}
 
 {% block extra_js %}
-{% if show_personal_modal %}
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+    var shouldShowModal = "{{ show_personal_modal|yesno:'true,false' }}" === 'true';
     var modalElement = document.getElementById('personalInfoModal');
-    if (!modalElement) {
+    var photoInput = document.getElementById('{{ personal_form.profile_photo.id_for_label }}');
+    var previewImage = document.getElementById('profilePhotoPreviewImage');
+    var previewInitial = document.getElementById('profilePhotoPreviewInitial');
+
+    if (photoInput) {
+      photoInput.addEventListener('change', function (event) {
+        var file = event.target.files && event.target.files[0];
+        if (!file) {
+          return;
+        }
+
+        var reader = new FileReader();
+        reader.onload = function (loadEvent) {
+          if (!previewImage) {
+            previewImage = document.createElement('img');
+            previewImage.id = 'profilePhotoPreviewImage';
+            previewImage.alt = 'Selected profile photo';
+            var previewContainer = document.querySelector('.profile-v2-photo-preview');
+            if (previewContainer) {
+              previewContainer.insertBefore(previewImage, previewContainer.firstChild);
+            }
+          }
+
+          previewImage.src = loadEvent.target.result;
+
+          if (previewInitial) {
+            previewInitial.style.display = 'none';
+          }
+        };
+
+        reader.readAsDataURL(file);
+      });
+    }
+
+    if (!modalElement || !shouldShowModal) {
       return;
     }
 
@@ -483,5 +697,4 @@
     modal.show();
   });
 </script>
-{% endif %}
 {% endblock %}

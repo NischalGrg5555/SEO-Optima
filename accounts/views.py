@@ -406,7 +406,7 @@ class ProfileView(LoginRequiredMixin, View):
 
     def post(self, request):
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
-        personal_form = PersonalInformationForm(request.POST, instance=profile, user=request.user)
+        personal_form = PersonalInformationForm(request.POST, request.FILES, instance=profile, user=request.user)
         if personal_form.is_valid():
             personal_form.save()
             messages.success(request, 'Profile updated successfully.')
