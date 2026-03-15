@@ -1,8 +1,37 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from datetime import timedelta
 import random
+
+
+class UserProfile(models.Model):
+    DATE_RANGE_CHOICES = [
+        ('7d', 'Last 7 days'),
+        ('28d', 'Last 28 days'),
+        ('90d', 'Last 90 days'),
+    ]
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    company = models.CharField(max_length=150, blank=True)
+    job_title = models.CharField(max_length=120, blank=True)
+    phone = models.CharField(max_length=30, blank=True)
+    timezone = models.CharField(max_length=100, default='UTC')
+    bio = models.TextField(blank=True)
+    default_property = models.CharField(max_length=255, blank=True)
+    preferred_date_range = models.CharField(max_length=10, choices=DATE_RANGE_CHOICES, default='28d')
+    receive_report_emails = models.BooleanField(default=True)
+    receive_alert_emails = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['user__first_name', 'user__email']
+
+    def __str__(self):
+        return f"Profile for {self.user.email}"
 
 class OTP(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='otps')
@@ -32,3 +61,12 @@ class OTP(models.Model):
         code = cls.generate_code()
         expires_at = timezone.now() + timedelta(minutes=10)
         return cls.objects.create(user=user, code=code, expires_at=expires_at)
+
+
+@receiver(post_save, sender=User)
+def create_or_update_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.create(user=instance)
+        return
+
+    UserProfile.objects.get_or_create(user=instance)

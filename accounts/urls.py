@@ -1,9 +1,10 @@
 from django.urls import path
-from .views import RegisterView, LoginViewCustom, logout_view, OTPVerifyView, ResendOTPView, GoogleLoginView, GoogleSignUpView, GoogleCallbackView
+from .views import RegisterView, LoginViewCustom, logout_view, OTPVerifyView, ResendOTPView, GoogleLoginView, GoogleSignUpView, GoogleCallbackView, ProfileView
 
 app_name = "accounts"
 
 urlpatterns = [
+    path("profile/", ProfileView.as_view(), name="profile"),
     path("register/", RegisterView.as_view(), name="register"),
     path("verify-otp/", OTPVerifyView.as_view(), name="verify_otp"),
     path("resend-otp/", ResendOTPView.as_view(), name="resend_otp"),

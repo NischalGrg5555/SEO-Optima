@@ -3,18 +3,29 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
 from django.contrib import messages
 from django.conf import settings
+import importlib
 from .services.pagespeed import fetch_pagespeed_data, get_score_color, extract_field_data_from_response
 from .services.header_extractor import extract_headers, get_header_hierarchy
 from .services.image_extractor import extract_images, get_image_stats
 from .services.keyword_extractor import get_keyword_stats, fetch_gsc_keywords, GSCAuthError
 from .models import PageSpeedAnalysis, ImageAltAnalysis, KeywordAnalysis, GSCConnection, HeaderAnalysis
 from .forms import PageSpeedForm, PageSpeedFilterForm, HeaderExtractorForm
-from google_auth_oauthlib.flow import Flow
-from googleapiclient.discovery import build
-from google.oauth2.credentials import Credentials
 import json
 from urllib.parse import urlparse
 from collections import defaultdict
+
+
+def _load_gsc_oauth_clients():
+    try:
+        google_auth_flow = importlib.import_module('google_auth_oauthlib.flow')
+        googleapiclient_discovery = importlib.import_module('googleapiclient.discovery')
+    except ImportError as exc:
+        raise RuntimeError(
+            'Google Search Console dependencies are not installed. '
+            'Install packages from requirements.txt to use this feature.'
+        ) from exc
+
+    return google_auth_flow.Flow, googleapiclient_discovery.build
 
 
 def _group_properties_by_domain(properties_list):
@@ -684,6 +695,12 @@ def connect_gsc(request):
     if not settings.GSC_CLIENT_ID or not settings.GSC_CLIENT_SECRET:
         messages.error(request, 'Google Search Console API is not configured. Please contact administrator.')
         return redirect('dashboard:keywords_finder')
+
+    try:
+        Flow, _ = _load_gsc_oauth_clients()
+    except RuntimeError as exc:
+        messages.error(request, str(exc))
+        return redirect('dashboard:keywords_finder')
     
     # Create flow instance
     flow = Flow.from_client_config(
@@ -727,8 +744,9 @@ def gsc_callback(request):
         return redirect('dashboard:keywords_finder')
     
     try:
+        Flow, build = _load_gsc_oauth_clients()
+
         # Create flow instance with relaxed scope checking
-        from oauthlib.oauth2.rfc6749.parameters import prepare_token_request
         import os
         
         # Disable strict scope checking

@@ -1,6 +1,7 @@
 from django.contrib.auth import logout, login
 from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy, reverse
@@ -9,13 +10,12 @@ from django.views import View
 from django.core.mail import send_mail
 from django.http import JsonResponse
 from django.conf import settings
-from google.oauth2 import id_token
-from google.auth.transport import requests as google_requests
+import importlib
 import json
 import requests
 
-from .forms import RegisterForm, LoginForm, OTPVerifyForm
-from .models import OTP
+from .forms import RegisterForm, LoginForm, OTPVerifyForm, PersonalInformationForm
+from .models import OTP, UserProfile
 
 class RegisterView(CreateView):
     template_name = "accounts/register.html"
@@ -300,6 +300,13 @@ class GoogleCallbackView(View):
             return redirect('accounts:login')
 
         try:
+            try:
+                id_token = importlib.import_module('google.oauth2.id_token')
+                google_requests = importlib.import_module('google.auth.transport.requests')
+            except ImportError:
+                messages.error(request, "Google auth dependencies are not installed on the server.")
+                return redirect('accounts:login')
+
             # Exchange code for token
             token_url = 'https://oauth2.googleapis.com/token'
             token_data = {
@@ -379,6 +386,72 @@ class GoogleCallbackView(View):
         except Exception as e:
             messages.error(request, f"Google authentication failed: {str(e)}")
             return redirect('accounts:login')
+
+
+class ProfileView(LoginRequiredMixin, View):
+    template_name = 'accounts/profile.html'
+
+    def get(self, request):
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        personal_form = PersonalInformationForm(instance=profile, user=request.user)
+        name_parts = self.get_name_parts(request.user)
+        context = {
+            'personal_form': personal_form,
+            'profile': profile,
+            'profile_completion': self.get_profile_completion(request.user, profile),
+            'name_parts': name_parts,
+            'show_personal_modal': False,
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        personal_form = PersonalInformationForm(request.POST, instance=profile, user=request.user)
+        if personal_form.is_valid():
+            personal_form.save()
+            messages.success(request, 'Profile updated successfully.')
+            return redirect('accounts:profile')
+
+        name_parts = self.get_name_parts(request.user)
+        context = {
+            'personal_form': personal_form,
+            'profile': profile,
+            'profile_completion': self.get_profile_completion(request.user, profile),
+            'name_parts': name_parts,
+            'show_personal_modal': True,
+        }
+        return render(request, self.template_name, context)
+
+    @staticmethod
+    def get_name_parts(user):
+        first_name = user.first_name or ''
+        last_name = user.last_name or ''
+
+        if first_name and not last_name and ' ' in first_name:
+            parts = first_name.split(None, 1)
+            return {
+                'first_name': parts[0],
+                'last_name': parts[1],
+            }
+
+        return {
+            'first_name': first_name,
+            'last_name': last_name,
+        }
+
+    @staticmethod
+    def get_profile_completion(user, profile):
+        fields = [
+            bool(user.first_name.strip()),
+            bool(user.email.strip()),
+            bool(profile.company.strip()),
+            bool(profile.job_title.strip()),
+            bool(profile.timezone.strip()),
+            bool(profile.default_property.strip()),
+            bool(profile.bio.strip()),
+        ]
+        completed = sum(fields)
+        return round((completed / len(fields)) * 100)
 
 
 

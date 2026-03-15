@@ -1,18 +1,35 @@
 """
 Service to extract keywords and ranking data from Google Search Console
 """
+import importlib
 import random
 from typing import List, Dict, Optional
 from urllib.parse import urlparse
 from datetime import datetime, timedelta
-from googleapiclient.discovery import build
-from google.oauth2.credentials import Credentials
-from google.auth.transport.requests import Request
-from google.auth.exceptions import RefreshError
 
 
 class GSCAuthError(Exception):
     """Raised when stored Google credentials are invalid or revoked."""
+
+
+def _load_google_clients():
+    try:
+        googleapiclient_discovery = importlib.import_module('googleapiclient.discovery')
+        google_oauth2_credentials = importlib.import_module('google.oauth2.credentials')
+        google_transport_requests = importlib.import_module('google.auth.transport.requests')
+        google_auth_exceptions = importlib.import_module('google.auth.exceptions')
+    except ImportError as exc:
+        raise Exception(
+            'Google Search Console dependencies are not installed. '
+            'Install packages from requirements.txt to use this feature.'
+        ) from exc
+
+    return (
+        googleapiclient_discovery.build,
+        google_oauth2_credentials.Credentials,
+        google_transport_requests.Request,
+        google_auth_exceptions.RefreshError,
+    )
 
 
 def _is_auth_error(error_text: str) -> bool:
@@ -52,6 +69,8 @@ def fetch_gsc_keywords(url: str, credentials_dict: dict, properties_list: list =
         List of dictionaries containing keyword data
     """
     try:
+        build, Credentials, Request, RefreshError = _load_google_clients()
+
         # Create credentials object from dictionary
         credentials = Credentials(
             token=credentials_dict.get('token'),
