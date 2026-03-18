@@ -3,396 +3,670 @@
 {% block title %}Extract Content Headers | SEO Optima{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-  <!-- Header -->
-  <div class="row mb-4">
-    <div class="col-12">
-      <h1 class="h2">🔗 Extract Content Headers</h1>
-      <p class="text-muted">Analyze and extract all heading tags (H1-H6) from any webpage to understand content structure and SEO hierarchy.</p>
-    </div>
-  </div>
-
-  <!-- Extract Form -->
-  <div class="row mb-4">
-    <div class="col-lg-8 mx-auto">
-      <div class="card shadow-sm">
-        <div class="card-body p-4">
-          <form method="post" id="headerExtractForm">
-            {% csrf_token %}
-            
-            <div class="mb-4">
-              <label for="{{ form.url.id_for_label }}" class="form-label fw-bold">
-                Enter Website URL
-              </label>
-              {{ form.url }}
-              {% if form.url.errors %}
-                <div class="invalid-feedback d-block">
-                  {{ form.url.errors.0 }}
-                </div>
-              {% endif %}
-              <div class="form-text">
-                Example: https://example.com or https://blog.example.com/article
-              </div>
-            </div>
-
-            <div class="d-grid">
-              <button type="submit" class="btn btn-primary btn-lg" id="extractBtn">
-                <span id="btnText">🔍 Extract Headers</span>
-                <span id="btnLoading" class="d-none">
-                  <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Extracting...
-                </span>
-              </button>
-            </div>
-          </form>
+<div class="container-fluid py-4 headers-command-center">
+  <section class="row g-4 mb-4 align-items-stretch hero-grid">
+    <div class="col-xl-6">
+      <div class="command-hero h-100">
+        <p class="hero-kicker">SEO Command Center</p>
+        <h1 class="hero-title">Extract Content Headers</h1>
+        <p class="hero-subtitle">
+          Map the heading hierarchy of any page in seconds and spot structure issues before publishing.
+        </p>
+        <div class="hero-badges">
+          <span class="hero-badge">Heading hierarchy map</span>
+          <span class="hero-badge">Fast page structure scan</span>
+          <span class="hero-badge">SEO-ready output</span>
         </div>
       </div>
     </div>
-  </div>
+    <div class="col-xl-6">
+      <div class="command-panel h-100">
+        <h2 class="panel-title">Launch Extraction</h2>
+        <p class="panel-text">Paste a page URL and run a structured heading scan.</p>
+        <form method="post" id="headerExtractForm" class="extract-form">
+          {% csrf_token %}
 
-  <!-- Results Section -->
+          <label for="{{ form.url.id_for_label }}" class="form-label panel-label">Website URL</label>
+          <div class="url-field-wrap">
+            {{ form.url }}
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="pasteUrlBtn">Paste</button>
+          </div>
+          {% if form.url.errors %}
+            <div class="invalid-feedback d-block">{{ form.url.errors.0 }}</div>
+          {% endif %}
+          <div class="form-text panel-hint">
+            Try: https://example.com/article, https://docs.example.com/guide
+          </div>
+
+          <div class="quick-url-row">
+            <button type="button" class="quick-url" data-url="https://example.com/blog">Blog page</button>
+            <button type="button" class="quick-url" data-url="https://example.com/product">Product page</button>
+            <button type="button" class="quick-url" data-url="https://example.com/docs">Docs page</button>
+          </div>
+
+          <button type="submit" class="btn launch-btn w-100" id="extractBtn">
+            <span id="btnText">Extract Headers</span>
+            <span id="btnLoading" class="d-none">
+              <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              Scanning structure...
+            </span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </section>
+
   {% if headers %}
-  <div class="row">
-    <div class="col-lg-10 mx-auto">
-      <!-- Stats Cards -->
-      <div class="row mb-4">
-        <div class="col-md-3 col-6 mb-3">
-          <div class="stat-card">
-            <div class="stat-value">{{ headers|length }}</div>
-            <div class="stat-label">Total Headers</div>
-          </div>
-        </div>
-        <div class="col-md-3 col-6 mb-3">
-          <div class="stat-card stat-h1">
-            <div class="stat-value">{{ hierarchy.H1 }}</div>
-            <div class="stat-label">H1 Tags</div>
-          </div>
-        </div>
-        <div class="col-md-3 col-6 mb-3">
-          <div class="stat-card stat-h2">
-            <div class="stat-value">{{ hierarchy.H2 }}</div>
-            <div class="stat-label">H2 Tags</div>
-          </div>
-        </div>
-        <div class="col-md-3 col-6 mb-3">
-          <div class="stat-card stat-h3">
-            <div class="stat-value">{{ hierarchy.H3 }}</div>
-            <div class="stat-label">H3 Tags</div>
-          </div>
+  <section class="results-shell">
+    <div class="row g-3 mb-4">
+      <div class="col-lg-3 col-6">
+        <div class="metric-card">
+          <p class="metric-label">Total Headers</p>
+          <p class="metric-value">{{ headers|length }}</p>
         </div>
       </div>
-
-      <!-- URL Display -->
-      <div class="card mb-4">
-        <div class="card-body">
-          <h6 class="text-muted mb-2">Analyzed URL:</h6>
-          <a href="{{ url }}" target="_blank" class="text-break">{{ url }}</a>
+      <div class="col-lg-3 col-6">
+        <div class="metric-card level-h1">
+          <p class="metric-label">H1</p>
+          <p class="metric-value">{{ hierarchy.H1 }}</p>
         </div>
       </div>
-
-      <!-- Headers Display -->
-      <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">Content Headers Structure</h5>
-          <span class="badge bg-primary">{{ headers|length }} Headers Found</span>
-        </div>
-        <div class="card-body">
-          <div class="headers-container">
-            {% for header in headers %}
-            <div class="header-item header-{{ header.level|lower }}">
-              <span class="header-tag">{{ header.level }}</span>
-              <span class="header-text">{{ header.text }}</span>
-            </div>
-            {% endfor %}
-          </div>
+      <div class="col-lg-3 col-6">
+        <div class="metric-card level-h2">
+          <p class="metric-label">H2</p>
+          <p class="metric-value">{{ hierarchy.H2 }}</p>
         </div>
       </div>
-
-      <!-- SEO Tips -->
-      <div class="card mt-4">
-        <div class="card-header">
-          <h5 class="mb-0">💡 SEO Best Practices</h5>
-        </div>
-        <div class="card-body">
-          <ul class="mb-0">
-            <li class="mb-2"><strong>Use exactly one H1 tag</strong> per page (Currently: {{ hierarchy.H1 }})</li>
-            <li class="mb-2"><strong>Maintain proper hierarchy:</strong> H1 → H2 → H3 (don't skip levels)</li>
-            <li class="mb-2"><strong>Include keywords:</strong> Use relevant keywords in your headings naturally</li>
-            <li class="mb-2"><strong>Keep headers descriptive:</strong> Headers should clearly describe the content that follows</li>
-            <li><strong>Make them engaging:</strong> Headers help users scan and understand your content quickly</li>
-          </ul>
+      <div class="col-lg-3 col-6">
+        <div class="metric-card level-h3">
+          <p class="metric-label">H3</p>
+          <p class="metric-value">{{ hierarchy.H3 }}</p>
         </div>
       </div>
     </div>
-  </div>
+
+    <div class="result-card mb-4">
+      <p class="result-meta">Analyzed URL</p>
+      <a href="{{ url }}" target="_blank" class="analyzed-url">{{ url }}</a>
+    </div>
+
+    <div class="result-card mb-4">
+      <div class="result-head">
+        <h3 class="result-title">Content Header Structure</h3>
+        <span class="pill">{{ headers|length }} found</span>
+      </div>
+      <div class="headers-container">
+        {% for header in headers %}
+        <div class="header-item header-{{ header.level|lower }}" style="--item-index: {{ forloop.counter0 }};">
+          <span class="header-tag">{{ header.level }}</span>
+          <span class="header-text">{{ header.text }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="result-card tips-card mb-4">
+      <h3 class="result-title">SEO Best Practices</h3>
+      <ul class="tips-list mb-0">
+        <li>Use one H1 per page. Current count: <strong>{{ hierarchy.H1 }}</strong>.</li>
+        <li>Keep hierarchy ordered: H1 then H2 then H3, without skipping levels.</li>
+        <li>Use descriptive headers that match user intent and on-page content.</li>
+        <li>Include keywords naturally in headings where relevant.</li>
+      </ul>
+    </div>
+  </section>
   {% elif error %}
-  <div class="row">
-    <div class="col-lg-8 mx-auto">
-      <div class="alert alert-danger" role="alert">
-        <h5 class="alert-heading">Error!</h5>
-        <p class="mb-0">{{ error }}</p>
-      </div>
-    </div>
+  <div class="alert alert-danger" role="alert">
+    <h5 class="alert-heading mb-1">Extraction failed</h5>
+    <p class="mb-0">{{ error }}</p>
   </div>
   {% endif %}
 
-  <!-- Previous Analyses Section -->
   {% if analyses %}
-  <div class="row mt-5">
-    <div class="col-lg-10 mx-auto">
-      <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <h5 class="mb-0"> Recent Analyses</h5>
-          <span class="badge bg-secondary">{{ analyses|length }} Recent</span>
-        </div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-hover">
-              <thead>
-                <tr>
-                  <th>URL</th>
-                  <th>Total Headers</th>
-                  <th>H1</th>
-                  <th>H2</th>
-                  <th>H3</th>
-                  <th>Analyzed</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for analysis in analyses %}
-                <tr>
-                  <td>
-                    <a href="{% url 'dashboard:header_analysis_detail' analysis.pk %}">
-                      {{ analysis.url|truncatechars:50 }}
-                    </a>
-                  </td>
-                  <td><span class="badge bg-primary">{{ analysis.total_headers }}</span></td>
-                  <td>
-                    {% if analysis.h1_count == 1 %}
-                    <span class="badge bg-success">{{ analysis.h1_count }}</span>
-                    {% elif analysis.h1_count == 0 %}
-                    <span class="badge bg-danger">0</span>
-                    {% else %}
-                    <span class="badge bg-warning">{{ analysis.h1_count }}</span>
-                    {% endif %}
-                  </td>
-                  <td><span class="badge bg-info">{{ analysis.h2_count }}</span></td>
-                  <td><span class="badge bg-secondary">{{ analysis.h3_count }}</span></td>
-                  <td><small class="text-muted">{{ analysis.created_at|date:"M d, Y" }}</small></td>
-                  <td>
-                    <div class="btn-group btn-group-sm" role="group">
-                      <a href="{% url 'dashboard:header_analysis_detail' analysis.pk %}" 
-                         class="btn btn-outline-primary" title="View Details">
-                        <i class="bi bi-eye"></i>
-                      </a>
-                      <a href="{% url 'dashboard:delete_header_analysis' analysis.pk %}" 
-                         class="btn btn-outline-danger" title="Delete">
-                        <i class="bi bi-trash"></i>
-                      </a>
-                    </div>
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+  <section class="result-card">
+    <div class="result-head mb-2">
+      <h3 class="result-title">Recent Analyses</h3>
+      <span class="pill muted">{{ analyses|length }} recent</span>
     </div>
-  </div>
+    <div class="table-responsive">
+      <table class="table align-middle table-hover">
+        <thead>
+          <tr>
+            <th>URL</th>
+            <th>Total</th>
+            <th>H1</th>
+            <th>H2</th>
+            <th>H3</th>
+            <th>Analyzed</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for analysis in analyses %}
+          <tr>
+            <td>
+              <a href="{% url 'dashboard:header_analysis_detail' analysis.pk %}">
+                {{ analysis.url|truncatechars:50 }}
+              </a>
+            </td>
+            <td><span class="badge text-bg-primary">{{ analysis.total_headers }}</span></td>
+            <td>
+              {% if analysis.h1_count == 1 %}
+              <span class="badge text-bg-success">{{ analysis.h1_count }}</span>
+              {% elif analysis.h1_count == 0 %}
+              <span class="badge text-bg-danger">0</span>
+              {% else %}
+              <span class="badge text-bg-warning">{{ analysis.h1_count }}</span>
+              {% endif %}
+            </td>
+            <td><span class="badge text-bg-info">{{ analysis.h2_count }}</span></td>
+            <td><span class="badge text-bg-secondary">{{ analysis.h3_count }}</span></td>
+            <td><small class="text-muted">{{ analysis.created_at|date:"M d, Y" }}</small></td>
+            <td>
+              <div class="btn-group btn-group-sm" role="group">
+                <a href="{% url 'dashboard:header_analysis_detail' analysis.pk %}" class="btn btn-outline-primary" title="View Details">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="{% url 'dashboard:delete_header_analysis' analysis.pk %}" class="btn btn-outline-danger" title="Delete">
+                  <i class="bi bi-trash"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
   {% endif %}
 </div>
 
 <style>
-  /* Stat Cards */
-  .stat-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 20px;
-    border-radius: 12px;
-    text-align: center;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
+
+  .headers-command-center {
+    --cc-bg-1: #f6fbff;
+    --cc-bg-2: #eef8f5;
+    --cc-surface: #ffffff;
+    --cc-ink: #0f172a;
+    --cc-muted: #4b5563;
+    --cc-line: #d9e4ec;
+    --cc-accent: #0ea5a4;
+    --cc-accent-2: #84cc16;
+    --cc-shadow: 0 18px 42px rgba(9, 30, 66, 0.12);
+    background:
+      radial-gradient(circle at 12% 18%, rgba(14, 165, 164, 0.14), transparent 36%),
+      radial-gradient(circle at 82% 12%, rgba(132, 204, 22, 0.15), transparent 34%),
+      linear-gradient(120deg, var(--cc-bg-1), var(--cc-bg-2));
+    border-radius: 22px;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
 
-  .stat-card.stat-h1 {
-    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  .hero-grid {
+    animation: fade-lift 0.5s ease-out;
   }
 
-  .stat-card.stat-h2 {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  .command-hero,
+  .command-panel,
+  .result-card,
+  .metric-card {
+    background: var(--cc-surface);
+    border: 1px solid var(--cc-line);
+    border-radius: 18px;
+    box-shadow: var(--cc-shadow);
   }
 
-  .stat-card.stat-h3 {
-    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  .command-hero {
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
   }
 
-  .stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 5px;
+  .command-hero::after {
+    content: '';
+    position: absolute;
+    width: 240px;
+    height: 240px;
+    right: -70px;
+    bottom: -70px;
+    background: radial-gradient(circle, rgba(14, 165, 164, 0.16), transparent 68%);
   }
 
-  .stat-label {
-    font-size: 0.875rem;
-    opacity: 0.9;
+  .hero-kicker {
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    font-weight: 700;
+    font-size: 0.74rem;
+    color: #0f766e;
+    margin-bottom: 0.75rem;
   }
 
-  /* Headers Container */
+  .hero-title,
+  .panel-title,
+  .result-title {
+    font-family: 'Space Grotesk', 'Avenir Next', 'Trebuchet MS', sans-serif;
+    color: var(--cc-ink);
+  }
+
+  .hero-title {
+    font-size: clamp(1.8rem, 2.4vw, 2.65rem);
+    line-height: 1.15;
+    margin-bottom: 0.9rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.01rem;
+    color: var(--cc-muted);
+    max-width: 52ch;
+    margin-bottom: 1.3rem;
+  }
+
+  .hero-badges {
+    display: flex;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+  }
+
+  .hero-badge {
+    padding: 0.35rem 0.72rem;
+    border: 1px solid #cae8e8;
+    background: #f2fbfb;
+    color: #155e75;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+
+  .command-panel {
+    padding: 1.6rem;
+    position: relative;
+    animation: fade-lift 0.6s ease-out;
+  }
+
+  .panel-title {
+    font-size: 1.45rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .panel-text {
+    color: var(--cc-muted);
+    margin-bottom: 1rem;
+  }
+
+  .panel-label {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .url-field-wrap {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.6rem;
+    align-items: center;
+  }
+
+  .url-field-wrap input {
+    border-radius: 12px;
+    border: 1px solid #cddce5;
+    height: 47px;
+    padding: 0 0.95rem;
+  }
+
+  .url-field-wrap input:focus {
+    border-color: #0ea5a4;
+    box-shadow: 0 0 0 0.2rem rgba(14, 165, 164, 0.16);
+  }
+
+  .panel-hint {
+    color: #64748b;
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .quick-url-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .quick-url {
+    border: 1px solid #bed8e2;
+    background: #f8fdff;
+    color: #155e75;
+    border-radius: 10px;
+    padding: 0.32rem 0.72rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .quick-url:hover {
+    border-color: #0ea5a4;
+    background: #e9fbfb;
+  }
+
+  .launch-btn {
+    border: none;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(102deg, #0e7490, #0ea5a4 65%, #84cc16);
+    color: #fff;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+  }
+
+  .launch-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(14, 116, 144, 0.25);
+    color: #fff;
+  }
+
+  .launch-btn:disabled {
+    opacity: 0.85;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .metric-card {
+    padding: 1rem 1.1rem;
+    border-top: 4px solid #0e7490;
+  }
+
+  .metric-card.level-h1 {
+    border-top-color: #0f766e;
+  }
+
+  .metric-card.level-h2 {
+    border-top-color: #0284c7;
+  }
+
+  .metric-card.level-h3 {
+    border-top-color: #65a30d;
+  }
+
+  .metric-label {
+    color: #64748b;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 0.2rem;
+    font-weight: 700;
+  }
+
+  .metric-value {
+    font-size: 1.9rem;
+    line-height: 1;
+    font-family: 'Space Grotesk', 'Avenir Next', 'Trebuchet MS', sans-serif;
+    margin-bottom: 0;
+    color: #0f172a;
+  }
+
+  .result-card {
+    padding: 1.2rem 1.35rem;
+    animation: fade-lift 0.56s ease-out;
+  }
+
+  .result-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+  }
+
+  .result-title {
+    font-size: 1.24rem;
+    margin-bottom: 0;
+  }
+
+  .pill {
+    border-radius: 999px;
+    padding: 0.25rem 0.68rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #115e59;
+    background: #e7f9f8;
+    border: 1px solid #b8ecea;
+  }
+
+  .pill.muted {
+    color: #334155;
+    background: #eef3f8;
+    border-color: #d3dee8;
+  }
+
+  .result-meta {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #64748b;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.45rem;
+    font-weight: 700;
+  }
+
+  .analyzed-url {
+    font-weight: 600;
+    color: #0369a1;
+    word-break: break-all;
+  }
+
   .headers-container {
-    max-height: 600px;
+    max-height: 560px;
     overflow-y: auto;
-    padding: 10px 0;
+    padding-top: 0.7rem;
   }
 
   .header-item {
-    padding: 12px 16px;
-    margin-bottom: 8px;
-    border-left: 4px solid;
-    background: #f9fafb;
-    border-radius: 6px;
+    border: 1px solid #d9e4ec;
+    border-left: 5px solid;
+    border-radius: 12px;
+    padding: 0.72rem 0.88rem;
+    background: #fbfdff;
     display: flex;
+    gap: 0.75rem;
     align-items: flex-start;
-    transition: all 0.2s ease;
-  }
-
-  .header-item:hover {
-    background: #f3f4f6;
-    transform: translateX(4px);
+    margin-bottom: 0.58rem;
+    opacity: 0;
+    transform: translateY(7px);
+    animation: item-in 0.42s ease-out forwards;
+    animation-delay: calc(var(--item-index) * 0.04s);
   }
 
   .header-tag {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    margin-right: 12px;
-    min-width: 40px;
+    min-width: 44px;
     text-align: center;
-    color: white;
-    flex-shrink: 0;
+    border-radius: 8px;
+    font-size: 0.73rem;
+    padding: 0.23rem 0.45rem;
+    color: #fff;
+    font-weight: 700;
+    letter-spacing: 0.04em;
   }
 
   .header-text {
-    flex: 1;
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: #1f2937;
+    color: #1e293b;
+    line-height: 1.45;
   }
 
-  /* H1 - Purple */
   .header-h1 {
-    border-left-color: #8b5cf6;
+    border-left-color: #0f766e;
   }
 
   .header-h1 .header-tag {
-    background-color: #8b5cf6;
+    background: #0f766e;
   }
 
   .header-h1 .header-text {
-    font-size: 1.1rem;
-    font-weight: 600;
+    font-size: 1.05rem;
+    font-weight: 700;
   }
 
-  /* H2 - Blue */
   .header-h2 {
-    border-left-color: #3b82f6;
-    margin-left: 20px;
+    border-left-color: #0284c7;
+    margin-left: 18px;
   }
 
   .header-h2 .header-tag {
-    background-color: #3b82f6;
+    background: #0284c7;
   }
 
   .header-h2 .header-text {
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 600;
   }
 
-  /* H3 - Cyan */
   .header-h3 {
-    border-left-color: #06b6d4;
-    margin-left: 40px;
+    border-left-color: #65a30d;
+    margin-left: 34px;
   }
 
   .header-h3 .header-tag {
-    background-color: #06b6d4;
+    background: #65a30d;
   }
 
-  /* H4 - Green */
   .header-h4 {
-    border-left-color: #10b981;
-    margin-left: 60px;
+    border-left-color: #16a34a;
+    margin-left: 52px;
   }
 
   .header-h4 .header-tag {
-    background-color: #10b981;
+    background: #16a34a;
   }
 
-  .header-h4 .header-text {
-    font-size: 0.9rem;
-  }
-
-  /* H5 - Yellow */
   .header-h5 {
-    border-left-color: #f59e0b;
-    margin-left: 80px;
+    border-left-color: #d97706;
+    margin-left: 70px;
   }
 
   .header-h5 .header-tag {
-    background-color: #f59e0b;
+    background: #d97706;
   }
 
-  .header-h5 .header-text {
-    font-size: 0.875rem;
-  }
-
-  /* H6 - Gray */
   .header-h6 {
-    border-left-color: #6b7280;
-    margin-left: 100px;
+    border-left-color: #475569;
+    margin-left: 88px;
   }
 
   .header-h6 .header-tag {
-    background-color: #6b7280;
+    background: #475569;
   }
 
-  .header-h6 .header-text {
-    font-size: 0.85rem;
+  .tips-card {
+    background: linear-gradient(135deg, #ffffff, #f4fdfa);
   }
 
-  /* Form Enhancements */
-  .form-control-lg {
-    border: 2px solid #e5e7eb;
-    padding: 12px 16px;
-    font-size: 1rem;
+  .tips-list li {
+    margin-bottom: 0.5rem;
+    color: #334155;
   }
 
-  .form-control-lg:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  .tips-list li:last-child {
+    margin-bottom: 0;
   }
 
-  /* Loading State */
-  #extractBtn:disabled {
-    opacity: 0.7;
+  @keyframes fade-lift {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes item-in {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 991.98px) {
+    .headers-command-center {
+      border-radius: 14px;
+      padding: 1rem;
+    }
+
+    .command-hero,
+    .command-panel,
+    .result-card,
+    .metric-card {
+      border-radius: 14px;
+      box-shadow: 0 12px 24px rgba(9, 30, 66, 0.1);
+    }
+
+    .hero-title {
+      font-size: 1.8rem;
+    }
+
+    .header-h2,
+    .header-h3,
+    .header-h4,
+    .header-h5,
+    .header-h6 {
+      margin-left: 0;
+    }
+  }
+
+  @media (max-width: 575.98px) {
+    .url-field-wrap {
+      grid-template-columns: 1fr;
+    }
+
+    .result-head {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .hero-badges {
+      gap: 0.42rem;
+    }
   }
 </style>
 
 <script>
-  // Show loading state on form submit
-  document.getElementById('headerExtractForm').addEventListener('submit', function() {
-    const btn = document.getElementById('extractBtn');
-    const btnText = document.getElementById('btnText');
-    const btnLoading = document.getElementById('btnLoading');
-    
-    btn.disabled = true;
-    btnText.classList.add('d-none');
-    btnLoading.classList.remove('d-none');
+  const headerExtractForm = document.getElementById('headerExtractForm');
+  const extractBtn = document.getElementById('extractBtn');
+  const btnText = document.getElementById('btnText');
+  const btnLoading = document.getElementById('btnLoading');
+  const urlInput = document.getElementById('{{ form.url.id_for_label }}');
+  const pasteUrlBtn = document.getElementById('pasteUrlBtn');
+
+  if (headerExtractForm) {
+    headerExtractForm.addEventListener('submit', function() {
+      extractBtn.disabled = true;
+      btnText.classList.add('d-none');
+      btnLoading.classList.remove('d-none');
+    });
+  }
+
+  if (pasteUrlBtn && urlInput) {
+    pasteUrlBtn.addEventListener('click', async function() {
+      if (!navigator.clipboard || !navigator.clipboard.readText) {
+        return;
+      }
+      try {
+        const clipText = await navigator.clipboard.readText();
+        if (clipText && clipText.trim()) {
+          urlInput.value = clipText.trim();
+          urlInput.focus();
+        }
+      } catch (error) {
+        console.warn('Clipboard read blocked', error);
+      }
+    });
+  }
+
+  document.querySelectorAll('.quick-url').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      if (!urlInput) {
+        return;
+      }
+      urlInput.value = this.dataset.url || '';
+      urlInput.focus();
+    });
   });
 </script>
 {% endblock %}
