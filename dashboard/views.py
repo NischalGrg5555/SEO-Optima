@@ -331,6 +331,17 @@ def extract_headers_view(request):
     error = None
     analysis = None
     
+    # Check if returning from detail page with analysis_id
+    analysis_id = request.GET.get('analysis_id')
+    if analysis_id and request.method != 'POST':
+        try:
+            analysis = HeaderAnalysis.objects.get(pk=analysis_id, user=request.user)
+            url = analysis.url
+            headers = analysis.headers_data
+            hierarchy = get_header_hierarchy(headers)
+        except HeaderAnalysis.DoesNotExist:
+            pass
+    
     if request.method == 'POST' and form.is_valid():
         url = form.cleaned_data['url']
         

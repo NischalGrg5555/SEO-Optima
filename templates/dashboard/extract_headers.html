@@ -135,8 +135,8 @@
           {% for analysis in analyses %}
           <tr>
             <td>
-              <a href="{% url 'dashboard:header_analysis_detail' analysis.pk %}">
-                {{ analysis.url|truncatechars:50 }}
+              <a href="{{ analysis.url }}" target="_blank" rel="noopener noreferrer" class="text-break" title="{{ analysis.url }}">
+                {{ analysis.url }}
               </a>
             </td>
             <td><span class="badge text-bg-primary">{{ analysis.total_headers }}</span></td>

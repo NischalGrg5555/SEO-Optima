@@ -11,8 +11,8 @@
             <p class="text-muted">{{ analysis.url }}</p>
         </div>
         <div class="col-md-4 text-end">
-            <a href="{% url 'dashboard:header_analysis_list' %}" class="btn btn-secondary">
-                <i class="bi bi-arrow-left"></i> Back to List
+            <a href="{% url 'dashboard:extract_headers' %}?referrer=detail&analysis_id={{ analysis.pk }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Extract Headers
             </a>
             <a href="{% url 'dashboard:delete_header_analysis' analysis.pk %}" class="btn btn-danger">
                 <i class="bi bi-trash"></i> Delete
