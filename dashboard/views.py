@@ -392,16 +392,8 @@ def extract_headers_view(request):
 
 @login_required
 def header_analysis_list(request):
-    """List all header analyses for the current user"""
-    analyses = list(HeaderAnalysis.objects.filter(user=request.user).order_by('-created_at'))
-    for analysis in analyses:
-        _sync_header_analysis_counts(analysis)
-    
-    context = {
-        'analyses': analyses,
-    }
-    
-    return render(request, 'dashboard/header_analysis_list.html', context)
+    """Legacy route kept for bookmarks. Redirect to extract headers dashboard."""
+    return redirect('dashboard:extract_headers')
 
 
 @login_required  
@@ -431,13 +423,38 @@ def delete_header_analysis(request, pk):
     if request.method == 'POST':
         analysis.delete()
         messages.success(request, 'Header analysis deleted successfully!')
-        return redirect('dashboard:header_analysis_list')
+        return redirect('dashboard:extract_headers')
     
     context = {
         'analysis': analysis,
     }
     
     return render(request, 'dashboard/delete_header_analysis.html', context)
+
+
+@login_required
+def bulk_delete_header_analyses(request):
+    """Delete multiple selected header analyses from extract headers page."""
+    redirect_name = 'dashboard:extract_headers'
+
+    if request.method != 'POST':
+        return redirect(redirect_name)
+
+    selected_ids = request.POST.getlist('analysis_ids')
+    if not selected_ids:
+        messages.warning(request, 'Please select at least one analysis to delete.')
+        return redirect(redirect_name)
+
+    queryset = HeaderAnalysis.objects.filter(user=request.user, pk__in=selected_ids)
+    deleted_count = queryset.count()
+
+    if deleted_count == 0:
+        messages.warning(request, 'No matching analyses were found to delete.')
+    else:
+        queryset.delete()
+        messages.success(request, f'{deleted_count} selected analyses deleted successfully.')
+
+    return redirect(redirect_name)
 
 
 @login_required

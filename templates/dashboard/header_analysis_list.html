@@ -31,10 +31,24 @@
     {% if analyses %}
     <div class="row">
         <div class="col-md-12">
+            <form method="post" action="{% url 'dashboard:bulk_delete_header_analyses' %}" id="bulkHeaderListForm">
+                {% csrf_token %}
+                <input type="hidden" name="source" value="header_analysis_list">
+                <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+                    <label class="mb-0">
+                        <input type="checkbox" id="selectAllHeaderList" class="form-check-input me-2">
+                        Select all
+                    </label>
+                    <span class="text-muted small fw-semibold" id="selectedHeaderListCount">0 selected</span>
+                    <button type="submit" class="btn btn-sm btn-outline-danger" id="bulkDeleteHeaderListBtn" disabled>
+                        <i class="bi bi-trash"></i> Delete Selected
+                    </button>
+                </div>
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
                         <tr>
+                            <th style="width: 74px;">Select</th>
                             <th>URL</th>
                             <th>Total Headers</th>
                             <th>H1</th>
@@ -47,6 +61,15 @@
                     <tbody>
                         {% for analysis in analyses %}
                         <tr>
+                            <td>
+                                <input
+                                    type="checkbox"
+                                    class="form-check-input header-list-select"
+                                    name="analysis_ids"
+                                    value="{{ analysis.pk }}"
+                                    aria-label="Select analysis {{ analysis.pk }}"
+                                >
+                            </td>
                             <td>
                                 <a href="{% url 'dashboard:header_analysis_detail' analysis.pk %}">
                                     {{ analysis.url|truncatechars:60 }}
@@ -82,6 +105,7 @@
                     </tbody>
                 </table>
             </div>
+            </form>
         </div>
     </div>
     {% else %}
@@ -91,4 +115,56 @@
     </div>
     {% endif %}
 </div>
+
+<script>
+    const bulkHeaderListForm = document.getElementById('bulkHeaderListForm');
+    const selectAllHeaderList = document.getElementById('selectAllHeaderList');
+    const selectedHeaderListCount = document.getElementById('selectedHeaderListCount');
+    const bulkDeleteHeaderListBtn = document.getElementById('bulkDeleteHeaderListBtn');
+
+    if (bulkHeaderListForm) {
+        const rowCheckboxes = Array.from(document.querySelectorAll('.header-list-select'));
+
+        const updateHeaderListSelection = function() {
+            const selectedCount = rowCheckboxes.filter(function(box) {
+                return box.checked;
+            }).length;
+
+            selectedHeaderListCount.textContent = selectedCount + ' selected';
+            bulkDeleteHeaderListBtn.disabled = selectedCount === 0;
+
+            if (rowCheckboxes.length > 0) {
+                selectAllHeaderList.checked = selectedCount === rowCheckboxes.length;
+            }
+        };
+
+        selectAllHeaderList.addEventListener('change', function() {
+            rowCheckboxes.forEach(function(box) {
+                box.checked = selectAllHeaderList.checked;
+            });
+            updateHeaderListSelection();
+        });
+
+        rowCheckboxes.forEach(function(box) {
+            box.addEventListener('change', updateHeaderListSelection);
+        });
+
+        bulkHeaderListForm.addEventListener('submit', function(event) {
+            const selectedCount = rowCheckboxes.filter(function(box) {
+                return box.checked;
+            }).length;
+
+            if (selectedCount === 0) {
+                event.preventDefault();
+                return;
+            }
+
+            if (!window.confirm('Delete ' + selectedCount + ' selected analyses? This action cannot be undone.')) {
+                event.preventDefault();
+            }
+        });
+
+        updateHeaderListSelection();
+    }
+</script>
 {% endblock %}

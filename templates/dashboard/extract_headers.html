@@ -118,10 +118,23 @@
       <h3 class="result-title">Recent Analyses</h3>
       <span class="pill muted">{{ analyses|length }} recent</span>
     </div>
-    <div class="table-responsive">
+    <form method="post" action="{% url 'dashboard:bulk_delete_header_analyses' %}" id="bulkHeaderActionForm">
+      {% csrf_token %}
+      <div class="bulk-actions-bar">
+        <label class="bulk-select-all mb-0">
+          <input type="checkbox" id="selectAllAnalyses" class="form-check-input me-2">
+          Select all
+        </label>
+        <span class="bulk-selected-text" id="selectedAnalysisCount">0 selected</span>
+        <button type="submit" class="btn btn-sm btn-outline-danger" id="bulkDeleteBtn" disabled>
+          <i class="bi bi-trash"></i> Delete Selected
+        </button>
+      </div>
+      <div class="table-responsive">
       <table class="table align-middle table-hover">
         <thead>
           <tr>
+            <th class="select-col">Select</th>
             <th>URL</th>
             <th>Total</th>
             <th>H1</th>
@@ -134,6 +147,15 @@
         <tbody>
           {% for analysis in analyses %}
           <tr>
+            <td>
+              <input
+                type="checkbox"
+                class="form-check-input analysis-select"
+                name="analysis_ids"
+                value="{{ analysis.pk }}"
+                aria-label="Select analysis {{ analysis.pk }}"
+              >
+            </td>
             <td>
               <a href="{{ analysis.url }}" target="_blank" rel="noopener noreferrer" class="text-break" title="{{ analysis.url }}">
                 {{ analysis.url }}
@@ -166,7 +188,8 @@
           {% endfor %}
         </tbody>
       </table>
-    </div>
+      </div>
+    </form>
   </section>
   {% endif %}
 </div>
@@ -531,6 +554,25 @@
     margin-bottom: 0;
   }
 
+  .bulk-actions-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 0.85rem;
+    flex-wrap: wrap;
+  }
+
+  .bulk-selected-text {
+    font-size: 0.84rem;
+    color: #475569;
+    font-weight: 600;
+  }
+
+  .select-col {
+    width: 74px;
+    white-space: nowrap;
+  }
+
   @keyframes fade-lift {
     from {
       opacity: 0;
@@ -597,6 +639,10 @@
   const extractBtn = document.getElementById('extractBtn');
   const btnText = document.getElementById('btnText');
   const btnLoading = document.getElementById('btnLoading');
+  const bulkHeaderActionForm = document.getElementById('bulkHeaderActionForm');
+  const selectAllAnalyses = document.getElementById('selectAllAnalyses');
+  const selectedAnalysisCount = document.getElementById('selectedAnalysisCount');
+  const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
 
   if (headerExtractForm) {
     headerExtractForm.addEventListener('submit', function() {
@@ -604,6 +650,53 @@
       btnText.classList.add('d-none');
       btnLoading.classList.remove('d-none');
     });
+  }
+
+  if (bulkHeaderActionForm) {
+    const analysisCheckboxes = Array.from(document.querySelectorAll('.analysis-select'));
+
+    const updateBulkSelectionState = function() {
+      const selectedCount = analysisCheckboxes.filter(function(box) {
+        return box.checked;
+      }).length;
+
+      selectedAnalysisCount.textContent = selectedCount + ' selected';
+      bulkDeleteBtn.disabled = selectedCount === 0;
+
+      if (analysisCheckboxes.length > 0) {
+        selectAllAnalyses.checked = selectedCount === analysisCheckboxes.length;
+      }
+    };
+
+    if (selectAllAnalyses) {
+      selectAllAnalyses.addEventListener('change', function() {
+        analysisCheckboxes.forEach(function(box) {
+          box.checked = selectAllAnalyses.checked;
+        });
+        updateBulkSelectionState();
+      });
+    }
+
+    analysisCheckboxes.forEach(function(box) {
+      box.addEventListener('change', updateBulkSelectionState);
+    });
+
+    bulkHeaderActionForm.addEventListener('submit', function(event) {
+      const selectedCount = analysisCheckboxes.filter(function(box) {
+        return box.checked;
+      }).length;
+
+      if (selectedCount === 0) {
+        event.preventDefault();
+        return;
+      }
+
+      if (!window.confirm('Delete ' + selectedCount + ' selected analyses? This action cannot be undone.')) {
+        event.preventDefault();
+      }
+    });
+
+    updateBulkSelectionState();
   }
 </script>
 {% endblock %}
