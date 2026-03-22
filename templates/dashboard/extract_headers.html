@@ -29,20 +29,10 @@
           <label for="{{ form.url.id_for_label }}" class="form-label panel-label">Website URL</label>
           <div class="url-field-wrap">
             {{ form.url }}
-            <button type="button" class="btn btn-outline-secondary btn-sm" id="pasteUrlBtn">Paste</button>
           </div>
           {% if form.url.errors %}
             <div class="invalid-feedback d-block">{{ form.url.errors.0 }}</div>
           {% endif %}
-          <div class="form-text panel-hint">
-            Try: https://example.com/article, https://docs.example.com/guide
-          </div>
-
-          <div class="quick-url-row">
-            <button type="button" class="quick-url" data-url="https://example.com/blog">Blog page</button>
-            <button type="button" class="quick-url" data-url="https://example.com/product">Product page</button>
-            <button type="button" class="quick-url" data-url="https://example.com/docs">Docs page</button>
-          </div>
 
           <button type="submit" class="btn launch-btn w-100" id="extractBtn">
             <span id="btnText">Extract Headers</span>
@@ -301,16 +291,16 @@
 
   .url-field-wrap {
     display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 0.6rem;
-    align-items: center;
+    grid-template-columns: 1fr;
+    margin-bottom: 1.2rem;
   }
 
   .url-field-wrap input {
     border-radius: 12px;
     border: 1px solid #cddce5;
-    height: 47px;
-    padding: 0 0.95rem;
+    height: 50px;
+    padding: 0 1rem;
+    font-size: 0.95rem;
   }
 
   .url-field-wrap input:focus {
@@ -318,41 +308,17 @@
     box-shadow: 0 0 0 0.2rem rgba(14, 165, 164, 0.16);
   }
 
-  .panel-hint {
-    color: #64748b;
-    margin-top: 0.5rem;
-    margin-bottom: 1rem;
-  }
 
-  .quick-url-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-  }
-
-  .quick-url {
-    border: 1px solid #bed8e2;
-    background: #f8fdff;
-    color: #155e75;
-    border-radius: 10px;
-    padding: 0.32rem 0.72rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-  }
-
-  .quick-url:hover {
-    border-color: #0ea5a4;
-    background: #e9fbfb;
-  }
 
   .launch-btn {
     border: none;
-    height: 48px;
+    height: 50px;
+    margin-top: 0.8rem;
     border-radius: 12px;
     background: linear-gradient(102deg, #0e7490, #0ea5a4 65%, #84cc16);
     color: #fff;
     font-weight: 700;
+    font-size: 1rem;
     letter-spacing: 0.01em;
     transition: transform 0.22s ease, box-shadow 0.22s ease;
   }
@@ -631,8 +597,6 @@
   const extractBtn = document.getElementById('extractBtn');
   const btnText = document.getElementById('btnText');
   const btnLoading = document.getElementById('btnLoading');
-  const urlInput = document.getElementById('{{ form.url.id_for_label }}');
-  const pasteUrlBtn = document.getElementById('pasteUrlBtn');
 
   if (headerExtractForm) {
     headerExtractForm.addEventListener('submit', function() {
@@ -641,32 +605,5 @@
       btnLoading.classList.remove('d-none');
     });
   }
-
-  if (pasteUrlBtn && urlInput) {
-    pasteUrlBtn.addEventListener('click', async function() {
-      if (!navigator.clipboard || !navigator.clipboard.readText) {
-        return;
-      }
-      try {
-        const clipText = await navigator.clipboard.readText();
-        if (clipText && clipText.trim()) {
-          urlInput.value = clipText.trim();
-          urlInput.focus();
-        }
-      } catch (error) {
-        console.warn('Clipboard read blocked', error);
-      }
-    });
-  }
-
-  document.querySelectorAll('.quick-url').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      if (!urlInput) {
-        return;
-      }
-      urlInput.value = this.dataset.url || '';
-      urlInput.focus();
-    });
-  });
 </script>
 {% endblock %}
