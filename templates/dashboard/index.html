@@ -232,27 +232,30 @@
 {% endblock %}
 
 {% block extra_js %}
+{{ monthly_chart_data|json_script:"monthly-chart-data" }}
+{{ performance_trend_data|json_script:"performance-trend-data" }}
 <script>
   Chart.defaults.font.family = "'Space Grotesk', 'Segoe UI', sans-serif";
   Chart.defaults.color = '#586379';
 
-  const monthlyDataSets = {
-    week: {
-      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      data: [3, 7, 5, 9, 4, 8, 6],
-      insight: 'Consistent crawl velocity this week.'
-    },
-    month: {
-      labels: ['W1', 'W2', 'W3', 'W4'],
-      data: [18, 26, 22, 29],
-      insight: 'Monthly output improved in the final week.'
-    },
-    year: {
-      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-      data: [41, 48, 44, 57, 60, 66],
-      insight: 'Yearly trend shows stronger production in Q2.'
-    }
+  const monthlyDataSets = JSON.parse(document.getElementById('monthly-chart-data').textContent || '{}');
+  const performanceTrendData = JSON.parse(document.getElementById('performance-trend-data').textContent || '{}');
+
+  const defaultMonthly = {
+    week: { labels: ['Mon 01', 'Tue 02', 'Wed 03', 'Thu 04', 'Fri 05', 'Sat 06', 'Sun 07'], data: [0, 0, 0, 0, 0, 0, 0], insight: 'No analyses found for this time range yet.' },
+    month: { labels: ['Jan 01 - 07', 'Jan 08 - 14', 'Jan 15 - 21', 'Jan 22 - 28'], data: [0, 0, 0, 0], insight: 'No analyses found for this time range yet.' },
+    year: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], insight: 'No analyses found for this time range yet.' }
   };
+
+  const mergedMonthlyData = {
+    week: monthlyDataSets.week || defaultMonthly.week,
+    month: monthlyDataSets.month || defaultMonthly.month,
+    year: monthlyDataSets.year || defaultMonthly.year,
+  };
+
+  const trendLabels = performanceTrendData.labels || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+  const trendPerformance = performanceTrendData.performance || [0, 0, 0, 0, 0, 0];
+  const trendSeo = performanceTrendData.seo || [0, 0, 0, 0, 0, 0];
 
   // Monthly Analyses Chart
   const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
@@ -263,10 +266,10 @@
   const monthlyChart = new Chart(monthlyCtx, {
     type: 'bar',
     data: {
-      labels: monthlyDataSets.week.labels,
+      labels: mergedMonthlyData.week.labels,
       datasets: [{
         label: 'Analyses',
-        data: monthlyDataSets.week.data,
+        data: mergedMonthlyData.week.data,
         backgroundColor: monthlyGradient,
         borderRadius: 8,
         barThickness: 24,
@@ -314,11 +317,11 @@
   const performanceChart = new Chart(perfCtx, {
     type: 'line',
     data: {
-      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+      labels: trendLabels,
       datasets: [
         {
           label: 'Performance',
-          data: [65, 72, 68, 78, 82, 85],
+          data: trendPerformance,
           borderColor: '#0e7490',
           backgroundColor: perfGradient,
           pointBackgroundColor: '#0e7490',
@@ -329,7 +332,7 @@
         },
         {
           label: 'SEO',
-          data: [78, 82, 85, 88, 90, 92],
+          data: trendSeo,
           borderColor: '#ea580c',
           backgroundColor: seoGradient,
           pointBackgroundColor: '#ea580c',
@@ -370,13 +373,17 @@
   const rangeTabs = document.querySelectorAll('.chart-tab');
   const analysisTrendText = document.getElementById('analysisTrendText');
 
+  if (analysisTrendText) {
+    analysisTrendText.textContent = mergedMonthlyData.week.insight;
+  }
+
   rangeTabs.forEach((tab) => {
     tab.addEventListener('click', () => {
       rangeTabs.forEach((btn) => btn.classList.remove('active'));
       tab.classList.add('active');
 
       const range = tab.dataset.range;
-      const selectedData = monthlyDataSets[range] || monthlyDataSets.week;
+      const selectedData = mergedMonthlyData[range] || mergedMonthlyData.week;
       monthlyChart.data.labels = selectedData.labels;
       monthlyChart.data.datasets[0].data = selectedData.data;
       monthlyChart.update();

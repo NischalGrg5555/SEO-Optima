@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView
 from django.contrib import messages
 from django.conf import settings
+from django.utils import timezone
 import importlib
 from .services.pagespeed import fetch_pagespeed_data, get_score_color, extract_field_data_from_response
 from .services.header_extractor import extract_headers, get_header_hierarchy
@@ -13,6 +14,7 @@ from .forms import PageSpeedForm, PageSpeedFilterForm, HeaderExtractorForm
 import json
 from urllib.parse import urlparse
 from collections import defaultdict
+from datetime import date, timedelta
 
 
 def _load_gsc_oauth_clients():
@@ -160,27 +162,150 @@ def _sync_header_analysis_counts(analysis):
 @login_required
 def dashboard_home(request):
     """Dashboard home page - overview of all features"""
+    now = timezone.now()
+
+    analyses_qs = PageSpeedAnalysis.objects.filter(
+        user=request.user,
+        is_deleted=False,
+    )
+
     # Get user's analyses statistics
-    total_analyses = PageSpeedAnalysis.objects.filter(user=request.user).count()
+    total_analyses = analyses_qs.count()
     
     # Get recent analyses
-    recent_analyses = PageSpeedAnalysis.objects.filter(
-        user=request.user
-    ).order_by('-created_at')[:5]
+    recent_analyses = analyses_qs.order_by('-created_at')[:5]
     
+    analysis_points = list(
+        analyses_qs.values('created_at', 'performance_score', 'seo_score')
+    )
+
     # Calculate average scores
-    analyses = PageSpeedAnalysis.objects.filter(user=request.user)
     avg_performance = 0
     avg_seo = 0
-    
-    if analyses.exists():
-        perf_scores = [a.performance_score for a in analyses if a.performance_score]
-        seo_scores = [a.seo_score for a in analyses if a.seo_score]
-        
+
+    if analysis_points:
+        perf_scores = [point['performance_score'] for point in analysis_points if point.get('performance_score') is not None]
+        seo_scores = [point['seo_score'] for point in analysis_points if point.get('seo_score') is not None]
+
         if perf_scores:
             avg_performance = sum(perf_scores) / len(perf_scores)
         if seo_scores:
             avg_seo = sum(seo_scores) / len(seo_scores)
+
+    # Build chart data from persisted analyses
+    week_start = (now - timedelta(days=6)).date()
+    today = now.date()
+    current_week_start = today - timedelta(days=today.weekday())
+    rolling_week_starts = [current_week_start - timedelta(weeks=offset) for offset in range(3, -1, -1)]
+
+    week_counts = defaultdict(int)
+    month_counts = defaultdict(int)
+    year_counts = defaultdict(int)
+
+    for point in analysis_points:
+        created_at = point.get('created_at')
+        if not created_at:
+            continue
+
+        local_date = timezone.localtime(created_at).date()
+
+        if local_date >= week_start:
+            week_counts[local_date] += 1
+
+        week_bucket = local_date - timedelta(days=local_date.weekday())
+        if week_bucket in rolling_week_starts:
+            month_counts[week_bucket] += 1
+
+        if local_date.year == now.year:
+            year_counts[local_date.month] += 1
+
+    week_labels = []
+    week_data = []
+    for day_offset in range(7):
+        day = week_start + timedelta(days=day_offset)
+        week_labels.append(day.strftime('%a %d'))
+        week_data.append(week_counts.get(day, 0))
+
+    month_labels = []
+    for week_start_date in rolling_week_starts:
+        week_end_date = week_start_date + timedelta(days=6)
+        month_labels.append(f"{week_start_date.strftime('%b %d')} - {week_end_date.strftime('%d')}")
+    month_data = [month_counts.get(week_start_date, 0) for week_start_date in rolling_week_starts]
+
+    year_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    year_data = [year_counts.get(month_num, 0) for month_num in range(1, 13)]
+
+    monthly_chart_data = {
+        'week': {
+            'labels': week_labels,
+            'data': week_data,
+            'insight': 'Live daily analysis volume from your last 7 days.'
+        },
+        'month': {
+            'labels': month_labels,
+            'data': month_data,
+            'insight': 'Weekly analysis volume across the last 4 weeks.'
+        },
+        'year': {
+            'labels': year_labels,
+            'data': year_data,
+            'insight': 'Monthly analysis output for this calendar year.'
+        },
+    }
+
+    # Last 6 months average score trends (including current month)
+    current_month_index = now.year * 12 + (now.month - 1)
+    month_keys = []
+    for offset in range(5, -1, -1):
+        idx = current_month_index - offset
+        year = idx // 12
+        month = (idx % 12) + 1
+        month_keys.append((year, month))
+
+    month_key_set = set(month_keys)
+    perf_sum = defaultdict(float)
+    perf_count = defaultdict(int)
+    seo_sum = defaultdict(float)
+    seo_count = defaultdict(int)
+
+    for point in analysis_points:
+        created_at = point.get('created_at')
+        if not created_at:
+            continue
+
+        local_dt = timezone.localtime(created_at)
+        month_key = (local_dt.year, local_dt.month)
+        if month_key not in month_key_set:
+            continue
+
+        performance_score = point.get('performance_score')
+        seo_score = point.get('seo_score')
+
+        if performance_score is not None:
+            perf_sum[month_key] += performance_score
+            perf_count[month_key] += 1
+
+        if seo_score is not None:
+            seo_sum[month_key] += seo_score
+            seo_count[month_key] += 1
+
+    perf_trend_labels = []
+    perf_trend_data = []
+    seo_trend_data = []
+
+    for year, month in month_keys:
+        perf_avg = (perf_sum[(year, month)] / perf_count[(year, month)]) if perf_count[(year, month)] else 0
+        seo_avg = (seo_sum[(year, month)] / seo_count[(year, month)]) if seo_count[(year, month)] else 0
+
+        perf_trend_labels.append(date(year, month, 1).strftime('%b %y'))
+        perf_trend_data.append(round(perf_avg))
+        seo_trend_data.append(round(seo_avg))
+
+    performance_trend_data = {
+        'labels': perf_trend_labels,
+        'performance': perf_trend_data,
+        'seo': seo_trend_data,
+    }
     
     # Placeholder counts for future features
     headers_analyzed = 0  # Will be implemented
@@ -195,6 +320,8 @@ def dashboard_home(request):
         'headers_analyzed': headers_analyzed,
         'images_analyzed': images_analyzed,
         'keywords_tracked': keywords_tracked,
+        'monthly_chart_data': monthly_chart_data,
+        'performance_trend_data': performance_trend_data,
     }
     
     return render(request, 'dashboard/index.html', context)
