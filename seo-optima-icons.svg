@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="260" viewBox="0 0 1200 260" role="img" aria-label="SEO Optima process icons">
+  <defs>
+    <style>
+      .label { font-family: Arial, Helvetica, sans-serif; font-size: 24px; fill: #1f2a44; font-weight: 700; }
+      .sub { font-family: Arial, Helvetica, sans-serif; font-size: 18px; fill: #4a5a73; }
+      .section-label { font-family: Arial, Helvetica, sans-serif; font-size: 22px; fill: #1f2a44; font-weight: 700; }
+      .section-sub { font-family: Arial, Helvetica, sans-serif; font-size: 16px; fill: #4a5a73; }
+      .arrow { stroke: #4a90e2; stroke-width: 10; stroke-linecap: round; }
+      .card { fill: #f7fbff; stroke: #cfe3ff; stroke-width: 3; rx: 24; }
+      .icon-ring { fill: #ffffff; stroke: #4a90e2; stroke-width: 5; }
+      .accent { fill: #4a90e2; }
+      .green { fill: #2f9e55; }
+      .dark { fill: #1f2a44; }
+      .line { stroke: #1f2a44; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+      .thin { stroke: #1f2a44; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+    </style>
+  </defs>
+
+  <rect x="20" y="20" width="1160" height="220" class="card" rx="24"/>
+
+  <!-- Left icon: Website -->
+  <circle cx="150" cy="110" r="52" class="icon-ring"/>
+  <rect x="116" y="82" width="68" height="56" rx="6" class="thin"/>
+  <line x1="116" y1="98" x2="184" y2="98" class="thin"/>
+  <line x1="116" y1="114" x2="184" y2="114" class="thin"/>
+  <circle cx="132" cy="136" r="4" class="dark"/>
+  <circle cx="150" cy="136" r="4" class="dark"/>
+  <circle cx="168" cy="136" r="4" class="dark"/>
+  <text x="150" y="198" text-anchor="middle" class="label">Website</text>
+  <text x="150" y="222" text-anchor="middle" class="sub">Input</text>
+
+  <!-- Arrow 1 -->
+  <line x1="230" y1="110" x2="360" y2="110" class="arrow"/>
+  <polygon points="360,110 340,98 340,122" fill="#4a90e2"/>
+
+  <!-- Middle icon: Analysis -->
+  <circle cx="450" cy="110" r="52" class="icon-ring"/>
+  <!-- magnifier -->
+  <circle cx="438" cy="102" r="18" class="thin"/>
+  <line x1="451" y1="115" x2="468" y2="132" class="line"/>
+  <!-- gear-ish lines -->
+  <circle cx="456" cy="92" r="4" class="accent"/>
+  <circle cx="467" cy="103" r="4" class="accent"/>
+  <circle cx="456" cy="114" r="4" class="accent"/>
+  <circle cx="445" cy="103" r="4" class="accent"/>
+  <text x="450" y="198" text-anchor="middle" class="label">Analysis</text>
+  <text x="450" y="222" text-anchor="middle" class="sub">SEO Optima</text>
+
+  <!-- Arrow 2 -->
+  <line x1="530" y1="110" x2="660" y2="110" class="arrow"/>
+  <polygon points="660,110 640,98 640,122" fill="#4a90e2"/>
+
+  <!-- Right icon: Report -->
+  <circle cx="750" cy="110" r="52" class="icon-ring"/>
+  <path d="M728 82 h30 l20 20 v42 h-50 z" class="thin"/>
+  <path d="M758 82 v20 h20" class="thin"/>
+  <line x1="736" y1="114" x2="772" y2="114" class="thin"/>
+  <line x1="736" y1="126" x2="772" y2="126" class="thin"/>
+  <polyline points="738,144 748,152 766,132" class="line"/>
+  <text x="750" y="198" text-anchor="middle" class="label">Report</text>
+  <text x="750" y="222" text-anchor="middle" class="sub">Recommendations</text>
+
+  <!-- Caption -->
+  <text x="1010" y="92" text-anchor="middle" class="section-label">SEO Optima Process</text>
+  <text x="1010" y="124" text-anchor="middle" class="section-sub">Website Data → Analysis → SEO Report</text>
+</svg>

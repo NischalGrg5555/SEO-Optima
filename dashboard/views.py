@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.views.generic import ListView, DetailView
 from django.contrib import messages
 from django.conf import settings
@@ -9,7 +10,7 @@ from .services.pagespeed import fetch_pagespeed_data, get_score_color, extract_f
 from .services.header_extractor import extract_headers, get_header_hierarchy
 from .services.image_extractor import extract_images, get_image_stats
 from .services.keyword_extractor import get_keyword_stats, fetch_gsc_keywords, GSCAuthError
-from .models import PageSpeedAnalysis, ImageAltAnalysis, KeywordAnalysis, GSCConnection, HeaderAnalysis
+from .models import PageSpeedAnalysis, ImageAltAnalysis, KeywordAnalysis, GSCConnection, HeaderAnalysis, PDFReport
 from .forms import PageSpeedForm, PageSpeedFilterForm, HeaderExtractorForm
 import json
 from urllib.parse import urlparse
@@ -159,6 +160,32 @@ def _sync_header_analysis_counts(analysis):
         analysis.save()
 
 
+def _build_recent_item(*, title, detail_url, created_at, badge_text='', badge_class='badge bg-secondary',
+                       primary_meta='', secondary_meta='', delete_url=None, source_url=''):
+    return {
+        'title': title,
+        'detail_url': detail_url,
+        'created_at': created_at,
+        'badge_text': badge_text,
+        'badge_class': badge_class,
+        'primary_meta': primary_meta,
+        'secondary_meta': secondary_meta,
+        'delete_url': delete_url,
+        'source_url': source_url,
+    }
+
+
+def _build_recent_section(*, section_id, title, subtitle, view_all_url, items):
+    return {
+        'id': section_id,
+        'title': title,
+        'subtitle': subtitle,
+        'view_all_url': view_all_url,
+        'items': items,
+        'item_count': len(items),
+    }
+
+
 @login_required
 def dashboard_home(request):
     """Dashboard home page - overview of all features"""
@@ -172,8 +199,133 @@ def dashboard_home(request):
     # Get user's analyses statistics
     total_analyses = analyses_qs.count()
     
-    # Get recent analyses
+    # Get recent PageSpeed analyses
     recent_analyses = analyses_qs.order_by('-created_at')[:5]
+
+    recent_header_analyses = HeaderAnalysis.objects.filter(
+        user=request.user,
+    ).order_by('-created_at')[:4]
+
+    recent_image_analyses = ImageAltAnalysis.objects.filter(
+        user=request.user,
+    ).order_by('-created_at')[:4]
+
+    recent_keyword_analyses = KeywordAnalysis.objects.filter(
+        user=request.user,
+    ).order_by('-created_at')[:4]
+
+    recent_pdf_reports = PDFReport.objects.filter(
+        user=request.user,
+    ).order_by('-created_at')[:4]
+
+    recent_feature_sections = [
+        _build_recent_section(
+            section_id='recent-pagespeed',
+            title='PageSpeed Insights',
+            subtitle='Latest performance audits',
+            view_all_url=reverse('dashboard:analysis_list'),
+            items=[
+                _build_recent_item(
+                    title=analysis.url,
+                    detail_url=reverse('dashboard:analysis_detail', args=[analysis.pk]),
+                    created_at=analysis.created_at,
+                    badge_text=analysis.strategy.title(),
+                    badge_class=f'badge badge-{analysis.strategy}',
+                    primary_meta=f'Performance {analysis.performance_score if analysis.performance_score is not None else "--"}',
+                    secondary_meta=(
+                        f'SEO {analysis.seo_score if analysis.seo_score is not None else "--"} · '
+                        f'Best Practices {analysis.best_practices_score if analysis.best_practices_score is not None else "--"}'
+                    ),
+                    delete_url=reverse('dashboard:delete_analysis', args=[analysis.pk]),
+                )
+                for analysis in recent_analyses
+            ],
+        ),
+        _build_recent_section(
+            section_id='recent-headers',
+            title='Header Analysis',
+            subtitle='Recent content structure scans',
+            view_all_url=reverse('dashboard:extract_headers'),
+            items=[
+                _build_recent_item(
+                    title=analysis.url,
+                    detail_url=reverse('dashboard:header_analysis_detail', args=[analysis.pk]),
+                    created_at=analysis.created_at,
+                    badge_text=f'H1 {analysis.h1_count}',
+                    badge_class='badge bg-info text-dark',
+                    primary_meta=f'Headers {analysis.total_headers}',
+                    secondary_meta=f'H2 {analysis.h2_count} · H3 {analysis.h3_count}',
+                    delete_url=reverse('dashboard:delete_header_analysis', args=[analysis.pk]),
+                )
+                for analysis in recent_header_analyses
+            ],
+        ),
+        _build_recent_section(
+            section_id='recent-images',
+            title='Image Alt Analysis',
+            subtitle='Recent image accessibility scans',
+            view_all_url=reverse('dashboard:image_alt_list'),
+            items=[
+                _build_recent_item(
+                    title=analysis.url,
+                    detail_url=reverse('dashboard:image_alt_detail', args=[analysis.pk]),
+                    created_at=analysis.created_at,
+                    badge_text=f'{analysis.alt_text_percentage:.1f}% Alt',
+                    badge_class='badge bg-success',
+                    primary_meta=f'Images {analysis.total_images}',
+                    secondary_meta=f'With alt {analysis.images_with_alt} · Missing alt {analysis.images_without_alt}',
+                    delete_url=reverse('dashboard:delete_image_alt_analysis', args=[analysis.pk]),
+                )
+                for analysis in recent_image_analyses
+            ],
+        ),
+        _build_recent_section(
+            section_id='recent-keywords',
+            title='Keyword Analysis',
+            subtitle='Recent GSC keyword scans',
+            view_all_url=reverse('dashboard:keywords_list'),
+            items=[
+                _build_recent_item(
+                    title=analysis.url,
+                    detail_url=reverse('dashboard:keywords_detail', args=[analysis.pk]),
+                    created_at=analysis.created_at,
+                    badge_text=f'{analysis.total_keywords} Keywords',
+                    badge_class='badge bg-warning text-dark',
+                    primary_meta=f'Avg position {analysis.avg_position:.1f}',
+                    secondary_meta=f'Top 10 {analysis.top_10_positions} · Volume {analysis.total_volume}',
+                    delete_url=reverse('dashboard:delete_keyword_analysis', args=[analysis.pk]),
+                )
+                for analysis in recent_keyword_analyses
+            ],
+        ),
+        _build_recent_section(
+            section_id='recent-reports',
+            title='PDF Reports',
+            subtitle='Recent generated reports',
+            view_all_url=reverse('dashboard:pdf_reports_list'),
+            items=[
+                _build_recent_item(
+                    title=report.title,
+                    detail_url=reverse('dashboard:pdf_report_detail', args=[report.pk]),
+                    created_at=report.created_at,
+                    badge_text=report.get_report_type_display(),
+                    badge_class='badge bg-secondary',
+                    primary_meta=' · '.join([
+                        section.replace('_', ' ').title()
+                        for section in report.report_sections
+                    ]) if report.report_sections else 'Report generated from selected analyses',
+                    secondary_meta=(
+                        report.pagespeed_analysis.url if report.pagespeed_analysis else
+                        report.keyword_analysis.url if report.keyword_analysis else
+                        report.image_analysis.url if report.image_analysis else
+                        (report.headers_data.get('url', '') if isinstance(report.headers_data, dict) else '')
+                    ),
+                    delete_url=reverse('dashboard:delete_pdf_report', args=[report.pk]),
+                )
+                for report in recent_pdf_reports
+            ],
+        ),
+    ]
     
     analysis_points = list(
         analyses_qs.values('created_at', 'performance_score', 'seo_score')
@@ -307,10 +459,11 @@ def dashboard_home(request):
         'seo': seo_trend_data,
     }
     
-    # Placeholder counts for future features
-    headers_analyzed = 0  # Will be implemented
-    images_analyzed = 0   # Will be implemented
-    keywords_tracked = 0  # Will be implemented
+    # Feature counts for the overview cards
+    headers_analyzed = HeaderAnalysis.objects.filter(user=request.user).count()
+    images_analyzed = ImageAltAnalysis.objects.filter(user=request.user).count()
+    keywords_tracked = KeywordAnalysis.objects.filter(user=request.user).count()
+    reports_generated = PDFReport.objects.filter(user=request.user).count()
     
     context = {
         'total_analyses': total_analyses,
@@ -320,8 +473,10 @@ def dashboard_home(request):
         'headers_analyzed': headers_analyzed,
         'images_analyzed': images_analyzed,
         'keywords_tracked': keywords_tracked,
+        'reports_generated': reports_generated,
         'monthly_chart_data': monthly_chart_data,
         'performance_trend_data': performance_trend_data,
+        'recent_feature_sections': recent_feature_sections,
     }
     
     return render(request, 'dashboard/index.html', context)

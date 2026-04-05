@@ -1,10 +1,14 @@
-from unittest import TestCase
+from unittest import TestCase as UnitTestCase
 from unittest.mock import MagicMock, patch
+
+from django.contrib.auth.models import User
+from django.test import TestCase as DjangoTestCase
+from django.urls import reverse
 
 from dashboard.services.keyword_extractor import fetch_gsc_keywords
 
 
-class FetchGSCKeywordsTests(TestCase):
+class FetchGSCKeywordsTests(UnitTestCase):
     @patch('dashboard.services.keyword_extractor.build')
     @patch('dashboard.services.keyword_extractor.Credentials')
     def test_uses_page_dimension_and_returns_real_row_url(self, mock_credentials_cls, mock_build):
@@ -114,3 +118,19 @@ class FetchGSCKeywordsTests(TestCase):
         self.assertEqual(result[0]['volume'], 631)
         self.assertEqual(result[0]['clicks'], 10)
         self.assertEqual(result[0]['url'], 'https://homeschool.asia/faqs/what-is-igcse/')
+
+
+class DashboardHomeRecentSectionsTests(DjangoTestCase):
+    def test_dashboard_home_renders_feature_recent_sections(self):
+        user = User.objects.create_user(username='dashboard-user', password='password123')
+        self.client.force_login(user)
+
+        response = self.client.get(reverse('dashboard:home'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Recent Activity')
+        self.assertContains(response, 'PageSpeed Insights')
+        self.assertContains(response, 'Header Analysis')
+        self.assertContains(response, 'Image Alt Analysis')
+        self.assertContains(response, 'Keyword Analysis')
+        self.assertContains(response, 'PDF Reports')

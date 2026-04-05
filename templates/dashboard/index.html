@@ -142,71 +142,81 @@
   </div>
 </div>
 
-<!-- Recent Analyses Table -->
+<!-- Recent Activity by Feature -->
 <div class="table-card">
   <div class="table-header">
     <div>
-      <h3 class="table-title">Recent Analyses</h3>
-      <p class="table-subtitle">Your latest PageSpeed reports</p>
+      <h3 class="table-title">Recent Activity</h3>
+      <p class="table-subtitle">Jump to the latest analyses for each dashboard feature</p>
     </div>
-    <a href="{% url 'dashboard:analysis_list' %}" class="btn-link">
+  </div>
+
+  <div class="d-flex flex-wrap gap-2">
+    {% for section in recent_feature_sections %}
+    <a href="#{{ section.id }}" class="btn btn-outline-secondary btn-sm">
+      {{ section.title }} <span class="ms-1">({{ section.item_count }})</span>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+
+{% for section in recent_feature_sections %}
+<div class="table-card mt-4" id="{{ section.id }}">
+  <div class="table-header">
+    <div>
+      <h3 class="table-title">{{ section.title }}</h3>
+      <p class="table-subtitle">{{ section.subtitle }}</p>
+    </div>
+    <a href="{{ section.view_all_url }}" class="btn-link">
       View All <i class="bi bi-arrow-right"></i>
     </a>
   </div>
 
-  {% if recent_analyses %}
+  {% if section.items %}
   <div class="table-responsive">
     <table class="data-table">
       <thead>
         <tr>
-          <th>Website</th>
+          <th>Item</th>
+          <th>Details</th>
           <th>Date</th>
-          <th>Device</th>
-          <th>Performance</th>
-          <th>SEO</th>
-          <th>Best Practices</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
-        {% for analysis in recent_analyses %}
+        {% for item in section.items %}
         <tr class="analysis-row">
           <td>
             <div class="cell-with-icon">
               <i class="bi bi-globe"></i>
-              <span class="text-truncate table-url">{{ analysis.url }}</span>
-            </div>
-          </td>
-          <td>{{ analysis.created_at|date:"M d, Y" }}</td>
-          <td>
-            <span class="badge badge-{{ analysis.strategy }}">
-              <i class="bi bi-{% if analysis.strategy == 'mobile' %}phone{% else %}laptop{% endif %}"></i>
-              {{ analysis.strategy|title }}
-            </span>
-          </td>
-          <td>
-            <div class="score-badge score-{{ analysis.performance_score|default:0 }}">
-              {{ analysis.performance_score|default:"--" }}
+              <div>
+                <a href="{{ item.detail_url }}" class="url-link">{{ item.title|truncatechars:60 }}</a>
+                {% if item.source_url %}
+                <div class="text-muted small">{{ item.source_url|truncatechars:60 }}</div>
+                {% endif %}
+              </div>
             </div>
           </td>
           <td>
-            <div class="score-badge score-{{ analysis.seo_score|default:0 }}">
-              {{ analysis.seo_score|default:"--" }}
-            </div>
+            {% if item.badge_text %}
+            <span class="{{ item.badge_class }}">{{ item.badge_text }}</span>
+            {% endif %}
+            <div class="text-muted small mt-1">{{ item.primary_meta }}</div>
+            {% if item.secondary_meta %}
+            <div class="text-muted small">{{ item.secondary_meta }}</div>
+            {% endif %}
           </td>
-          <td>
-            <div class="score-badge score-{{ analysis.best_practices_score|default:0 }}">
-              {{ analysis.best_practices_score|default:"--" }}
-            </div>
-          </td>
+          <td>{{ item.created_at|date:"M d, Y" }}</td>
           <td>
             <div class="action-buttons">
-              <a href="{% url 'dashboard:analysis_detail' analysis.pk %}" class="btn-icon" title="View Details">
+              <a href="{{ item.detail_url }}" class="btn-icon" title="View Details">
                 <i class="bi bi-eye"></i>
               </a>
-              <a href="{% url 'dashboard:delete_analysis' analysis.pk %}" class="btn-icon btn-icon-danger" title="Delete">
+              {% if item.delete_url %}
+              <a href="{{ item.delete_url }}" class="btn-icon btn-icon-danger" title="Delete">
                 <i class="bi bi-trash"></i>
               </a>
+              {% endif %}
             </div>
           </td>
         </tr>
@@ -219,14 +229,15 @@
     <div class="empty-icon">
       <i class="bi bi-inbox"></i>
     </div>
-    <h3 class="empty-title">No analyses yet</h3>
-    <p class="empty-subtitle">Start by analyzing your first website with PageSpeed Insights</p>
-    <a href="{% url 'dashboard:page_speed_insights' %}" class="btn btn-primary">
-      <i class="bi bi-plus-lg"></i> New Analysis
+    <h3 class="empty-title">No {{ section.title|lower }} yet</h3>
+    <p class="empty-subtitle">Start a new analysis from this feature to see it here.</p>
+    <a href="{{ section.view_all_url }}" class="btn btn-primary">
+      <i class="bi bi-plus-lg"></i> Open Feature
     </a>
   </div>
   {% endif %}
 </div>
+{% endfor %}
 </section>
 
 {% endblock %}
