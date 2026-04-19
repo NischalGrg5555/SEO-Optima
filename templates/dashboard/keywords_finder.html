@@ -88,6 +88,9 @@
                   <a href="{% url 'dashboard:connect_gsc' %}" class="btn btn-sm btn-primary ms-3">
                     <i class="bi bi-google me-1"></i> Connect GSC
                   </a>
+                  <a href="https://support.google.com/webmasters/answer/10267942?hl=en" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary ms-2">
+                    <i class="bi bi-question-circle me-1"></i> Setup Guide
+                  </a>
                 </div>
               </div>
             </div>
@@ -98,6 +101,35 @@
       <div class="alert alert-warning mt-3">
         <i class="bi bi-exclamation-triangle me-2"></i>
         <strong>Google Search Console Required:</strong> You must connect your Google Search Console account to see real keyword rankings. We no longer show demo data to ensure 100% accuracy.
+        <div class="mt-2">
+          <a href="https://support.google.com/webmasters/answer/10267942?hl=en" target="_blank" rel="noopener noreferrer" class="alert-link">
+            New to Search Console? Follow this step-by-step setup guide.
+          </a>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mt-3 gsc-video-guide-card">
+        <div class="card-body py-3">
+          <h6 class="mb-2">
+            <i class="bi bi-youtube text-danger me-2"></i>Video Guide: Set up Google Search Console
+          </h6>
+          <p class="text-muted small mb-3">Watch this beginner-friendly walkthrough, then come back and click Connect GSC.</p>
+          <div class="ratio ratio-16x9 rounded overflow-hidden gsc-video-embed">
+            <iframe
+              src="https://www.youtube.com/embed/uoQ-0xREQgQ"
+              title="How to Set Up Google Search Console (Complete Beginner's Guide)"
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerpolicy="strict-origin-when-cross-origin"
+              allowfullscreen>
+            </iframe>
+          </div>
+          <div class="mt-2">
+            <a href="https://www.youtube.com/watch?v=uoQ-0xREQgQ" target="_blank" rel="noopener noreferrer" class="small text-decoration-none">
+              Open on YouTube
+            </a>
+          </div>
+        </div>
       </div>
       {% endif %}
     </div>
@@ -571,6 +603,15 @@
 .table-pagination {
   border-top: 1px solid #e5e7eb;
   background: #fff;
+}
+
+.gsc-video-guide-card {
+  max-width: 920px;
+}
+
+.gsc-video-embed {
+  max-width: 760px;
+  margin: 0 auto;
 }
 
 #prevPageBtn:disabled,

@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, PasswordResetForm, SetPasswordForm
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
@@ -46,6 +46,37 @@ class LoginForm(AuthenticationForm):
         "class": "form-control",
         "placeholder": "Password",
     }))
+
+
+class CustomPasswordResetForm(PasswordResetForm):
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={
+            "class": "form-control",
+            "placeholder": "Enter your account email",
+        }),
+    )
+
+
+class CustomSetPasswordForm(SetPasswordForm):
+    new_password1 = forms.CharField(
+        label="New password",
+        strip=False,
+        widget=forms.PasswordInput(attrs={
+            "class": "form-control",
+            "autocomplete": "new-password",
+            "placeholder": "Enter new password",
+        }),
+    )
+    new_password2 = forms.CharField(
+        label="Confirm new password",
+        strip=False,
+        widget=forms.PasswordInput(attrs={
+            "class": "form-control",
+            "autocomplete": "new-password",
+            "placeholder": "Confirm new password",
+        }),
+    )
 
 
 class OTPVerifyForm(forms.Form):

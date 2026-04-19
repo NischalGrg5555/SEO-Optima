@@ -19,6 +19,10 @@
       {% for e in form.password.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
     </div>
 
+    <div class="text-end mb-3">
+      <a href="{% url 'accounts:password_reset' %}" class="text-decoration-none small">Forgot password?</a>
+    </div>
+
     <button class="btn btn-brand w-100 py-2" type="submit">Sign In</button>
 
     {% if google_client_id %}
