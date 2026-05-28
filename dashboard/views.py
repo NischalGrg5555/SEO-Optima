@@ -328,21 +328,32 @@ def dashboard_home(request):
     ]
     
     analysis_points = list(
-        analyses_qs.values('created_at', 'performance_score', 'seo_score')
+        analyses_qs.values('created_at')
     )
 
-    # Calculate average scores
-    avg_performance = 0
-    avg_seo = 0
+    # SEO health coverage (alt text + H1 status)
+    image_totals = ImageAltAnalysis.objects.filter(user=request.user).values('total_images', 'images_with_alt')
+    total_images = sum(item['total_images'] or 0 for item in image_totals)
+    total_images_with_alt = sum(item['images_with_alt'] or 0 for item in image_totals)
+    alt_coverage_percent = None
+    if total_images:
+        alt_coverage_percent = round((total_images_with_alt / total_images) * 100, 1)
 
-    if analysis_points:
-        perf_scores = [point['performance_score'] for point in analysis_points if point.get('performance_score') is not None]
-        seo_scores = [point['seo_score'] for point in analysis_points if point.get('seo_score') is not None]
+    header_qs = HeaderAnalysis.objects.filter(user=request.user)
+    total_header_analyses = header_qs.count()
+    single_h1_count = header_qs.filter(h1_count=1).count()
+    h1_health_percent = None
+    if total_header_analyses:
+        h1_health_percent = round((single_h1_count / total_header_analyses) * 100, 1)
 
-        if perf_scores:
-            avg_performance = sum(perf_scores) / len(perf_scores)
-        if seo_scores:
-            avg_seo = sum(seo_scores) / len(seo_scores)
+    health_components = [value for value in (alt_coverage_percent, h1_health_percent) if value is not None]
+    seo_health_score = round(sum(health_components) / len(health_components)) if health_components else None
+
+    # Keyword visibility snapshot (latest analysis)
+    latest_keyword_analysis = KeywordAnalysis.objects.filter(user=request.user).order_by('-created_at').first()
+    keyword_total = latest_keyword_analysis.total_keywords if latest_keyword_analysis else None
+    keyword_top10 = latest_keyword_analysis.top_10_positions if latest_keyword_analysis else None
+    keyword_avg_position = latest_keyword_analysis.avg_position if latest_keyword_analysis else None
 
     # Build chart data from persisted analyses
     week_start = (now - timedelta(days=6)).date()
@@ -405,60 +416,6 @@ def dashboard_home(request):
         },
     }
 
-    # Last 6 months average score trends (including current month)
-    current_month_index = now.year * 12 + (now.month - 1)
-    month_keys = []
-    for offset in range(5, -1, -1):
-        idx = current_month_index - offset
-        year = idx // 12
-        month = (idx % 12) + 1
-        month_keys.append((year, month))
-
-    month_key_set = set(month_keys)
-    perf_sum = defaultdict(float)
-    perf_count = defaultdict(int)
-    seo_sum = defaultdict(float)
-    seo_count = defaultdict(int)
-
-    for point in analysis_points:
-        created_at = point.get('created_at')
-        if not created_at:
-            continue
-
-        local_dt = timezone.localtime(created_at)
-        month_key = (local_dt.year, local_dt.month)
-        if month_key not in month_key_set:
-            continue
-
-        performance_score = point.get('performance_score')
-        seo_score = point.get('seo_score')
-
-        if performance_score is not None:
-            perf_sum[month_key] += performance_score
-            perf_count[month_key] += 1
-
-        if seo_score is not None:
-            seo_sum[month_key] += seo_score
-            seo_count[month_key] += 1
-
-    perf_trend_labels = []
-    perf_trend_data = []
-    seo_trend_data = []
-
-    for year, month in month_keys:
-        perf_avg = (perf_sum[(year, month)] / perf_count[(year, month)]) if perf_count[(year, month)] else 0
-        seo_avg = (seo_sum[(year, month)] / seo_count[(year, month)]) if seo_count[(year, month)] else 0
-
-        perf_trend_labels.append(date(year, month, 1).strftime('%b %y'))
-        perf_trend_data.append(round(perf_avg))
-        seo_trend_data.append(round(seo_avg))
-
-    performance_trend_data = {
-        'labels': perf_trend_labels,
-        'performance': perf_trend_data,
-        'seo': seo_trend_data,
-    }
-    
     # Feature counts for the overview cards
     headers_analyzed = HeaderAnalysis.objects.filter(user=request.user).count()
     images_analyzed = ImageAltAnalysis.objects.filter(user=request.user).count()
@@ -468,14 +425,17 @@ def dashboard_home(request):
     context = {
         'total_analyses': total_analyses,
         'recent_analyses': recent_analyses,
-        'avg_performance': round(avg_performance),
-        'avg_seo': round(avg_seo),
+        'alt_coverage_percent': alt_coverage_percent,
+        'h1_health_percent': h1_health_percent,
+        'seo_health_score': seo_health_score,
+        'keyword_total': keyword_total,
+        'keyword_top10': keyword_top10,
+        'keyword_avg_position': keyword_avg_position,
         'headers_analyzed': headers_analyzed,
         'images_analyzed': images_analyzed,
         'keywords_tracked': keywords_tracked,
         'reports_generated': reports_generated,
         'monthly_chart_data': monthly_chart_data,
-        'performance_trend_data': performance_trend_data,
         'recent_feature_sections': recent_feature_sections,
     }
     

@@ -14,14 +14,14 @@
   <div class="hero-meta-card">
     <p class="hero-meta-label">Snapshot</p>
     <p class="hero-meta-value">{% now "M d, Y" %}</p>
-    <div class="hero-meta-status {% if avg_performance >= 75 and avg_seo >= 80 %}is-good{% elif avg_performance >= 50 or avg_seo >= 60 %}is-watch{% else %}is-risk{% endif %}">
+    <div class="hero-meta-status {% if seo_health_score >= 80 %}is-good{% elif seo_health_score >= 50 %}is-watch{% else %}is-risk{% endif %}">
       <span class="status-dot"></span>
-      {% if avg_performance >= 75 and avg_seo >= 80 %}
-      Healthy momentum
-      {% elif avg_performance >= 50 or avg_seo >= 60 %}
-      Needs optimization
+      {% if seo_health_score >= 80 %}
+      Healthy SEO coverage
+      {% elif seo_health_score >= 50 %}
+      Needs on-page fixes
       {% else %}
-      Critical SEO debt
+      Critical SEO gaps
       {% endif %}
     </div>
   </div>
@@ -46,34 +46,34 @@
     </div>
   </div>
 
-  <!-- Avg Performance -->
+  <!-- SEO Health Coverage -->
   <div class="stat-card stat-card-performance">
     <div class="stat-card-content">
       <div class="stat-info">
-        <p class="stat-kicker">Core Web Vitals</p>
-        <p class="stat-label">Avg Performance</p>
-        <h3 class="stat-value">{{ avg_performance|default:"--" }}</h3>
-        <p class="stat-change {% if avg_performance >= 50 %}positive{% else %}negative{% endif %}">
-          <i class="bi bi-{% if avg_performance >= 50 %}arrow-up{% else %}arrow-down{% endif %}"></i> 
-          Performance score
+        <p class="stat-kicker">SEO Health</p>
+        <p class="stat-label">Coverage Score</p>
+        <h3 class="stat-value">{% if seo_health_score is not None %}{{ seo_health_score }}%{% else %}--{% endif %}</h3>
+        <p class="stat-change neutral">
+          <i class="bi bi-shield-check"></i>
+          Alt {{ alt_coverage_percent|default:"--" }}% · H1 {{ h1_health_percent|default:"--" }}%
         </p>
       </div>
       <div class="stat-icon stat-icon-success">
-        <i class="bi bi-speedometer2"></i>
+        <i class="bi bi-shield-check"></i>
       </div>
     </div>
   </div>
 
-  <!-- Avg SEO Score -->
+  <!-- Keyword Visibility Snapshot -->
   <div class="stat-card stat-card-seo">
     <div class="stat-card-content">
       <div class="stat-info">
-        <p class="stat-kicker">Search Visibility</p>
-        <p class="stat-label">Avg SEO Score</p>
-        <h3 class="stat-value">{{ avg_seo|default:"--" }}</h3>
-        <p class="stat-change {% if avg_seo >= 80 %}positive{% else %}negative{% endif %}">
-          <i class="bi bi-{% if avg_seo >= 80 %}arrow-up{% else %}arrow-down{% endif %}"></i> 
-          SEO ranking
+        <p class="stat-kicker">Keyword Visibility</p>
+        <p class="stat-label">Latest Snapshot</p>
+        <h3 class="stat-value">{% if keyword_total is not None %}{{ keyword_total }}{% else %}--{% endif %}</h3>
+        <p class="stat-change neutral">
+          <i class="bi bi-search"></i>
+          Top 10 {{ keyword_top10|default:"--" }} · Avg pos {{ keyword_avg_position|default:"--" }}
         </p>
       </div>
       <div class="stat-icon stat-icon-warning">
@@ -106,8 +106,8 @@
   <div class="chart-card">
     <div class="chart-header">
       <div>
-        <h3 class="chart-title">Monthly Analyses</h3>
-        <p class="chart-subtitle">Track your site analysis over time</p>
+        <h3 class="chart-title">Analysis Volume Trend</h3>
+        <p class="chart-subtitle">Weekly and monthly activity across all analyses</p>
       </div>
       <div class="chart-actions">
         <button class="chart-tab active" data-range="week">Week</button>
@@ -124,20 +124,32 @@
     </div>
   </div>
 
-  <!-- Performance Score Chart -->
   <div class="chart-card">
     <div class="chart-header">
       <div>
-        <h3 class="chart-title">Performance Trends</h3>
-        <p class="chart-subtitle">Average scores over time</p>
+        <h3 class="chart-title">Keyword Visibility Snapshot</h3>
+        <p class="chart-subtitle">Most recent Search Console analysis</p>
       </div>
     </div>
     <div class="chart-insight chart-insight-secondary">
-      <i class="bi bi-graph-up-arrow"></i>
-      <span id="scoreTrendText">Performance is rising steadily across the last 6 months.</span>
+      <i class="bi bi-key"></i>
+      <span>Top 10 keywords and average position from your latest GSC fetch.</span>
     </div>
     <div class="chart-body">
-      <canvas id="performanceChart"></canvas>
+      <div class="d-flex flex-column gap-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="text-muted">Total Keywords</span>
+          <strong>{% if keyword_total is not None %}{{ keyword_total }}{% else %}--{% endif %}</strong>
+        </div>
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="text-muted">Top 10 Keywords</span>
+          <strong>{% if keyword_top10 is not None %}{{ keyword_top10 }}{% else %}--{% endif %}</strong>
+        </div>
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="text-muted">Average Position</span>
+          <strong>{% if keyword_avg_position is not None %}{{ keyword_avg_position }}{% else %}--{% endif %}</strong>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -244,13 +256,11 @@
 
 {% block extra_js %}
 {{ monthly_chart_data|json_script:"monthly-chart-data" }}
-{{ performance_trend_data|json_script:"performance-trend-data" }}
 <script>
   Chart.defaults.font.family = "'Space Grotesk', 'Segoe UI', sans-serif";
   Chart.defaults.color = '#586379';
 
   const monthlyDataSets = JSON.parse(document.getElementById('monthly-chart-data').textContent || '{}');
-  const performanceTrendData = JSON.parse(document.getElementById('performance-trend-data').textContent || '{}');
 
   const defaultMonthly = {
     week: { labels: ['Mon 01', 'Tue 02', 'Wed 03', 'Thu 04', 'Fri 05', 'Sat 06', 'Sun 07'], data: [0, 0, 0, 0, 0, 0, 0], insight: 'No analyses found for this time range yet.' },
@@ -264,9 +274,6 @@
     year: monthlyDataSets.year || defaultMonthly.year,
   };
 
-  const trendLabels = performanceTrendData.labels || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-  const trendPerformance = performanceTrendData.performance || [0, 0, 0, 0, 0, 0];
-  const trendSeo = performanceTrendData.seo || [0, 0, 0, 0, 0, 0];
 
   // Monthly Analyses Chart
   const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
@@ -315,71 +322,6 @@
     }
   });
 
-  // Performance Trends Chart
-  const perfCtx = document.getElementById('performanceChart').getContext('2d');
-  const perfGradient = perfCtx.createLinearGradient(0, 0, 0, 300);
-  perfGradient.addColorStop(0, 'rgba(14, 116, 144, 0.34)');
-  perfGradient.addColorStop(1, 'rgba(14, 116, 144, 0.04)');
-
-  const seoGradient = perfCtx.createLinearGradient(0, 0, 0, 300);
-  seoGradient.addColorStop(0, 'rgba(234, 88, 12, 0.30)');
-  seoGradient.addColorStop(1, 'rgba(234, 88, 12, 0.05)');
-
-  const performanceChart = new Chart(perfCtx, {
-    type: 'line',
-    data: {
-      labels: trendLabels,
-      datasets: [
-        {
-          label: 'Performance',
-          data: trendPerformance,
-          borderColor: '#0e7490',
-          backgroundColor: perfGradient,
-          pointBackgroundColor: '#0e7490',
-          pointRadius: 3,
-          pointHoverRadius: 5,
-          tension: 0.4,
-          fill: true
-        },
-        {
-          label: 'SEO',
-          data: trendSeo,
-          borderColor: '#ea580c',
-          backgroundColor: seoGradient,
-          pointBackgroundColor: '#ea580c',
-          pointRadius: 3,
-          pointHoverRadius: 5,
-          tension: 0.4,
-          fill: true
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: true,
-          position: 'top',
-          align: 'end'
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          max: 100,
-          grid: {
-            color: 'rgba(126, 142, 170, 0.15)'
-          }
-        },
-        x: {
-          grid: {
-            display: false
-          }
-        }
-      }
-    }
-  });
 
   const rangeTabs = document.querySelectorAll('.chart-tab');
   const analysisTrendText = document.getElementById('analysisTrendText');
@@ -405,19 +347,5 @@
     });
   });
 
-  const performanceData = performanceChart.data.datasets[0].data;
-  const start = performanceData[0];
-  const end = performanceData[performanceData.length - 1];
-  const diff = end - start;
-  const scoreTrendText = document.getElementById('scoreTrendText');
-  if (scoreTrendText) {
-    if (diff > 0) {
-      scoreTrendText.textContent = `Performance climbed ${diff} points in the last 6 months.`;
-    } else if (diff < 0) {
-      scoreTrendText.textContent = `Performance dropped ${Math.abs(diff)} points in the last 6 months.`;
-    } else {
-      scoreTrendText.textContent = 'Performance remained stable in the last 6 months.';
-    }
-  }
 </script>
 {% endblock %}
