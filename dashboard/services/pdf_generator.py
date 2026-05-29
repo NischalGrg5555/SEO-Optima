@@ -16,7 +16,7 @@ from reportlab.pdfgen import canvas
 
 
 def get_metric_category(value, metric_type):
-    """Categorize metric values into Fast/Average/Slow or Good/Average/Poor"""
+    """Categorize metric values into Fast/Average/Poor."""
     if value is None:
         return ('Unknown', colors.gray)
     if metric_type == 'LCP':  # Largest Contentful Paint (seconds)
@@ -25,7 +25,7 @@ def get_metric_category(value, metric_type):
         elif value <= 4.0:
             return ('Average', colors.orange)
         else:
-            return ('Slow', colors.red)
+            return ('Poor', colors.red)
     
     elif metric_type == 'INP':  # Interaction to Next Paint (milliseconds)
         if value <= 200:
@@ -33,11 +33,11 @@ def get_metric_category(value, metric_type):
         elif value <= 500:
             return ('Average', colors.orange)
         else:
-            return ('Slow', colors.red)
+            return ('Poor', colors.red)
     
     elif metric_type == 'CLS':  # Cumulative Layout Shift (score)
         if value <= 0.1:
-            return ('Good', colors.green)
+            return ('Fast', colors.green)
         elif value <= 0.25:
             return ('Average', colors.orange)
         else:
@@ -178,8 +178,8 @@ def generate_basic_report(user, title, pagespeed_analysis=None, keyword_analysis
         cls_value, cls_numeric = _extract_field_metric(
             full_response,
             'CUMULATIVE_LAYOUT_SHIFT_SCORE',
-            value_formatter=lambda v: f"{v / 100:.2f}" if v > 1 else f"{v:.2f}",
-            numeric_divisor=1,
+            value_formatter=lambda v: f"{v / 100:.2f}",
+            numeric_divisor=100,
         )
 
         if lcp_value == 'N/A' or lcp_numeric is None:
@@ -205,9 +205,9 @@ def generate_basic_report(user, title, pagespeed_analysis=None, keyword_analysis
         )
 
         thresholds = {
-            'lcp': Paragraph('Fast (0-2.5s) • Average (2.5-4s) • Slow (4s+)', table_body_style),
-            'inp': Paragraph('Fast (0-200ms) • Average (200-500ms) • Slow (500ms+)', table_body_style),
-            'cls': Paragraph('Good (0-0.1) • Average (0.1-0.25) • Poor (0.25+)', table_body_style),
+            'lcp': Paragraph('Fast (0-2.5s) • Average (2.5-4s) • Poor (4s+)', table_body_style),
+            'inp': Paragraph('Fast (0-200ms) • Average (200-500ms) • Poor (500ms+)', table_body_style),
+            'cls': Paragraph('Fast (0-0.1) • Average (0.1-0.25) • Poor (0.25+)', table_body_style),
         }
 
         metrics_data = [
