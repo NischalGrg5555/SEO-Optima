@@ -17,6 +17,8 @@ from reportlab.pdfgen import canvas
 
 def get_metric_category(value, metric_type):
     """Categorize metric values into Fast/Average/Slow or Good/Average/Poor"""
+    if value is None:
+        return ('Unknown', colors.gray)
     if metric_type == 'LCP':  # Largest Contentful Paint (seconds)
         if value <= 2.5:
             return ('Fast', colors.green)
@@ -42,6 +44,57 @@ def get_metric_category(value, metric_type):
             return ('Poor', colors.red)
     
     return ('Unknown', colors.gray)
+
+
+def _extract_metric(metrics, full_response, metric_key, audit_key, numeric_divisor=1):
+    """Return display and numeric values from stored metrics or raw Lighthouse audits."""
+    display_value = 'N/A'
+    numeric_value = None
+
+    metric = metrics.get(metric_key) if isinstance(metrics, dict) else None
+    if isinstance(metric, dict):
+        display_value = metric.get('value', display_value)
+        numeric_value = metric.get('numericValue', numeric_value)
+
+    if numeric_value is None or display_value == 'N/A':
+        audits = {}
+        if isinstance(full_response, dict):
+            audits = full_response.get('lighthouseResult', {}).get('audits', {})
+
+        audit = audits.get(audit_key, {}) if isinstance(audits, dict) else {}
+        if display_value == 'N/A':
+            display_value = audit.get('displayValue', display_value)
+        if numeric_value is None:
+            numeric_value = audit.get('numericValue', numeric_value)
+
+    if numeric_value is not None and numeric_divisor:
+        numeric_value = numeric_value / numeric_divisor
+
+    return display_value, numeric_value
+
+
+def _extract_field_metric(full_response, metric_key, value_formatter=None, numeric_divisor=1):
+    """Return display and numeric values from CrUX field data in the response."""
+    if not isinstance(full_response, dict):
+        return 'N/A', None
+
+    loading_experience = full_response.get('loadingExperience', {})
+    origin_loading_experience = full_response.get('originLoadingExperience', {})
+    experience_data = origin_loading_experience or loading_experience
+    field_metrics = experience_data.get('metrics', {}) if isinstance(experience_data, dict) else {}
+
+    metric = field_metrics.get(metric_key, {}) if isinstance(field_metrics, dict) else {}
+    percentile = metric.get('percentile')
+    if percentile is None:
+        return 'N/A', None
+
+    numeric_value = percentile / numeric_divisor if numeric_divisor else percentile
+    if value_formatter:
+        display_value = value_formatter(percentile)
+    else:
+        display_value = str(numeric_value)
+
+    return display_value, numeric_value
 
 
 def generate_basic_report(user, title, pagespeed_analysis=None, keyword_analysis=None, 
@@ -107,32 +160,64 @@ def generate_basic_report(user, title, pagespeed_analysis=None, keyword_analysis
         story.append(Spacer(1, 0.15*inch))
         
         # Extract core web vitals from metrics
-        metrics = pagespeed_analysis.metrics
-        lcp_value = metrics.get('largest_contentful_paint', {}).get('displayValue', 'N/A')
-        inp_value = metrics.get('interaction_to_next_paint', {}).get('displayValue', 'N/A')
-        cls_value = metrics.get('cumulative_layout_shift', {}).get('displayValue', 'N/A')
-        
-        # Try to get numeric values for categorization
-        lcp_numeric = metrics.get('largest_contentful_paint', {}).get('numericValue', 0) / 1000  # Convert to seconds
-        inp_numeric = metrics.get('interaction_to_next_paint', {}).get('numericValue', 0)
-        cls_numeric = metrics.get('cumulative_layout_shift', {}).get('numericValue', 0)
+        metrics = pagespeed_analysis.metrics or {}
+        full_response = pagespeed_analysis.full_response or {}
+
+        lcp_value, lcp_numeric = _extract_field_metric(
+            full_response,
+            'LARGEST_CONTENTFUL_PAINT_MS',
+            value_formatter=lambda v: f"{v / 1000:.1f} s",
+            numeric_divisor=1000,
+        )
+        inp_value, inp_numeric = _extract_field_metric(
+            full_response,
+            'INTERACTION_TO_NEXT_PAINT',
+            value_formatter=lambda v: f"{v} ms",
+            numeric_divisor=1,
+        )
+        cls_value, cls_numeric = _extract_field_metric(
+            full_response,
+            'CUMULATIVE_LAYOUT_SHIFT_SCORE',
+            value_formatter=lambda v: f"{v / 100:.2f}" if v > 1 else f"{v:.2f}",
+            numeric_divisor=1,
+        )
+
+        if lcp_value == 'N/A' or lcp_numeric is None:
+            lcp_value, lcp_numeric = _extract_metric(metrics, full_response, 'lcp', 'largest-contentful-paint', 1000)
+
+        if inp_value == 'N/A' or inp_numeric is None:
+            inp_value, inp_numeric = _extract_metric(metrics, full_response, 'inp', 'interaction-to-next-paint', 1)
+
+        if cls_value == 'N/A' or cls_numeric is None:
+            cls_value, cls_numeric = _extract_metric(metrics, full_response, 'cls', 'cumulative-layout-shift', 1)
         
         lcp_category, lcp_color = get_metric_category(lcp_numeric, 'LCP')
         inp_category, inp_color = get_metric_category(inp_numeric, 'INP')
         cls_category, cls_color = get_metric_category(cls_numeric, 'CLS')
         
         # Metrics table
+        table_body_style = ParagraphStyle(
+            'TableBody',
+            parent=body_style,
+            fontSize=8.5,
+            leading=10,
+            textColor=colors.HexColor('#2c3e50')
+        )
+
+        thresholds = {
+            'lcp': Paragraph('Fast (0-2.5s) • Average (2.5-4s) • Slow (4s+)', table_body_style),
+            'inp': Paragraph('Fast (0-200ms) • Average (200-500ms) • Slow (500ms+)', table_body_style),
+            'cls': Paragraph('Good (0-0.1) • Average (0.1-0.25) • Poor (0.25+)', table_body_style),
+        }
+
         metrics_data = [
             ['Metric', 'Value', 'Status', 'Threshold'],
-            ['Largest Contentful Paint\n(Page Loading Speed)', lcp_value, lcp_category, 
-             'Fast (0-2.5s) • Average (2.5-4s) • Slow (4s+)'],
-            ['Interaction to Next Paint\n(Interactivity)', inp_value, inp_category,
-             'Fast (0-200ms) • Average (200-500ms) • Slow (500ms+)'],
-            ['Cumulative Layout Shift\n(Page Stability)', cls_value, cls_category,
-             'Good (0-0.1) • Average (0.1-0.25) • Poor (0.25+)'],
+            ['Largest Contentful Paint\n(Page Loading Speed)', lcp_value, lcp_category, thresholds['lcp']],
+            ['Interaction to Next Paint\n(Interactivity)', inp_value, inp_category, thresholds['inp']],
+            ['Cumulative Layout Shift\n(Page Stability)', cls_value, cls_category, thresholds['cls']],
         ]
         
-        metrics_table = Table(metrics_data, colWidths=[2*inch, 1*inch, 0.8*inch, 2.7*inch])
+        metrics_table = Table(metrics_data, colWidths=[2.1*inch, 0.9*inch, 0.85*inch, 2.65*inch])
         metrics_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#3498db')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
