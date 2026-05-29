@@ -564,6 +564,31 @@ def delete_analysis(request, pk):
 
 
 @login_required
+def bulk_delete_pagespeed_analyses(request):
+    """Soft delete multiple PageSpeed analyses from the PageSpeed Insights page."""
+    redirect_name = 'dashboard:page_speed_insights'
+
+    if request.method != 'POST':
+        return redirect(redirect_name)
+
+    selected_ids = request.POST.getlist('analysis_ids')
+    if not selected_ids:
+        messages.warning(request, 'Please select at least one analysis to delete.')
+        return redirect(redirect_name)
+
+    queryset = PageSpeedAnalysis.objects.filter(user=request.user, pk__in=selected_ids, is_deleted=False)
+    deleted_count = queryset.count()
+
+    if deleted_count == 0:
+        messages.warning(request, 'No matching analyses were found to delete.')
+    else:
+        queryset.update(is_deleted=True)
+        messages.success(request, f'{deleted_count} selected analyses deleted successfully.')
+
+    return redirect(redirect_name)
+
+
+@login_required
 def extract_headers_view(request):
     """Extract headers from a webpage"""
     form = HeaderExtractorForm(request.POST or None)
@@ -736,6 +761,8 @@ def image_alt_finder(request):
         except Exception as e:
             error = str(e)
             messages.error(request, f'Error extracting images: {error}')
+
+    analyses = ImageAltAnalysis.objects.filter(user=request.user).order_by('-created_at')[:10]
     
     context = {
         'form': form,
@@ -744,6 +771,7 @@ def image_alt_finder(request):
         'url': url,
         'error': error,
         'analysis': analysis,
+        'analyses': analyses,
     }
     
     return render(request, 'dashboard/image_alt_finder.html', context)
@@ -759,6 +787,31 @@ def image_alt_list(request):
     }
     
     return render(request, 'dashboard/image_alt_list.html', context)
+
+
+@login_required
+def bulk_delete_image_alt_analyses(request):
+    """Delete multiple image alt analyses from the list view."""
+    redirect_name = 'dashboard:image_alt_list'
+
+    if request.method != 'POST':
+        return redirect(redirect_name)
+
+    selected_ids = request.POST.getlist('analysis_ids')
+    if not selected_ids:
+        messages.warning(request, 'Please select at least one analysis to delete.')
+        return redirect(redirect_name)
+
+    queryset = ImageAltAnalysis.objects.filter(user=request.user, pk__in=selected_ids)
+    deleted_count = queryset.count()
+
+    if deleted_count == 0:
+        messages.warning(request, 'No matching analyses were found to delete.')
+    else:
+        queryset.delete()
+        messages.success(request, f'{deleted_count} selected analyses deleted successfully.')
+
+    return redirect(redirect_name)
 
 
 @login_required
@@ -811,6 +864,31 @@ def delete_keyword_analysis(request, pk):
     }
     
     return render(request, 'dashboard/delete_keyword_analysis.html', context)
+
+
+@login_required
+def bulk_delete_keyword_analyses(request):
+    """Delete multiple keyword analyses from the list view."""
+    redirect_name = 'dashboard:keywords_list'
+
+    if request.method != 'POST':
+        return redirect(redirect_name)
+
+    selected_ids = request.POST.getlist('analysis_ids')
+    if not selected_ids:
+        messages.warning(request, 'Please select at least one analysis to delete.')
+        return redirect(redirect_name)
+
+    queryset = KeywordAnalysis.objects.filter(user=request.user, pk__in=selected_ids)
+    deleted_count = queryset.count()
+
+    if deleted_count == 0:
+        messages.warning(request, 'No matching analyses were found to delete.')
+    else:
+        queryset.delete()
+        messages.success(request, f'{deleted_count} selected analyses deleted successfully.')
+
+    return redirect(redirect_name)
 
 @login_required
 def keywords_finder(request):

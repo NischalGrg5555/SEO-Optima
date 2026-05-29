@@ -262,57 +262,79 @@
 <!-- Previous Analyses -->
 {% if recent_analyses %}
 <div class="table-card">
-  <div class="table-header">
-    <div>
-      <h3 class="table-title"> Recent Analyses</h3>
-      <p class="table-subtitle">Your latest performance reports</p>
+  <form method="post" action="{% url 'dashboard:bulk_delete_pagespeed_analyses' %}" id="bulkPageSpeedActionForm">
+    {% csrf_token %}
+    <div class="table-header">
+      <div>
+        <h3 class="table-title"> Recent Analyses</h3>
+        <p class="table-subtitle">Your latest performance reports</p>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <span class="badge bg-secondary">{{ recent_analyses|length }} Recent</span>
+        <div class="d-flex align-items-center gap-2">
+          <input type="checkbox" id="selectAllPageSpeedAnalyses" class="form-check-input">
+          <label for="selectAllPageSpeedAnalyses" class="small mb-0">Select all</label>
+        </div>
+        <span class="small text-muted" id="selectedPageSpeedCount">0 selected</span>
+        <button type="submit" class="btn btn-sm btn-outline-danger" id="bulkDeletePageSpeedBtn" disabled>
+          Delete Selected
+        </button>
+      </div>
     </div>
-    <span class="badge bg-secondary">{{ recent_analyses|length }} Recent</span>
-  </div>
 
-  <div class="table-responsive">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Website</th>
-          <th>Device</th>
-          <th>Date</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in recent_analyses %}
-        <tr>
-          <td>
-            <div class="cell-with-icon">
-              <i class="bi bi-globe"></i>
-              <a href="{{ item.url }}" target="_blank" class="url-link">
-                {{ item.url|truncatechars:50 }}
-              </a>
-            </div>
-          </td>
-          <td>
-            <span class="badge badge-{{ item.strategy }}">
-              <i class="bi bi-{% if item.strategy == 'mobile' %}phone{% else %}laptop{% endif %}"></i>
-              {{ item.strategy|title }}
-            </span>
-          </td>
-          <td>{{ item.created_at|date:"M d, Y" }}</td>
-          <td>
-            <div class="action-buttons">
-              <a href="{% url 'dashboard:analysis_detail' item.pk %}" class="btn-icon" title="View Details">
-                <i class="bi bi-eye"></i>
-              </a>
-              <a href="{% url 'dashboard:delete_analysis' item.pk %}" class="btn-icon" title="Delete Analysis" onclick="return confirm('Are you sure you want to delete this analysis?');">
-                <i class="bi bi-trash" style="color: #ef4444;"></i>
-              </a>
-            </div>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;"></th>
+            <th>Website</th>
+            <th>Device</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in recent_analyses %}
+          <tr>
+            <td>
+              <input
+                type="checkbox"
+                name="analysis_ids"
+                value="{{ item.pk }}"
+                class="form-check-input analysis-select"
+              >
+            </td>
+            <td>
+              <div class="cell-with-icon">
+                <i class="bi bi-globe"></i>
+                <a href="{{ item.url }}" target="_blank" class="url-link">
+                  {{ item.url|truncatechars:50 }}
+                </a>
+              </div>
+            </td>
+            <td>
+              <span class="badge badge-{{ item.strategy }}">
+                <i class="bi bi-{% if item.strategy == 'mobile' %}phone{% else %}laptop{% endif %}"></i>
+                {{ item.strategy|title }}
+              </span>
+            </td>
+            <td>{{ item.created_at|date:"M d, Y" }}</td>
+            <td>
+              <div class="action-buttons">
+                <a href="{% url 'dashboard:analysis_detail' item.pk %}" class="btn-icon" title="View Details">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="{% url 'dashboard:delete_analysis' item.pk %}" class="btn-icon" title="Delete Analysis" onclick="return confirm('Are you sure you want to delete this analysis?');">
+                  <i class="bi bi-trash" style="color: #ef4444;"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </form>
 </div>
 {% endif %}
 
@@ -1086,5 +1108,59 @@
   }
 }
 </style>
+
+<script>
+  const bulkPageSpeedActionForm = document.getElementById('bulkPageSpeedActionForm');
+  const selectAllPageSpeedAnalyses = document.getElementById('selectAllPageSpeedAnalyses');
+  const selectedPageSpeedCount = document.getElementById('selectedPageSpeedCount');
+  const bulkDeletePageSpeedBtn = document.getElementById('bulkDeletePageSpeedBtn');
+
+  if (bulkPageSpeedActionForm) {
+    const analysisCheckboxes = Array.from(document.querySelectorAll('.analysis-select'));
+
+    const updateBulkSelectionState = function() {
+      const selectedCount = analysisCheckboxes.filter(function(box) {
+        return box.checked;
+      }).length;
+
+      selectedPageSpeedCount.textContent = selectedCount + ' selected';
+      bulkDeletePageSpeedBtn.disabled = selectedCount === 0;
+
+      if (analysisCheckboxes.length > 0) {
+        selectAllPageSpeedAnalyses.checked = selectedCount === analysisCheckboxes.length;
+      }
+    };
+
+    if (selectAllPageSpeedAnalyses) {
+      selectAllPageSpeedAnalyses.addEventListener('change', function() {
+        analysisCheckboxes.forEach(function(box) {
+          box.checked = selectAllPageSpeedAnalyses.checked;
+        });
+        updateBulkSelectionState();
+      });
+    }
+
+    analysisCheckboxes.forEach(function(box) {
+      box.addEventListener('change', updateBulkSelectionState);
+    });
+
+    bulkPageSpeedActionForm.addEventListener('submit', function(event) {
+      const selectedCount = analysisCheckboxes.filter(function(box) {
+        return box.checked;
+      }).length;
+
+      if (selectedCount === 0) {
+        event.preventDefault();
+        return;
+      }
+
+      if (!window.confirm('Delete ' + selectedCount + ' selected analyses? This action cannot be undone.')) {
+        event.preventDefault();
+      }
+    });
+
+    updateBulkSelectionState();
+  }
+</script>
 
 {% endblock %}

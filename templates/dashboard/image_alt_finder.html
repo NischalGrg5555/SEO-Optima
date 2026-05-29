@@ -174,6 +174,104 @@
     </div>
   </div>
   {% endif %}
+
+  <!-- Recent Analyses Section -->
+  {% if analyses %}
+  <div class="row mt-5">
+    <div class="col-lg-10 mx-auto">
+      <div class="card">
+        <form method="post" action="{% url 'dashboard:bulk_delete_image_alt_analyses' %}" id="bulkImageAltFinderActionForm">
+          {% csrf_token %}
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="mb-0">Recent Analyses</h5>
+              <div class="d-flex align-items-center gap-2 mt-2">
+                <input type="checkbox" id="selectAllImageAltFinderAnalyses" class="form-check-input">
+                <label for="selectAllImageAltFinderAnalyses" class="small mb-0">Select all</label>
+                <span class="small text-muted" id="selectedImageAltFinderCount">0 selected</span>
+              </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge bg-secondary">{{ analyses|length }} Recent</span>
+              <button type="submit" class="btn btn-sm btn-outline-danger" id="bulkDeleteImageAltFinderBtn" disabled>
+                Delete Selected
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width: 40px;"></th>
+                    <th>URL</th>
+                    <th>Total Images</th>
+                    <th>With Alt Text</th>
+                    <th>Missing Alt Text</th>
+                    <th>Completion</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for analysis in analyses %}
+                  <tr>
+                    <td>
+                      <input
+                        type="checkbox"
+                        name="analysis_ids"
+                        value="{{ analysis.pk }}"
+                        class="form-check-input image-alt-analysis-select"
+                      >
+                    </td>
+                    <td>
+                      <small class="text-muted">
+                        <a href="{{ analysis.url }}" target="_blank" rel="noopener noreferrer">{{ analysis.url|truncatewords:5 }}</a>
+                      </small>
+                    </td>
+                    <td>{{ analysis.total_images }}</td>
+                    <td>
+                      <span class="badge bg-success">
+                        {{ analysis.images_with_alt }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge bg-danger">
+                        {{ analysis.images_without_alt }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="progress" style="height: 20px;">
+                        <div class="progress-bar {% if analysis.alt_text_percentage >= 80 %}bg-success{% elif analysis.alt_text_percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
+                             role="progressbar"
+                             style="width: {{ analysis.alt_text_percentage }}%;"
+                             aria-valuenow="{{ analysis.alt_text_percentage }}"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                          {{ analysis.alt_text_percentage }}%
+                        </div>
+                      </div>
+                    </td>
+                    <td class="small">{{ analysis.created_at|date:"M d, Y H:i" }}</td>
+                    <td>
+                      <a href="{% url 'dashboard:image_alt_detail' analysis.pk %}" class="btn btn-sm btn-outline-primary me-1">
+                        View
+                      </a>
+                      <a href="{% url 'dashboard:delete_image_alt_analysis' analysis.pk %}" class="btn btn-sm btn-outline-danger">
+                        Delete
+                      </a>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 </div>
 
 <style>
@@ -256,5 +354,57 @@ document.getElementById('imageAltForm')?.addEventListener('submit', function() {
   btnText.classList.add('d-none');
   btnLoading.classList.remove('d-none');
 });
+
+const bulkImageAltFinderActionForm = document.getElementById('bulkImageAltFinderActionForm');
+const selectAllImageAltFinderAnalyses = document.getElementById('selectAllImageAltFinderAnalyses');
+const selectedImageAltFinderCount = document.getElementById('selectedImageAltFinderCount');
+const bulkDeleteImageAltFinderBtn = document.getElementById('bulkDeleteImageAltFinderBtn');
+
+if (bulkImageAltFinderActionForm) {
+  const analysisCheckboxes = Array.from(document.querySelectorAll('.image-alt-analysis-select'));
+
+  const updateBulkSelectionState = function() {
+    const selectedCount = analysisCheckboxes.filter(function(box) {
+      return box.checked;
+    }).length;
+
+    selectedImageAltFinderCount.textContent = selectedCount + ' selected';
+    bulkDeleteImageAltFinderBtn.disabled = selectedCount === 0;
+
+    if (analysisCheckboxes.length > 0) {
+      selectAllImageAltFinderAnalyses.checked = selectedCount === analysisCheckboxes.length;
+    }
+  };
+
+  if (selectAllImageAltFinderAnalyses) {
+    selectAllImageAltFinderAnalyses.addEventListener('change', function() {
+      analysisCheckboxes.forEach(function(box) {
+        box.checked = selectAllImageAltFinderAnalyses.checked;
+      });
+      updateBulkSelectionState();
+    });
+  }
+
+  analysisCheckboxes.forEach(function(box) {
+    box.addEventListener('change', updateBulkSelectionState);
+  });
+
+  bulkImageAltFinderActionForm.addEventListener('submit', function(event) {
+    const selectedCount = analysisCheckboxes.filter(function(box) {
+      return box.checked;
+    }).length;
+
+    if (selectedCount === 0) {
+      event.preventDefault();
+      return;
+    }
+
+    if (!window.confirm('Delete ' + selectedCount + ' selected analyses? This action cannot be undone.')) {
+      event.preventDefault();
+    }
+  });
+
+  updateBulkSelectionState();
+}
 </script>
 {% endblock %}

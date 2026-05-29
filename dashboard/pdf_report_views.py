@@ -221,6 +221,31 @@ def delete_pdf_report(request, pk):
 
 
 @login_required
+def bulk_delete_pdf_reports(request):
+    """Delete multiple PDF reports from the list view."""
+    redirect_name = 'dashboard:pdf_reports_list'
+
+    if request.method != 'POST':
+        return redirect(redirect_name)
+
+    selected_ids = request.POST.getlist('report_ids')
+    if not selected_ids:
+        messages.warning(request, 'Please select at least one report to delete.')
+        return redirect(redirect_name)
+
+    queryset = PDFReport.objects.filter(user=request.user, pk__in=selected_ids)
+    deleted_count = queryset.count()
+
+    if deleted_count == 0:
+        messages.warning(request, 'No matching reports were found to delete.')
+    else:
+        queryset.delete()
+        messages.success(request, f'{deleted_count} selected reports deleted successfully.')
+
+    return redirect(redirect_name)
+
+
+@login_required
 def regenerate_pdf_report(request, pk):
     """Regenerate an existing PDF report"""
     report = get_object_or_404(PDFReport, pk=pk, user=request.user)
