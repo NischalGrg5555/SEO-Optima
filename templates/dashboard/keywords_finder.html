@@ -21,19 +21,21 @@
           {% if gsc_connected %}
             <div class="card border-success gsc-connection-card">
               <div class="card-body">
-                <div class="d-flex align-items-center mb-3">
+                <div class="d-flex align-items-start flex-wrap gap-2 mb-3">
                   <i class="bi bi-check-circle-fill text-success me-2" style="font-size: 1.5rem;"></i>
-                  <div>
-                    <strong class="text-success d-block">Connected to Google Search Console</strong>
-                    <small class="text-muted">{{ gsc_connection.properties|length }} properties found</small>
+                  <div class="flex-grow-1 min-width-0">
+                    <strong class="text-success d-block text-truncate">Connected to Google Search Console</strong>
+                    <small class="text-muted d-block text-truncate">{{ gsc_connection.properties|length }} properties found</small>
                   </div>
-                  <button class="btn btn-sm btn-outline-secondary me-2 properties-toggle" data-bs-toggle="collapse" data-bs-target="#propertiesList" aria-expanded="false">
-                    <i class="bi bi-chevron-down me-1"></i>
-                    <span class="toggle-text">Show</span>
-                  </button>
-                  <a href="{% url 'dashboard:disconnect_gsc' %}" class="btn btn-sm btn-outline-danger">
-                    <i class="bi bi-x-circle me-1"></i> Disconnect
-                  </a>
+                  <div class="ms-sm-auto d-flex align-items-start flex-wrap gap-2 mt-2 mt-sm-0">
+                    <button class="btn btn-sm btn-outline-secondary properties-toggle" data-bs-toggle="collapse" data-bs-target="#propertiesList" aria-expanded="false">
+                      <i class="bi bi-chevron-down me-1"></i>
+                      <span class="toggle-text">Show</span>
+                    </button>
+                    <a href="{% url 'dashboard:disconnect_gsc' %}" class="btn btn-sm btn-outline-danger">
+                      <i class="bi bi-x-circle me-1"></i> Disconnect
+                    </a>
+                  </div>
                 </div>
                 
                 <!-- Grouped Properties Display (Collapsible & Scrollable) -->
