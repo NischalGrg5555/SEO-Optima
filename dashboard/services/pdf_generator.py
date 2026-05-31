@@ -262,21 +262,52 @@ def generate_basic_report(user, title, pagespeed_analysis=None, keyword_analysis
     
     # ==================== CONTENT HEADERS ====================
     if headers_data:
+        def _get_header_count(hierarchy_data, level):
+            if not isinstance(hierarchy_data, dict):
+                return 0
+            value = hierarchy_data.get(level)
+            if value is None:
+                value = hierarchy_data.get(level.upper())
+            if value is None:
+                value = hierarchy_data.get(level.lower())
+            if isinstance(value, list):
+                return len(value)
+            if isinstance(value, int):
+                return value
+            return 0
+
         story.append(Paragraph("2. Extract Content Headers", heading_style))
         story.append(Paragraph(f"URL: {headers_data.get('url', 'N/A')}", body_style))
         story.append(Spacer(1, 0.15*inch))
         
         hierarchy = headers_data.get('hierarchy', {})
-        h1_count = len(hierarchy.get('h1', []))
-        h2_count = len(hierarchy.get('h2', []))
-        h3_count = len(hierarchy.get('h3', []))
-        total_headers = h1_count + h2_count + h3_count
+        h1_count = _get_header_count(hierarchy, 'H1')
+        h2_count = _get_header_count(hierarchy, 'H2')
+        h3_count = _get_header_count(hierarchy, 'H3')
+        h4_count = _get_header_count(hierarchy, 'H4')
+        h5_count = _get_header_count(hierarchy, 'H5')
+        h6_count = _get_header_count(hierarchy, 'H6')
+        total_headers = h1_count + h2_count + h3_count + h4_count + h5_count + h6_count
+
+        if total_headers == 0:
+            headers_list = headers_data.get('headers', [])
+            if isinstance(headers_list, list):
+                h1_count = len([h for h in headers_list if str(h.get('level', '')).upper() == 'H1'])
+                h2_count = len([h for h in headers_list if str(h.get('level', '')).upper() == 'H2'])
+                h3_count = len([h for h in headers_list if str(h.get('level', '')).upper() == 'H3'])
+            h4_count = len([h for h in headers_list if str(h.get('level', '')).upper() == 'H4'])
+            h5_count = len([h for h in headers_list if str(h.get('level', '')).upper() == 'H5'])
+            h6_count = len([h for h in headers_list if str(h.get('level', '')).upper() == 'H6'])
+            total_headers = h1_count + h2_count + h3_count + h4_count + h5_count + h6_count
         
         # Header statistics
         story.append(Paragraph(f"<b>Total Headers:</b> {total_headers}", body_style))
         story.append(Paragraph(f"<b>H1 Tags:</b> {h1_count}", body_style))
         story.append(Paragraph(f"<b>H2 Tags:</b> {h2_count}", body_style))
         story.append(Paragraph(f"<b>H3 Tags:</b> {h3_count}", body_style))
+        story.append(Paragraph(f"<b>H4 Tags:</b> {h4_count}", body_style))
+        story.append(Paragraph(f"<b>H5 Tags:</b> {h5_count}", body_style))
+        story.append(Paragraph(f"<b>H6 Tags:</b> {h6_count}", body_style))
         story.append(Spacer(1, 0.15*inch))
         
         # Action Plan
