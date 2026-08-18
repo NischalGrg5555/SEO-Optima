@@ -10,7 +10,10 @@ from .services.pagespeed import fetch_pagespeed_data, get_score_color, extract_f
 from .services.header_extractor import extract_headers, get_header_hierarchy
 from .services.image_extractor import extract_images, get_image_stats
 from .services.keyword_extractor import get_keyword_stats, fetch_gsc_keywords, GSCAuthError
-from .models import PageSpeedAnalysis, ImageAltAnalysis, KeywordAnalysis, GSCConnection, HeaderAnalysis, PDFReport
+from .models import PageSpeedAnalysis, ImageAltAnalysis, KeywordAnalysis, GSCConnection, HeaderAnalysis, PDFReport, AIReadinessAnalysis
+from .services.ai_search_extractor import analyze_ai_readiness
+from .services.ai_question_generator import generate_ai_questions
+from .services.ai_opportunity_finder import find_citation_opportunities
 from .forms import PageSpeedForm, PageSpeedFilterForm, HeaderExtractorForm
 import json
 from urllib.parse import urlparse
@@ -1184,3 +1187,185 @@ def delete_image_alt_analysis(request, pk):
     }
     
     return render(request, 'dashboard/delete_image_alt_analysis.html', context)
+
+
+# ==============================================================================
+# AI Search / AEO (Answer Engine Optimization) Views
+# ==============================================================================
+
+@login_required
+def ai_search_overview(request):
+    """Overview hub for AI Search Optimization"""
+    analyses = AIReadinessAnalysis.objects.filter(user=request.user, is_deleted=False)
+    
+    total_audits = analyses.count()
+    avg_score = 0
+    avg_answerability = 0
+    avg_structure = 0
+    avg_entity = 0
+    avg_technical = 0
+    avg_trust = 0
+    
+    if total_audits > 0:
+        avg_score = round(sum(a.overall_score for a in analyses) / total_audits)
+        avg_answerability = round(sum(a.answerability_score for a in analyses) / total_audits)
+        avg_structure = round(sum(a.structure_score for a in analyses) / total_audits)
+        avg_entity = round(sum(a.entity_score for a in analyses) / total_audits)
+        avg_technical = round(sum(a.technical_score for a in analyses) / total_audits)
+        avg_trust = round(sum(a.trust_score for a in analyses) / total_audits)
+
+    recent_audits = analyses[:10]
+
+    context = {
+        'total_audits': total_audits,
+        'avg_score': avg_score,
+        'avg_answerability': avg_answerability,
+        'avg_structure': avg_structure,
+        'avg_entity': avg_entity,
+        'avg_technical': avg_technical,
+        'avg_trust': avg_trust,
+        'recent_audits': recent_audits,
+    }
+    return render(request, 'dashboard/ai_search/overview.html', context)
+
+
+@login_required
+def ai_readiness_audit(request):
+    """Run an AI Search Readiness audit on a URL"""
+    if request.method == 'POST':
+        url = request.POST.get('url', '').strip()
+        if not url:
+            messages.error(request, 'Please enter a valid URL to analyze.')
+            return render(request, 'dashboard/ai_search/audit_form.html')
+        
+        if not url.startswith(('http://', 'https://')):
+            url = 'https://' + url
+            
+        try:
+            audit_data = analyze_ai_readiness(url)
+            
+            analysis = AIReadinessAnalysis.objects.create(
+                user=request.user,
+                url=url,
+                overall_score=audit_data['overall_score'],
+                answerability_score=audit_data['answerability_score'],
+                structure_score=audit_data['structure_score'],
+                entity_score=audit_data['entity_score'],
+                technical_score=audit_data['technical_score'],
+                trust_score=audit_data['trust_score'],
+                audit_results=audit_data['audit_results'],
+                recommendations=audit_data['recommendations']
+            )
+            
+            messages.success(request, f'AI Search Readiness audit completed for {url}!')
+            return redirect('dashboard:ai_readiness_detail', pk=analysis.pk)
+        except Exception as e:
+            messages.error(request, f'Error running AI Readiness audit: {str(e)}')
+            return render(request, 'dashboard/ai_search/audit_form.html', {'url': url})
+
+    return render(request, 'dashboard/ai_search/audit_form.html')
+
+
+@login_required
+def ai_readiness_detail(request, pk):
+    """Detail view for an AI Readiness Analysis"""
+    analysis = get_object_or_404(AIReadinessAnalysis, pk=pk, user=request.user, is_deleted=False)
+    
+    context = {
+        'analysis': analysis,
+        'audit_results': analysis.audit_results,
+        'recommendations': analysis.recommendations,
+    }
+    return render(request, 'dashboard/ai_search/audit_detail.html', context)
+
+
+@login_required
+def delete_ai_readiness(request, pk):
+    """Delete an AI Readiness Analysis"""
+    analysis = get_object_or_404(AIReadinessAnalysis, pk=pk, user=request.user)
+    if request.method == 'POST':
+        analysis.is_deleted = True
+        analysis.save()
+        messages.success(request, 'AI Readiness Audit deleted successfully.')
+        return redirect('dashboard:ai_search_overview')
+    
+    return render(request, 'dashboard/ai_search/delete_confirm.html', {'analysis': analysis})
+
+
+@login_required
+def bulk_delete_ai_readiness(request):
+    """Bulk delete AI Readiness Analyses"""
+    if request.method == 'POST':
+        ids = request.POST.getlist('ids')
+        if ids:
+            AIReadinessAnalysis.objects.filter(pk__in=ids, user=request.user).update(is_deleted=True)
+            messages.success(request, f'Successfully deleted {len(ids)} AI Readiness Audit(s).')
+        else:
+            messages.warning(request, 'No audits selected for deletion.')
+            
+    return redirect('dashboard:ai_search_overview')
+
+
+@login_required
+def ai_question_research(request):
+    """AI Question & Intent Generator View"""
+    gsc_connection = GSCConnection.objects.filter(user=request.user, is_active=True).first()
+    user_properties = _group_properties_by_domain(gsc_connection.properties) if gsc_connection else []
+
+    gsc_property = request.GET.get('property', '')
+    if not gsc_property and gsc_connection and gsc_connection.properties:
+        gsc_property = gsc_connection.properties[0]
+
+    topic_seed = request.GET.get('seed', '').strip()
+
+    questions = generate_ai_questions(request.user, gsc_property=gsc_property, topic_seed=topic_seed)
+
+    # Intent summary counts
+    intent_counts = {
+        'Informational': sum(1 for q in questions if q['intent'] == 'Informational'),
+        'Comparison / Best': sum(1 for q in questions if q['intent'] == 'Comparison / Best'),
+        'Commercial / Price': sum(1 for q in questions if q['intent'] == 'Commercial / Price'),
+        'Problem / Solution': sum(1 for q in questions if q['intent'] == 'Problem / Solution'),
+    }
+
+    # Coverage summary
+    coverage_counts = {
+        'Answered': sum(1 for q in questions if q['coverage_status'] == 'Answered'),
+        'Partially Answered': sum(1 for q in questions if q['coverage_status'] == 'Partially Answered'),
+        'Content Gap': sum(1 for q in questions if q['coverage_status'] == 'Content Gap'),
+    }
+
+    context = {
+        'gsc_connection': gsc_connection,
+        'user_properties': user_properties,
+        'selected_property': gsc_property,
+        'topic_seed': topic_seed,
+        'questions': questions,
+        'intent_counts': intent_counts,
+        'coverage_counts': coverage_counts,
+    }
+    return render(request, 'dashboard/ai_search/question_research.html', context)
+
+
+@login_required
+def ai_citation_opportunities(request):
+    """AI Citation Opportunity Finder View"""
+    gsc_connection = GSCConnection.objects.filter(user=request.user, is_active=True).first()
+    user_properties = _group_properties_by_domain(gsc_connection.properties) if gsc_connection else []
+
+    gsc_property = request.GET.get('property', '')
+    if not gsc_property and gsc_connection and gsc_connection.properties:
+        gsc_property = gsc_connection.properties[0]
+
+    opportunities = find_citation_opportunities(request.user, gsc_property=gsc_property)
+
+    high_roi_count = sum(1 for o in opportunities if o['opportunity_score'] == 'High')
+
+    context = {
+        'gsc_connection': gsc_connection,
+        'user_properties': user_properties,
+        'selected_property': gsc_property,
+        'opportunities': opportunities,
+        'high_roi_count': high_roi_count,
+    }
+    return render(request, 'dashboard/ai_search/citation_opportunities.html', context)

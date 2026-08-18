@@ -98,9 +98,9 @@ def _extract_field_metric(full_response, metric_key, value_formatter=None, numer
 
 
 def generate_basic_report(user, title, pagespeed_analysis=None, keyword_analysis=None, 
-                         image_analysis=None, headers_data=None):
+                         image_analysis=None, headers_data=None, ai_readiness_analysis=None):
     """
-    Generate a Basic PDF Report with selected analyses
+    Generate a Basic PDF Report with selected analyses including AI Search Readiness
     """
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.75*inch, bottomMargin=0.75*inch)
@@ -248,105 +248,50 @@ def generate_basic_report(user, title, pagespeed_analysis=None, keyword_analysis
         story.append(Paragraph("Recommendations for Improvement:", subheading_style))
         
         recommendations = [
-            "<b>• Optimize Images:</b> Compress and lazy-load images, use modern formats like WebP, and specify dimensions to reduce layout shifts.",
-            "<b>• Minimize JavaScript:</b> Remove unused code, defer non-critical JS, and use code splitting to improve interactivity.",
-            "<b>• Enable Caching:</b> Implement browser caching and CDN to serve static resources faster.",
-            "<b>• Reduce Server Response Time:</b> Optimize backend performance, use faster hosting, and implement server-side caching.",
-            "<b>• Eliminate Render-Blocking Resources:</b> Inline critical CSS, defer non-critical CSS and JavaScript to speed up page rendering.",
+            "<b>• Optimize images:</b> Compress and convert images to modern formats like WebP or AVIF.",
+            "<b>• Eliminate render-blocking resources:</b> Defer non-critical JavaScript and CSS to speed up page render.",
+            "<b>• Implement caching:</b> Leverage browser caching for static assets to improve load times for returning visitors.",
         ]
         
         for rec in recommendations:
             story.append(Paragraph(rec, body_style))
         
-        story.append(Spacer(1, 0.2*inch))
+        story.append(Spacer(1, 0.3*inch))
     
-    # ==================== CONTENT HEADERS ====================
+    # ==================== EXTRACT HEADERS ====================
     if headers_data:
-        def _get_header_count(hierarchy_data, level):
-            if not isinstance(hierarchy_data, dict):
-                return 0
-            value = hierarchy_data.get(level)
-            if value is None:
-                value = hierarchy_data.get(level.upper())
-            if value is None:
-                value = hierarchy_data.get(level.lower())
-            if isinstance(value, list):
-                return len(value)
-            if isinstance(value, int):
-                return value
-            return 0
-
-        story.append(Paragraph("2. Extract Content Headers", heading_style))
-        story.append(Paragraph(f"URL: {headers_data.get('url', 'N/A')}", body_style))
+        story.append(Paragraph("2. Content Header Structure", heading_style))
+        
+        total_headers = len(headers_data) if isinstance(headers_data, list) else 0
+        story.append(Paragraph(f"<b>Total Headings Found:</b> {total_headers}", body_style))
         story.append(Spacer(1, 0.15*inch))
         
-        hierarchy = headers_data.get('hierarchy', {})
-        h1_count = _get_header_count(hierarchy, 'H1')
-        h2_count = _get_header_count(hierarchy, 'H2')
-        h3_count = _get_header_count(hierarchy, 'H3')
-        h4_count = _get_header_count(hierarchy, 'H4')
-        h5_count = _get_header_count(hierarchy, 'H5')
-        h6_count = _get_header_count(hierarchy, 'H6')
-        total_headers = h1_count + h2_count + h3_count + h4_count + h5_count + h6_count
-
-        if total_headers == 0:
-            headers_list = headers_data.get('headers', [])
-            if isinstance(headers_list, list):
-                h1_count = len([h for h in headers_list if str(h.get('level', '')).upper() == 'H1'])
-                h2_count = len([h for h in headers_list if str(h.get('level', '')).upper() == 'H2'])
-                h3_count = len([h for h in headers_list if str(h.get('level', '')).upper() == 'H3'])
-            h4_count = len([h for h in headers_list if str(h.get('level', '')).upper() == 'H4'])
-            h5_count = len([h for h in headers_list if str(h.get('level', '')).upper() == 'H5'])
-            h6_count = len([h for h in headers_list if str(h.get('level', '')).upper() == 'H6'])
-            total_headers = h1_count + h2_count + h3_count + h4_count + h5_count + h6_count
-        
-        # Header statistics
-        story.append(Paragraph(f"<b>Total Headers:</b> {total_headers}", body_style))
-        story.append(Paragraph(f"<b>H1 Tags:</b> {h1_count}", body_style))
-        story.append(Paragraph(f"<b>H2 Tags:</b> {h2_count}", body_style))
-        story.append(Paragraph(f"<b>H3 Tags:</b> {h3_count}", body_style))
-        story.append(Paragraph(f"<b>H4 Tags:</b> {h4_count}", body_style))
-        story.append(Paragraph(f"<b>H5 Tags:</b> {h5_count}", body_style))
-        story.append(Paragraph(f"<b>H6 Tags:</b> {h6_count}", body_style))
-        story.append(Spacer(1, 0.15*inch))
-        
-        # Action Plan
-        story.append(Paragraph("Action Plan:", subheading_style))
-        
-        action_items = [
-            f"<b>• Use exactly one H1 tag per page</b> (Currently: {h1_count}) - The H1 should contain your primary keyword and describe the page topic.",
-            "<b>• Maintain proper hierarchy:</b> H1 → H2 → H3 (don't skip levels) - This helps search engines understand content structure.",
-            "<b>• Include keywords:</b> Use relevant keywords in your headings naturally - Balance SEO with readability.",
-            "<b>• Keep headers descriptive:</b> Headers should clearly describe the content that follows - Avoid vague titles.",
-            "<b>• Make them engaging:</b> Headers help users scan and understand your content quickly - Use action words when appropriate.",
+        header_actions = [
+            "<b>• Ensure single H1:</b> Each page should have exactly one H1 tag describing the main topic.",
+            "<b>• Maintain heading hierarchy:</b> Use H2 for main sections, H3 for sub-sections without skipping levels.",
+            "<b>• Include target keywords:</b> Incorporate primary and secondary keywords naturally in your headings.",
         ]
         
-        for item in action_items:
-            story.append(Paragraph(item, body_style))
+        for action in header_actions:
+            story.append(Paragraph(action, body_style))
         
-        story.append(Spacer(1, 0.2*inch))
+        story.append(Spacer(1, 0.3*inch))
     
-    # ==================== IMAGE & ALT TEXT ====================
+    # ==================== WEBSITE IMAGE + ALT TEXT ====================
     if image_analysis:
-        story.append(Paragraph("3. Website Image + Alt Text Finder", heading_style))
+        story.append(Paragraph("3. Image Alt Text Analysis", heading_style))
         story.append(Paragraph(f"URL: {image_analysis.url}", body_style))
         story.append(Spacer(1, 0.15*inch))
         
-        # Statistics
         story.append(Paragraph(f"<b>Total Images:</b> {image_analysis.total_images}", body_style))
         story.append(Paragraph(f"<b>Images with Alt Text:</b> {image_analysis.images_with_alt}", body_style))
-        story.append(Paragraph(f"<b>Missing Alt Text:</b> {image_analysis.images_without_alt}", body_style))
+        story.append(Paragraph(f"<b>Images Missing Alt Text:</b> {image_analysis.images_without_alt}", body_style))
         story.append(Paragraph(f"<b>Alt Text Coverage:</b> {image_analysis.alt_text_percentage}%", body_style))
         story.append(Spacer(1, 0.15*inch))
         
-        # Action Plan
-        story.append(Paragraph("Action Plan:", subheading_style))
-        
         alt_actions = [
-            "<b>• Add descriptive alt text to all images:</b> Write concise descriptions that explain what's in the image (aim for 125 characters or less).",
-            "<b>• Include relevant keywords naturally:</b> When appropriate, incorporate your target keywords, but prioritize accurate descriptions.",
-            "<b>• Skip alt text for decorative images:</b> Use empty alt=\"\" for purely decorative images that don't add informational value.",
-            f"<b>• Prioritize missing alt texts:</b> Focus on the {image_analysis.images_without_alt} images without alt text first, especially for product images and infographics.",
+            "<b>• Add missing alt text:</b> Ensure all informative images have descriptive alt text for accessibility and SEO.",
+            "<b>• Keep alt text concise:</b> Aim for 125 characters or less per image description.",
             "<b>• Review existing alt text quality:</b> Ensure current alt texts are descriptive and meaningful, not just generic filenames.",
         ]
         
@@ -361,16 +306,12 @@ def generate_basic_report(user, title, pagespeed_analysis=None, keyword_analysis
         story.append(Paragraph(f"URL: {keyword_analysis.url}", body_style))
         story.append(Spacer(1, 0.15*inch))
         
-        # Statistics
         story.append(Paragraph(f"<b>Total Keywords:</b> {keyword_analysis.total_keywords}", body_style))
         story.append(Paragraph(f"<b>Top 3 Positions:</b> {keyword_analysis.top_3_positions}", body_style))
         story.append(Paragraph(f"<b>Top 10 Positions:</b> {keyword_analysis.top_10_positions}", body_style))
         story.append(Paragraph(f"<b>Top 20 Positions:</b> {keyword_analysis.top_20_positions}", body_style))
         story.append(Paragraph(f"<b>Average Position:</b> {keyword_analysis.avg_position:.1f}", body_style))
         story.append(Spacer(1, 0.15*inch))
-        
-        # Action Plan
-        story.append(Paragraph("Action Plan:", subheading_style))
         
         keyword_actions = [
             f"<b>• Optimize for top-performing keywords:</b> Your {keyword_analysis.top_3_positions} keywords in the top 3 positions are strong - maintain and expand related content.",
@@ -383,6 +324,30 @@ def generate_basic_report(user, title, pagespeed_analysis=None, keyword_analysis
         for action in keyword_actions:
             story.append(Paragraph(action, body_style))
         
+        story.append(Spacer(1, 0.2*inch))
+
+    # ==================== AI SEARCH & AEO OPTIMIZATION ====================
+    if ai_readiness_analysis:
+        story.append(Paragraph("5. AI Search & Answer Engine Optimization (AEO)", heading_style))
+        story.append(Paragraph(f"Audited URL: {ai_readiness_analysis.url}", body_style))
+        story.append(Spacer(1, 0.15*inch))
+
+        story.append(Paragraph(f"<b>Overall AI Readiness Score:</b> {ai_readiness_analysis.overall_score}/100 ({ai_readiness_analysis.score_category})", body_style))
+        story.append(Paragraph(f"<b>Passage Answerability Score:</b> {ai_readiness_analysis.answerability_score}%", body_style))
+        story.append(Paragraph(f"<b>RAG Structure Score:</b> {ai_readiness_analysis.structure_score}%", body_style))
+        story.append(Paragraph(f"<b>Entity Schema Score:</b> {ai_readiness_analysis.entity_score}%", body_style))
+        story.append(Paragraph(f"<b>AI Bot Crawler Access:</b> {ai_readiness_analysis.technical_score}%", body_style))
+        story.append(Paragraph(f"<b>Trust & Evidence Signals:</b> {ai_readiness_analysis.trust_score}%", body_style))
+        story.append(Spacer(1, 0.15*inch))
+
+        story.append(Paragraph("Key AI Optimization Recommendations:", subheading_style))
+        if ai_readiness_analysis.recommendations:
+            for rec in ai_readiness_analysis.recommendations[:4]:
+                rec_text = f"<b>• [{rec.get('severity', 'Medium')}] {rec.get('title', '')}:</b> {rec.get('fix', '')}"
+                story.append(Paragraph(rec_text, body_style))
+        else:
+            story.append(Paragraph("<b>• Excellent AEO Alignment:</b> This page meets key RAG passage answerability and bot accessibility criteria.", body_style))
+
         story.append(Spacer(1, 0.2*inch))
     
     # Footer

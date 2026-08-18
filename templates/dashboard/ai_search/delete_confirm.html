@@ -1,0 +1,30 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Delete AI Readiness Audit | SEO Optima{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 600px;">
+  <div class="card border-0 shadow-lg rounded-4 overflow-hidden text-center p-4">
+    <div class="card-body">
+      <div class="p-3 bg-danger bg-opacity-10 text-danger rounded-circle d-inline-block mb-3">
+        <i class="bi bi-exclamation-triangle-fill display-4"></i>
+      </div>
+      <h3 class="fw-bold text-dark mb-2">Delete Audit?</h3>
+      <p class="text-muted mb-4">
+        Are you sure you want to delete the AI Search Readiness Audit for:<br>
+        <strong class="text-dark">{{ analysis.url }}</strong>?
+      </p>
+
+      <form action="{% url 'dashboard:delete_ai_readiness' analysis.pk %}" method="POST" class="d-flex justify-content-center gap-2">
+        {% csrf_token %}
+        <a href="{% url 'dashboard:ai_search_overview' %}" class="btn btn-outline-secondary px-4 rounded-pill">
+          Cancel
+        </a>
+        <button type="submit" class="btn btn-danger px-4 rounded-pill fw-bold">
+          <i class="bi bi-trash me-1"></i> Yes, Delete Audit
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

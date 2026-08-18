@@ -41,6 +41,24 @@
       <span>PDF Reports</span>
     </a>
 
+    <div class="menu-section">AI SEARCH & AEO</div>
+
+    <a class="menu-item {% if request.resolver_match.url_name == 'ai_search_overview' or request.resolver_match.url_name == 'ai_readiness_audit' or request.resolver_match.url_name == 'ai_readiness_detail' %}active{% endif %}" href="{% url 'dashboard:ai_search_overview' %}">
+      <i class="bi bi-robot"></i>
+      <span>AI Readiness Overview</span>
+    </a>
+
+    <a class="menu-item {% if request.resolver_match.url_name == 'ai_question_research' %}active{% endif %}" href="{% url 'dashboard:ai_question_research' %}">
+      <i class="bi bi-question-square"></i>
+      <span>AI Question Generator</span>
+    </a>
+
+    <a class="menu-item {% if request.resolver_match.url_name == 'ai_citation_opportunities' %}active{% endif %}" href="{% url 'dashboard:ai_citation_opportunities' %}">
+      <i class="bi bi-bullseye"></i>
+      <span>Citation Opportunities</span>
+      <span class="badge bg-primary text-white ms-auto" style="font-size: 0.65rem; padding: 2px 6px;">HIGH ROI</span>
+    </a>
+
     <div class="menu-divider"></div>
 
     <a class="menu-item menu-logout" href="{% url 'accounts:logout' %}">

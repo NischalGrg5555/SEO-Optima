@@ -24,6 +24,13 @@ from .views import (
     connect_gsc,
     gsc_callback,
     disconnect_gsc,
+    ai_search_overview,
+    ai_readiness_audit,
+    ai_readiness_detail,
+    delete_ai_readiness,
+    bulk_delete_ai_readiness,
+    ai_question_research,
+    ai_citation_opportunities,
 )
 from .pdf_report_views import (
     pdf_reports_list,
@@ -65,6 +72,15 @@ urlpatterns = [
     path("gsc-callback/", gsc_callback, name="gsc_callback"),
     path("disconnect-gsc/", disconnect_gsc, name="disconnect_gsc"),
     
+    # AI Search / AEO Optimization
+    path("ai-search/", ai_search_overview, name="ai_search_overview"),
+    path("ai-search/audit/", ai_readiness_audit, name="ai_readiness_audit"),
+    path("ai-search/audit/<int:pk>/", ai_readiness_detail, name="ai_readiness_detail"),
+    path("ai-search/audit/<int:pk>/delete/", delete_ai_readiness, name="delete_ai_readiness"),
+    path("ai-search/audit/bulk-delete/", bulk_delete_ai_readiness, name="bulk_delete_ai_readiness"),
+    path("ai-search/questions/", ai_question_research, name="ai_question_research"),
+    path("ai-search/opportunities/", ai_citation_opportunities, name="ai_citation_opportunities"),
+
     # PDF Reports
     path("reports/", pdf_reports_list, name="pdf_reports_list"),
     path("reports/generate/", generate_pdf_report, name="generate_pdf_report"),
@@ -75,3 +91,4 @@ urlpatterns = [
     path("reports/bulk-delete/", bulk_delete_pdf_reports, name="bulk_delete_pdf_reports"),
     path("reports/<int:pk>/regenerate/", regenerate_pdf_report, name="regenerate_pdf_report"),
 ]
+

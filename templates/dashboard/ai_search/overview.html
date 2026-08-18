@@ -1,0 +1,282 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}AI Search & AEO Optimization | SEO Optima{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <!-- Messages -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Hero Header -->
+  <div class="card border-0 shadow-sm rounded-4 mb-4 text-white overflow-hidden" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);">
+    <div class="card-body p-4 p-md-5">
+      <div class="row align-items-center">
+        <div class="col-lg-8">
+          <span class="badge bg-white text-indigo fw-bold text-uppercase px-3 py-2 rounded-pill mb-3" style="color: #4338ca; letter-spacing: 0.5px;">
+            <i class="bi bi-robot me-1"></i> Answer Engine Optimization (AEO)
+          </span>
+          <h1 class="display-6 fw-bold mb-3">AI Search Readiness & Optimization</h1>
+          <p class="lead mb-4 opacity-90">
+            Optimize your web content to be parsed, ingested, and cited by AI search engines like <strong>Perplexity</strong>, <strong>Google AI Overviews</strong>, <strong>ChatGPT Search</strong>, and <strong>Claude</strong>.
+          </p>
+
+          <!-- Quick Audit Trigger -->
+          <form action="{% url 'dashboard:ai_readiness_audit' %}" method="POST" class="row g-2">
+            {% csrf_token %}
+            <div class="col-md-8">
+              <div class="input-group input-group-lg shadow-sm">
+                <span class="input-group-text bg-white border-0 text-muted"><i class="bi bi-globe"></i></span>
+                <input type="url" name="url" class="form-control border-0" placeholder="https://example.com/article-url" required>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <button type="submit" class="btn btn-warning btn-lg w-100 fw-bold shadow-sm" style="background-color: #fbbf24; border: none; color: #1e1b4b;">
+                <i class="bi bi-lightning-charge-fill me-1"></i> Audit AI Readiness
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="col-lg-4 text-center d-none d-lg-block">
+          <div class="p-4 rounded-circle bg-white bg-opacity-10 d-inline-block border border-white border-opacity-20 shadow">
+            <i class="bi bi-cpu-fill display-1 text-warning opacity-90"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Aggregate Metric Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4 col-lg-2">
+      <div class="card border-0 shadow-sm rounded-3 h-100 text-center p-3">
+        <div class="text-muted small fw-semibold text-uppercase mb-1">Overall Avg</div>
+        <div class="display-6 fw-bold {% if avg_score >= 80 %}text-success{% elif avg_score >= 60 %}text-warning{% else %}text-danger{% endif %}">
+          {{ avg_score }}<small class="fs-6 text-muted">/100</small>
+        </div>
+        <div class="small text-muted mt-1">{{ total_audits }} Audits Run</div>
+      </div>
+    </div>
+    
+    <div class="col-md-4 col-lg-2">
+      <div class="card border-0 shadow-sm rounded-3 h-100 text-center p-3">
+        <div class="text-muted small fw-semibold text-uppercase mb-1">Answerability</div>
+        <div class="fs-2 fw-bold text-primary">{{ avg_answerability }}%</div>
+        <div class="progress mt-2" style="height: 4px;">
+          <div class="progress-bar bg-primary" role="progressbar" style="width: {{ avg_answerability }}%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 col-lg-2">
+      <div class="card border-0 shadow-sm rounded-3 h-100 text-center p-3">
+        <div class="text-muted small fw-semibold text-uppercase mb-1">RAG Structure</div>
+        <div class="fs-2 fw-bold text-info">{{ avg_structure }}%</div>
+        <div class="progress mt-2" style="height: 4px;">
+          <div class="progress-bar bg-info" role="progressbar" style="width: {{ avg_structure }}%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 col-lg-2">
+      <div class="card border-0 shadow-sm rounded-3 h-100 text-center p-3">
+        <div class="text-muted small fw-semibold text-uppercase mb-1">Schema & Entity</div>
+        <div class="fs-2 fw-bold text-purple" style="color: #8b5cf6;">{{ avg_entity }}%</div>
+        <div class="progress mt-2" style="height: 4px;">
+          <div class="progress-bar" role="progressbar" style="width: {{ avg_entity }}%; background-color: #8b5cf6;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 col-lg-2">
+      <div class="card border-0 shadow-sm rounded-3 h-100 text-center p-3">
+        <div class="text-muted small fw-semibold text-uppercase mb-1">AI Bot Access</div>
+        <div class="fs-2 fw-bold text-teal" style="color: #0d9488;">{{ avg_technical }}%</div>
+        <div class="progress mt-2" style="height: 4px;">
+          <div class="progress-bar" role="progressbar" style="width: {{ avg_technical }}%; background-color: #0d9488;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 col-lg-2">
+      <div class="card border-0 shadow-sm rounded-3 h-100 text-center p-3">
+        <div class="text-muted small fw-semibold text-uppercase mb-1">Trust & Stats</div>
+        <div class="fs-2 fw-bold text-warning">{{ avg_trust }}%</div>
+        <div class="progress mt-2" style="height: 4px;">
+          <div class="progress-bar bg-warning" role="progressbar" style="width: {{ avg_trust }}%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Audits Table -->
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+      <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-clock-history me-2 text-primary"></i> Recent AI Readiness Audits</h5>
+      <a href="{% url 'dashboard:ai_readiness_audit' %}" class="btn btn-sm btn-primary rounded-pill px-3">
+        <i class="bi bi-plus-circle me-1"></i> New Audit
+      </a>
+    </div>
+    <div class="card-body p-0">
+      {% if recent_audits %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light text-muted small text-uppercase">
+              <tr>
+                <th class="ps-4">Target URL</th>
+                <th class="text-center">Overall Score</th>
+                <th class="text-center">Answerability</th>
+                <th class="text-center">AI Bot Status</th>
+                <th class="text-center">Audited At</th>
+                <th class="text-end pe-4">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for audit in recent_audits %}
+                <tr>
+                  <td class="ps-4">
+                    <a href="{% url 'dashboard:ai_readiness_detail' audit.pk %}" class="fw-bold text-dark text-decoration-none d-block text-truncate" style="max-width: 320px;">
+                      {{ audit.url }}
+                    </a>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge rounded-pill px-3 py-2 {% if audit.overall_score >= 80 %}bg-success-subtle text-success border border-success{% elif audit.overall_score >= 60 %}bg-warning-subtle text-warning border border-warning{% else %}bg-danger-subtle text-danger border border-danger{% endif %}">
+                      <i class="bi bi-award-fill me-1"></i> {{ audit.overall_score }}/100
+                    </span>
+                  </td>
+                  <td class="text-center fw-semibold text-muted">
+                    {{ audit.answerability_score }}%
+                  </td>
+                  <td class="text-center">
+                    {% if audit.audit_results.technical.blocked_bots_count == 0 %}
+                      <span class="badge bg-success-subtle text-success px-2 py-1"><i class="bi bi-check-circle-fill me-1"></i> All Bots Allowed</span>
+                    {% else %}
+                      <span class="badge bg-danger-subtle text-danger px-2 py-1"><i class="bi bi-exclamation-triangle-fill me-1"></i> {{ audit.audit_results.technical.blocked_bots_count }} Blocked</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center text-muted small">
+                    {{ audit.created_at|date:"M d, Y H:i" }}
+                  </td>
+                  <td class="text-end pe-4">
+                    <a href="{% url 'dashboard:ai_readiness_detail' audit.pk %}" class="btn btn-sm btn-outline-primary me-1">
+                      <i class="bi bi-eye"></i> View
+                    </a>
+                    <a href="{% url 'dashboard:delete_ai_readiness' audit.pk %}" class="btn btn-sm btn-outline-danger">
+                      <i class="bi bi-trash"></i>
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-5">
+          <i class="bi bi-robot display-4 text-muted opacity-50 mb-3 d-block"></i>
+          <h5 class="fw-bold text-secondary">No AI Readiness Audits Yet</h5>
+          <p class="text-muted small mb-3">Audit your first URL above to analyze how AI search models view and extract your content.</p>
+          <a href="{% url 'dashboard:ai_readiness_audit' %}" class="btn btn-primary rounded-pill px-4">
+            <i class="bi bi-play-fill me-1"></i> Run First Audit
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 5 Core Dimensions Info Cards -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-6 col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
+        <div class="d-flex align-items-center mb-3">
+          <div class="p-2 rounded-3 bg-primary bg-opacity-10 text-primary me-3">
+            <i class="bi bi-chat-quote-fill fs-4"></i>
+          </div>
+          <div>
+            <h6 class="fw-bold mb-0">1. Passage Answerability</h6>
+            <span class="small text-muted">RAG Definition Extractability</span>
+          </div>
+        </div>
+        <p class="small text-muted mb-0">
+          Detects question headings (`H1`-`H4`) and verifies whether a 40–80 word direct answer paragraph immediately follows for RAG chunk extraction.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
+        <div class="d-flex align-items-center mb-3">
+          <div class="p-2 rounded-3 bg-info bg-opacity-10 text-info me-3">
+            <i class="bi bi-diagram-3-fill fs-4"></i>
+          </div>
+          <div>
+            <h6 class="fw-bold mb-0">2. RAG Structure</h6>
+            <span class="small text-muted">Lists, Tables & Headers</span>
+          </div>
+        </div>
+        <p class="small text-muted mb-0">
+          Audits semantic HTML lists (`<ol>`, `<ul>`), comparison data tables with `<thead>`, and structured workflow tags for non-hallucinated parsing.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
+        <div class="d-flex align-items-center mb-3">
+          <div class="p-2 rounded-3 bg-purple bg-opacity-10 text-purple me-3" style="color: #8b5cf6; background-color: rgba(139, 92, 246, 0.1);">
+            <i class="bi bi-file-code-fill fs-4"></i>
+          </div>
+          <div>
+            <h6 class="fw-bold mb-0">3. Entity & Schema</h6>
+            <span class="small text-muted">JSON-LD Grounding</span>
+          </div>
+        </div>
+        <p class="small text-muted mb-0">
+          Validates JSON-LD schema objects (`Organization`, `Article`, `FAQPage`, `Person`) to ground your brand entities inside AI Knowledge Graphs.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
+        <div class="d-flex align-items-center mb-3">
+          <div class="p-2 rounded-3 bg-teal bg-opacity-10 text-teal me-3" style="color: #0d9488; background-color: rgba(13, 148, 136, 0.1);">
+            <i class="bi bi-shield-check fs-4"></i>
+          </div>
+          <div>
+            <h6 class="fw-bold mb-0">4. AI Crawler Access</h6>
+            <span class="small text-muted">Robots.txt & JS Rendering</span>
+          </div>
+        </div>
+        <p class="small text-muted mb-0">
+          Audits `robots.txt` disallows targeting `GPTBot`, `PerplexityBot`, `ClaudeBot`, and detects client-side JS rendering dependencies.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
+        <div class="d-flex align-items-center mb-3">
+          <div class="p-2 rounded-3 bg-warning bg-opacity-10 text-warning me-3">
+            <i class="bi bi-graph-up-arrow fs-4"></i>
+          </div>
+          <div>
+            <h6 class="fw-bold mb-0">5. Trust & Evidence</h6>
+            <span class="small text-muted">Author & Data Density</span>
+          </div>
+        </div>
+        <p class="small text-muted mb-0">
+          Evaluates author attribution bylines, publication timestamps, outbound reference links, and numerical statistics density.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -209,6 +209,7 @@ class PDFReport(models.Model):
     pagespeed_analysis = models.ForeignKey(PageSpeedAnalysis, on_delete=models.SET_NULL, null=True, blank=True, related_name='pdf_reports')
     keyword_analysis = models.ForeignKey(KeywordAnalysis, on_delete=models.SET_NULL, null=True, blank=True, related_name='pdf_reports')
     image_analysis = models.ForeignKey(ImageAltAnalysis, on_delete=models.SET_NULL, null=True, blank=True, related_name='pdf_reports')
+    ai_readiness_analysis = models.ForeignKey('AIReadinessAnalysis', on_delete=models.SET_NULL, null=True, blank=True, related_name='pdf_reports')
     
     # Store header data as JSON (extracted headers)
     headers_data = models.JSONField(default=dict, blank=True)
@@ -246,4 +247,57 @@ class PDFReport(models.Model):
             sections.append('images')
         if self.headers_data:
             sections.append('headers')
+        if self.ai_readiness_analysis:
+            sections.append('ai_readiness')
         return sections
+
+
+class AIReadinessAnalysis(models.Model):
+    """Model to store AI Search / AEO Readiness Audit results"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ai_readiness_analyses')
+    url = models.URLField(max_length=500)
+    
+    # Multi-dimensional scores (0-100)
+    overall_score = models.IntegerField(default=0)
+    answerability_score = models.IntegerField(default=0)
+    structure_score = models.IntegerField(default=0)
+    entity_score = models.IntegerField(default=0)
+    technical_score = models.IntegerField(default=0)
+    trust_score = models.IntegerField(default=0)
+    
+    # Detailed audit payloads stored as JSON
+    # Stores parsed question headings, passage blocks, schema validation, robots.txt status, list/table counts, etc.
+    audit_results = models.JSONField(default=dict, blank=True)
+    
+    # Actionable rule-driven recommendations
+    recommendations = models.JSONField(default=list, blank=True)
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    # Soft delete
+    is_deleted = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['url']),
+        ]
+    
+    def __str__(self):
+        return f"AI Readiness: {self.url} ({self.overall_score}/100)"
+    
+    @property
+    def score_category(self):
+        """Category string for composite score"""
+        if self.overall_score >= 90:
+            return 'Excellent'
+        elif self.overall_score >= 75:
+            return 'Good'
+        elif self.overall_score >= 50:
+            return 'Needs Work'
+        else:
+            return 'Poor'
+

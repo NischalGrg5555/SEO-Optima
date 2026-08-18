@@ -1,0 +1,192 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}AI Question Generator & Intent Research | SEO Optima{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'dashboard:ai_search_overview' %}">AI Search</a></li>
+      <li class="breadcrumb-item active" aria-current="page">AI Question Generator</li>
+    </ol>
+  </nav>
+
+  <!-- Messages -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Header Banner -->
+  <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden text-white" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+    <div class="card-body p-4 p-md-5">
+      <div class="row align-items-center">
+        <div class="col-lg-8">
+          <span class="badge bg-primary text-white fw-bold text-uppercase px-3 py-1 rounded-pill mb-2">
+            <i class="bi bi-patch-question me-1"></i> Intent-Clustered AI Questions
+          </span>
+          <h2 class="display-6 fw-bold mb-2">AI Search Question & Intent Generator</h2>
+          <p class="lead opacity-90 mb-4">
+            Convert Search Console queries and topic seeds into conversational questions users ask AI search engines. Identify which questions your site answers, partially covers, or has content gaps for.
+          </p>
+
+          <!-- Input Filters Form -->
+          <form method="GET" action="{% url 'dashboard:ai_question_research' %}" class="row g-2 align-items-center">
+            {% if gsc_connection %}
+              <div class="col-md-5">
+                <select name="property" class="form-select border-0 shadow-sm">
+                  {% for group in user_properties %}
+                    <optgroup label="{{ group.primary_display }}">
+                      {% for prop in group.properties %}
+                        <option value="{{ prop.url }}" {% if prop.url == selected_property %}selected{% endif %}>
+                          {{ prop.display }}
+                        </option>
+                      {% endfor %}
+                    </optgroup>
+                  {% endfor %}
+                </select>
+              </div>
+            {% endif %}
+
+            <div class="col-md-5">
+              <div class="input-group shadow-sm">
+                <span class="input-group-text bg-white border-0 text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" name="seed" class="form-control border-0" placeholder="Enter topic seed (e.g. page speed)" value="{{ topic_seed|default:'' }}">
+              </div>
+            </div>
+
+            <div class="col-md-2">
+              <button type="submit" class="btn btn-warning w-100 fw-bold shadow-sm" style="color: #0f172a;">
+                <i class="bi bi-lightning-fill me-1"></i> Generate
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="col-lg-4 text-center d-none d-lg-block">
+          <div class="p-4 rounded-circle bg-white bg-opacity-10 d-inline-block border border-white border-opacity-20 shadow">
+            <i class="bi bi-question-lg display-1 text-warning"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Metric Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 h-100 text-center">
+        <div class="text-muted small fw-semibold text-uppercase mb-1">Informational Questions</div>
+        <div class="fs-2 fw-bold text-primary">{{ intent_counts.Informational }}</div>
+        <div class="small text-muted mt-1">What / How / Why Queries</div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 h-100 text-center">
+        <div class="text-muted small fw-semibold text-uppercase mb-1">Comparison & Best</div>
+        <div class="fs-2 fw-bold text-info">{{ intent_counts.Comparison }}</div>
+        <div class="small text-muted mt-1">Best / Vs / Alternative Prompts</div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 h-100 text-center">
+        <div class="text-muted small fw-semibold text-uppercase mb-1">Answered Coverage</div>
+        <div class="fs-2 fw-bold text-success">{{ coverage_counts.Answered }}</div>
+        <div class="small text-muted mt-1">Direct Answers Detected</div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 h-100 text-center">
+        <div class="text-muted small fw-semibold text-uppercase mb-1">Content Gaps</div>
+        <div class="fs-2 fw-bold text-danger">{{ coverage_counts.Content }}</div>
+        <div class="small text-muted mt-1">Unanswered AI Questions</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Questions Table -->
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+      <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-list-stars text-primary me-2"></i> Generated Conversational AI Questions</h5>
+      <span class="badge bg-light text-dark border fs-6 px-3">{{ questions|length }} Total Questions</span>
+    </div>
+
+    <div class="card-body p-0">
+      {% if questions %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light text-muted small text-uppercase">
+              <tr>
+                <th class="ps-4">Conversational AI Question</th>
+                <th>Intent Category</th>
+                <th class="text-center">Search Impressions</th>
+                <th class="text-center">Coverage Status</th>
+                <th class="text-end pe-4">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for q in questions %}
+                <tr>
+                  <td class="ps-4">
+                    <strong class="text-dark d-block fs-6 mb-1">{{ q.question }}</strong>
+                    <span class="small text-muted font-monospace"><i class="bi bi-search me-1"></i> Original Query: "{{ q.original_query }}"</span>
+                  </td>
+
+                  <td>
+                    <span class="badge rounded-pill px-3 py-1 {% if q.intent == 'Informational' %}bg-primary-subtle text-primary border border-primary{% elif q.intent == 'Comparison / Best' %}bg-info-subtle text-info border border-info{% elif q.intent == 'Commercial / Price' %}bg-warning-subtle text-warning border border-warning{% else %}bg-secondary-subtle text-secondary border{% endif %}">
+                      {{ q.intent }}
+                    </span>
+                  </td>
+
+                  <td class="text-center">
+                    <span class="fw-bold text-dark">{{ q.impressions }}</span>
+                    <div class="small text-muted">Pos: {{ q.position }}</div>
+                  </td>
+
+                  <td class="text-center">
+                    {% if q.coverage_status == 'Answered' %}
+                      <span class="badge bg-success-subtle text-success px-3 py-2"><i class="bi bi-check-circle-fill me-1"></i> Answered</span>
+                    {% elif q.coverage_status == 'Partially Answered' %}
+                      <span class="badge bg-warning-subtle text-warning px-3 py-2"><i class="bi bi-exclamation-circle-fill me-1"></i> Partial Coverage</span>
+                    {% else %}
+                      <span class="badge bg-danger-subtle text-danger px-3 py-2"><i class="bi bi-x-circle-fill me-1"></i> Content Gap</span>
+                    {% endif %}
+                  </td>
+
+                  <td class="text-end pe-4">
+                    {% if q.target_url %}
+                      <a href="{% url 'dashboard:ai_readiness_audit' %}?url={{ q.target_url|urlencode }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                        <i class="bi bi-cpu me-1"></i> Audit URL
+                      </a>
+                    {% else %}
+                      <a href="{% url 'dashboard:ai_readiness_audit' %}" class="btn btn-sm btn-primary rounded-pill px-3">
+                        <i class="bi bi-plus-lg me-1"></i> Create Answer
+                      </a>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-5">
+          <i class="bi bi-question-circle display-4 text-muted opacity-50 mb-3 d-block"></i>
+          <h5 class="fw-bold text-secondary">No AI Questions Generated</h5>
+          <p class="text-muted small mb-3">Connect Google Search Console or enter a topic seed above to generate conversational questions.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
